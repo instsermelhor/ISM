@@ -77,7 +77,7 @@ export const DonationSection: React.FC = () => {
             </div>
             <h2 className="text-3xl md:text-5xl font-bold mb-6">Fundo de Sustentabilidade Perpétua</h2>
             <p className="text-gray-300 max-w-2xl text-lg">
-                Sua doação não é apenas um ato de caridade; é um investimento direto na transformação sistêmica.
+                Sua doação não é apenas um ato de caridade; é um investimento direto na transformação social sistêmica.
             </p>
         </div>
 

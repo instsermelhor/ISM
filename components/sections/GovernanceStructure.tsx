@@ -9,7 +9,7 @@ interface Props {
 }
 
 const OrganIconMap: Record<number, React.ReactNode> = {
-  1: <Landmark size={24} />, // Assembleia
+  1: <Landmark size={24} />, // Assembleia Geral
   2: <Scale size={24} />,    // Conselho Deliberativo
   3: <Eye size={24} />,      // Conselho Fiscal
   4: <Briefcase size={24} />, // Diretoria

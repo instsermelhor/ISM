@@ -54,7 +54,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData }) => {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">Intercâmbio Global</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  Benchmarks com as ONGs mais eficazes do mundo.
+                  Benchmarks com as Entidades mais eficazes do mundo.
                 </p>
               </div>
           </div>

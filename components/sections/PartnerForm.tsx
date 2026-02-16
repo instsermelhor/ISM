@@ -91,7 +91,7 @@ export const PartnerForm: React.FC = () => {
                         </div>
                         <div>
                             <h4 className="font-bold text-secondary-900">Cooperação Técnica</h4>
-                            <p className="text-sm text-gray-500">Intercâmbio de expertise com academia e institutos de pesquisa.</p>
+                            <p className="text-sm text-gray-500">Intercâmbio de expertise com Universidades, Academias e Institutos de pesquisa.</p>
                         </div>
                     </div>
                 </div>
@@ -115,7 +115,7 @@ export const PartnerForm: React.FC = () => {
                                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
                                 >
                                     <option value="Corporativo">Corporativo</option>
-                                    <option value="Institucional/ONG">Institucional / ONG</option>
+                                    <option value="Institucional/ONG">Institucional / OSC</option>
                                     <option value="Pesquisa/Academia">Pesquisa / Academia</option>
                                     <option value="Individual">Grande Doador (Individual)</option>
                                 </select>
