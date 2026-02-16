@@ -231,7 +231,7 @@ export const institutionalData = {
     {
       id: 1,
       attributes: {
-        name: "Dra. Helena Souza",
+        name: "Rikardo Ribeiro",
         role: "Presidente do CDE",
         type: "board",
         bio: "Referência global em conservação.",

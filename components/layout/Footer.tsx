@@ -13,7 +13,7 @@ export const Footer: React.FC = () => {
               <h3 className="text-2xl font-bold">Instituto Ser Melhor</h3>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Trabalhando desde 2025 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.
+              Trabalhando desde 2007 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.
             </p>
             <div className="flex gap-4 pt-2">
               {[Instagram, Facebook, Linkedin, Twitter].map((Icon, i) => (

@@ -26,7 +26,7 @@ const mockPageResponse: StrapiSingleResponse<InstitutionalPageAttributes> = {
       heroImage: "https://picsum.photos/1920/1080?grayscale",
       logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso foco no Desenvolvimento Sustentável Integral. O arco exterior amarelo simboliza o Ciclo da Prosperidade e a natureza regenerativa de nosso trabalho.",
       motto: "Sapere Aude",
-      mottoExplanation: "Significa 'Ousa Saber'. Reflete nosso Valor de Excelência Inflexível e a importância da Educação Transformadora, posicionando o Instituto como promotor da autossuficiência intelectual.",
+      mottoExplanation: "Significa 'Ouse Saber'. Reflete nosso Valor de Excelência Inflexível e a importância da Educação Transformadora, posicionando o Instituto como promotor da autossuficiência intelectual.",
       networkIntro: "O Instituto Ser Melhor reconhece que a excelência não é alcançada no isolamento. Nossa Rede de Colaboração de Elite (R-CE) é um ecossistema seletivo de stakeholders globais."
     }
   },
@@ -149,7 +149,7 @@ const mockTimelineMilestonesResponse: StrapiCollectionResponse<TimelineMilestone
       attributes: {
         year: 2007,
         title: "Fundação Conceitual",
-        impactDescription: "Estabelecimento do Instituto a partir da fusão de três fundações líderes e criação da Metodologia M-IS."
+        impactDescription: "Estabelecimento do Instituto a partir da fusão de três Entidades líderes e criação da Metodologia M-IS."
       }
     },
     {
@@ -223,7 +223,7 @@ const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> 
     {
       id: 1,
       attributes: {
-        name: "Dra. Helena Souza",
+        name: "Rikardo Ribeiro",
         role: "Presidente do CDE",
         type: "board",
         bio: "Referência global em conservação.",
@@ -233,10 +233,10 @@ const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> 
     {
       id: 2,
       attributes: {
-        name: "Mariana Alencar",
+        name: "Rikardo Ribeiro",
         role: "CEO",
         type: "executive",
-        bio: "Executiva premiada por inovação.",
+        bio: "Executivo premiado por inovação.",
         imageUrl: "https://picsum.photos/200/200?random=3"
       }
     }
