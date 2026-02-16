@@ -20,7 +20,7 @@ export const institutionalData = {
       heroImage: "https://picsum.photos/1920/1080?grayscale",
       logoExplanation: "Nossa identidade visual não é apenas um emblema; é uma síntese filosófica de nossa Missão, ancorada na busca pela sabedoria e pelo aprimoramento contínuo. O emblema circular com três figuras humanas estilizadas representa o nosso foco no Desenvolvimento Sustentável Integral e o ciclo perpétuo da melhoria.",
       motto: "Sapere Aude",
-      mottoExplanation: "Significa 'Ousa Saber'. Reflete nosso Valor de Excelência Inflexível e a importância da Educação Transformadora. Enfatiza que a verdadeira melhoria e emancipação vêm da coragem de utilizar a própria razão e do compromisso em buscar o conhecimento mais profundo.",
+      mottoExplanation: "Significa 'Ouse Saber'. Reflete nosso Valor de Excelência Inflexível e a importância da Educação Transformadora. Enfatiza que a verdadeira melhoria e emancipação vêm da coragem de utilizar a própria razão e do compromisso em buscar o conhecimento mais profundo.",
       networkIntro: "O Instituto Ser Melhor reconhece que a excelência não é alcançada no isolamento. Nossa capacidade de gerar impacto sistêmico é potencializada por uma rede de colaboração estratégica, composta por instituições, experts e corporações que compartilham o nosso Compromisso Perpétuo com a transformação global.",
       transparencyDocuments: [
         {
@@ -241,10 +241,10 @@ export const institutionalData = {
     {
       id: 2,
       attributes: {
-        name: "Mariana Alencar",
+        name: "Rikardo Ribeiro",
         role: "CEO",
         type: "executive",
-        bio: "Executiva premiada por inovação.",
+        bio: "Executivo premiado por Gestão e Inovação.",
         imageUrl: "https://picsum.photos/200/200?random=3"
       }
     }

@@ -47,6 +47,7 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
             <ul className="space-y-3 text-gray-300 text-sm">
               <li><a href="#" className="hover:text-brand-400 transition-colors">Educação</a></li>
               <li><a href="#" className="hover:text-brand-400 transition-colors">Educação Ambiental</a></li>
+              <li><a href="#" className="hover:text-brand-400 transition-colors">Proteção Animal</a></li>
               <li><a href="#" className="hover:text-brand-400 transition-colors">Preservação Ambiental</a></li>
               <li><a href="#" className="hover:text-brand-400 transition-colors">Justiça Social</a></li>
               <li><a href="#" className="hover:text-brand-400 transition-colors">Desenvolvimento Social</a></li>

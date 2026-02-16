@@ -113,7 +113,7 @@ export const PartnerApplicationForm: React.FC = () => {
                             className="w-full pl-4 pr-8 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all appearance-none bg-white"
                         >
                             <option value="Corporativo">Corporativo</option>
-                            <option value="Institucional/ONG">Institucional / ONG</option>
+                            <option value="Institucional/ONG">Institucional / OSC</option>
                             <option value="Pesquisa/Academia">Pesquisa / Academia</option>
                             <option value="Individual">Grande Doador (Individual)</option>
                         </select>

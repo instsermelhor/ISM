@@ -211,20 +211,20 @@ const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> 
     {
       id: 1,
       attributes: {
-        name: "Dra. Helena Souza",
+        name: "Rikardo Ribeiro",
         role: "Presidente do CDE",
         type: "board",
-        bio: "Referência global em conservação.",
+        bio: "Referência global em Gestão.",
         imageUrl: "https://picsum.photos/200/200?random=1"
       }
     },
     {
       id: 2,
       attributes: {
-        name: "Mariana Alencar",
+        name: "Rikardo Ribeiro",
         role: "CEO",
         type: "executive",
-        bio: "Executiva premiada por inovação.",
+        bio: "Executivo premiado por inovação.",
         imageUrl: "https://picsum.photos/200/200?random=3"
       }
     }

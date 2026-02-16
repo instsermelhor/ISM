@@ -12,7 +12,7 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
         <div className="flex flex-col lg:flex-row items-center gap-16">
           
           {/* Text Content */}
-          <div className="lg:w-1/2 space-y-10">
+          <div className="lg:w-1/2 space-y-12">
             <div>
                 <div className="inline-block px-3 py-1 bg-brand-100 text-brand-800 text-xs font-bold uppercase tracking-widest rounded-full mb-4">
                   Sobre Nós
@@ -25,14 +25,13 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
                 </blockquote>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                <h3 className="text-xl font-bold text-secondary-800 mb-3 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-brand-500"></span>
-                    Nossa Visão de Futuro
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                    {data.visionStatement}
-                </p>
+            <div>
+                <h2 className="text-3xl md:text-4xl font-bold text-secondary-900 leading-tight mb-6">
+                    Nossa Visão
+                </h2>
+                <blockquote className="text-2xl font-light text-brand-700 border-l-4 border-brand-500 pl-6 italic">
+                    "{data.visionStatement}"
+                </blockquote>
             </div>
           </div>
 
