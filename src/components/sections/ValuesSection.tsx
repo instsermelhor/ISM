@@ -1,5 +1,5 @@
 import React from 'react';
-import { StrapiItem, ValueBlockAttributes } from '../../../types';
+import { StrapiItem, ValueBlockAttributes } from '../../types';
 import { ValueCard } from '../ui/ValueCard';
 
 interface Props {

@@ -1,12 +1,7 @@
 import React from 'react';
 import { Leaf, Mail, MapPin, Phone, Instagram, Facebook, Linkedin, Twitter } from 'lucide-react';
 
-interface Props {
-  onOpenPrivacy: () => void;
-  onOpenTerms: () => void;
-}
-
-export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
+export const Footer: React.FC = () => {
   return (
     <footer className="bg-secondary-900 text-white pt-16 pb-8 border-t-4 border-brand-600">
       <div className="container mx-auto px-4 md:px-6">
@@ -76,8 +71,8 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
           <p>&copy; 2026 Instituto Ser Melhor. Todos os direitos reservados.</p>
           <div className="flex gap-6">
-            <button onClick={onOpenPrivacy} className="hover:text-white transition-colors">Política de Privacidade</button>
-            <button onClick={onOpenTerms} className="hover:text-white transition-colors">Termos de Uso</button>
+            <a href="#" className="hover:text-white">Política de Privacidade</a>
+            <a href="#" className="hover:text-white">Termos de Uso</a>
           </div>
         </div>
       </div>

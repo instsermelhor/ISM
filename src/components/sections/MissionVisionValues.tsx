@@ -1,5 +1,5 @@
 import React from 'react';
-import { InstitutionalPageAttributes } from '../../../types';
+import { InstitutionalPageAttributes } from '../../types';
 
 interface Props {
   data: InstitutionalPageAttributes;

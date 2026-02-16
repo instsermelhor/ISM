@@ -1,5 +1,5 @@
 import React from 'react';
-import { StrapiItem, TransparencyDocumentAttributes, FinancialEntry } from '../../../types';
+import { StrapiItem, TransparencyDocumentAttributes, FinancialEntry } from '../../types';
 import { ExternalLink, ShieldCheck, Lock } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { DocumentCard } from '../ui/DocumentCard';

@@ -36,7 +36,7 @@ export const PartnerSection: React.FC = () => {
                         </div>
                         <div>
                             <h4 className="font-bold text-secondary-900">Cooperação Técnica</h4>
-                            <p className="text-sm text-gray-500">Intercâmbio de expertise com Universidades, academias e institutos de pesquisa.</p>
+                            <p className="text-sm text-gray-500">Intercâmbio de expertise com academia e institutos de pesquisa.</p>
                         </div>
                     </div>
                 </div>

@@ -267,36 +267,11 @@ export const InstitutionalService = {
   // POST Mocks
   submitPartnerApplication: async (data: PartnerApplicationPayload): Promise<{ success: boolean; id: string }> => {
     console.log("Submitting Partner Application to Strapi:", data);
-    
-    // 1. Backend Validation for Partners
-    if (!data.consentLGPD) {
-        throw new Error("Consentimento LGPD é obrigatório para parcerias.");
-    }
-
     return new Promise(resolve => setTimeout(() => resolve({ success: true, id: `PARTNER-${Date.now()}` }), 1500));
   },
   
-  // Updated to simulate Secure Stripe Gateway + LGPD Check
   processDonation: async (data: DonationPayload): Promise<{ success: boolean; transactionId: string }> => {
-    console.log("Initiating Secure Checkout Session via /api/checkout/route.ts");
-    
-    // 1. Backend Validation Simulation
-    if (!data.consentLGPD) {
-      throw new Error("Consentimento LGPD é obrigatório.");
-    }
-
-    console.log("Payload:", {
-      amount: data.amount,
-      currency: 'BRL',
-      frequency: data.type,
-      encryptedData: "****************", // Simulating encrypted transmission
-      lgpd_consent_version: "2026.02" // Updated Version
-    });
-
-    // Simulate API Latency for Stripe Session Creation
-    return new Promise(resolve => setTimeout(() => {
-      console.log("Stripe Session Created. Redirecting to Checkout...");
-      resolve({ success: true, transactionId: `STRIPE-SESS-${Date.now()}` });
-    }, 2000));
+    console.log("Processing Donation Gateway + Strapi Record:", data);
+    return new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: `TXN-${Date.now()}` }), 2000));
   }
 };

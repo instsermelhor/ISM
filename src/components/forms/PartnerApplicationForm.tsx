@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { Send, User, Mail, CheckCircle } from 'lucide-react';
-import { PartnerApplicationPayload } from '../../../types';
-import { InstitutionalService } from '../../../services/data';
+import { PartnerApplicationPayload } from '../../types';
+import { InstitutionalService } from '../../services/data';
 
 export const PartnerApplicationForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [consent, setConsent] = useState(false);
   
   const [formData, setFormData] = useState<Partial<PartnerApplicationPayload>>({
     type: 'Corporativo',
@@ -23,19 +22,10 @@ export const PartnerApplicationForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!consent) {
-        alert("Para prosseguir, é obrigatório aceitar a Política de Privacidade.");
-        return;
-    }
-
     setLoading(true);
     
     try {
-      await InstitutionalService.submitPartnerApplication({
-          ...formData,
-          consentLGPD: consent
-      } as PartnerApplicationPayload);
+      await InstitutionalService.submitPartnerApplication(formData as PartnerApplicationPayload);
       setSuccess(true);
     } catch (error) {
       alert("Erro ao enviar solicitação. Tente novamente.");
@@ -55,7 +45,7 @@ export const PartnerApplicationForm: React.FC = () => {
             Agradecemos o interesse em fazer parte da nossa Rede de Colaboração de Elite. Nossa equipe de Relações Institucionais analisará sua proposta e entrará em contato em até 48 horas úteis.
         </p>
         <button 
-            onClick={() => { setSuccess(false); setFormData({}); setConsent(false); }}
+            onClick={() => { setSuccess(false); setFormData({}); }}
             className="text-brand-600 font-bold hover:underline"
         >
             Enviar nova solicitação
@@ -177,24 +167,6 @@ export const PartnerApplicationForm: React.FC = () => {
                 ></textarea>
             </div>
 
-             {/* LGPD Consent Section */}
-             <div className="p-4 bg-white rounded-xl border border-gray-200">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center">
-                        <input 
-                            type="checkbox" 
-                            className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-gray-300 shadow-sm checked:border-brand-500 checked:bg-brand-500 transition-all"
-                            checked={consent}
-                            onChange={(e) => setConsent(e.target.checked)}
-                        />
-                        <CheckCircle size={14} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100" />
-                    </div>
-                    <div className="text-xs text-gray-600 leading-relaxed select-none">
-                        Li e concordo com os <strong className="text-secondary-900">Termos de Uso</strong> e a <strong className="text-brand-600">Política de Privacidade</strong>. Autorizo o processamento dos dados para análise de parceria.
-                    </div>
-                </label>
-            </div>
-
             <button 
                 type="submit" 
                 disabled={loading}
@@ -210,3 +182,4 @@ export const PartnerApplicationForm: React.FC = () => {
         </div>
     </form>
   );
+};

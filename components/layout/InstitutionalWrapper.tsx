@@ -4,11 +4,9 @@ import { Footer } from './Footer';
 
 interface Props {
   children: ReactNode;
-  onOpenPrivacy: () => void;
-  onOpenTerms: () => void;
 }
 
-export const InstitutionalWrapper: React.FC<Props> = ({ children, onOpenPrivacy, onOpenTerms }) => {
+export const InstitutionalWrapper: React.FC<Props> = ({ children }) => {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
@@ -41,7 +39,7 @@ export const InstitutionalWrapper: React.FC<Props> = ({ children, onOpenPrivacy,
       <main className="flex-grow">
         {children}
       </main>
-      <Footer onOpenPrivacy={onOpenPrivacy} onOpenTerms={onOpenTerms} />
+      <Footer />
     </div>
   );
 };

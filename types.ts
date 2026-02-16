@@ -107,7 +107,6 @@ export interface PartnerApplicationPayload {
   areaOfInterest: string;
   intendedContribution?: string;
   status: 'Novo'; // Default on submission
-  consentLGPD: boolean; // MANDATORY for Audit Trail
 }
 
 // 7. Collection Type: donation-record
@@ -121,7 +120,6 @@ export interface DonationPayload {
   donorEmail: string;
   taxId?: string; // CPF/CNPJ
   sourceCampaign?: string;
-  consentLGPD: boolean; // Mandatory for compliance
 }
 
 // Combined Data Structure for App State

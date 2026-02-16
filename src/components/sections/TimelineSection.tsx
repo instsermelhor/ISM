@@ -1,5 +1,5 @@
 import React from 'react';
-import { StrapiItem, TimelineMilestoneAttributes } from '../../../types';
+import { StrapiItem, TimelineMilestoneAttributes } from '../../types';
 import { History } from 'lucide-react';
 import { TimelineEvent } from '../ui/TimelineEvent';
 
