@@ -1,9 +1,9 @@
 import React from 'react';
 import { FileText, FileBarChart, Scale, Book, Download } from 'lucide-react';
-import { TransparencyDocumentAttributes } from '../../types';
+import { TransparencyDocument } from '../../types';
 
 interface Props {
-  data: TransparencyDocumentAttributes;
+  data: TransparencyDocument;
 }
 
 const getDocIcon = (type: string) => {

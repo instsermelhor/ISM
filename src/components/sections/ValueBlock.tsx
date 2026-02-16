@@ -1,12 +1,12 @@
 import React from 'react';
 import { StrapiItem, ValueBlockAttributes } from '../../types';
-import { ValueBlock } from '../ui/ValueBlock';
+import { ValueCard } from '../ui/ValueCard';
 
 interface Props {
   values: StrapiItem<ValueBlockAttributes>[];
 }
 
-export const ValuesSection: React.FC<Props> = ({ values }) => {
+export const ValueBlock: React.FC<Props> = ({ values }) => {
   return (
     <section id="values" className="py-24 bg-slate-50">
       <div className="container mx-auto px-4 md:px-6">
@@ -17,9 +17,14 @@ export const ValuesSection: React.FC<Props> = ({ values }) => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+        <div className="flex flex-wrap justify-center gap-6">
           {values.map((item) => (
-            <ValueBlock key={item.id} data={item.attributes} />
+            <div 
+              key={item.id} 
+              className="w-full md:w-[calc(50%-1.5rem)] lg:w-[calc(33.333%-1.5rem)] min-w-[280px] flex"
+            >
+              <ValueCard data={item.attributes} />
+            </div>
           ))}
         </div>
       </div>
