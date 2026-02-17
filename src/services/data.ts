@@ -7,7 +7,8 @@ import {
   TimelineMilestoneAttributes, 
   GovernanceMemberAttributes, 
   PartnerApplicationPayload, 
-  DonationPayload 
+  DonationPayload,
+  TransparencyDocument 
 } from '../types';
 
 // Mock: GET /api/institutional-page
@@ -214,7 +215,7 @@ const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> 
         name: "Rikardo Ribeiro",
         role: "Presidente do CDE",
         type: "board",
-        bio: "Referência global em Gestão.",
+        bio: "Referência global em conservação.",
         imageUrl: "https://picsum.photos/200/200?random=1"
       }
     },
