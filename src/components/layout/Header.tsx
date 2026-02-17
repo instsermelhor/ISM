@@ -60,7 +60,7 @@ export const Header: React.FC = () => {
             <Leaf size={24} />
           </div>
           <div className="flex flex-col leading-none">
-            <span className="text-sm font-medium text-secondary-800 uppercase tracking-widest group-hover:text-brand-700 transition-colors">Instituto</span>
+            <span className="text-sm font-bold text-[#302681] uppercase tracking-widest transition-colors">Instituto</span>
             <span className="text-xl font-bold tracking-tight text-brand-600 group-hover:text-brand-800 transition-colors">Ser Melhor</span>
           </div>
         </a>
