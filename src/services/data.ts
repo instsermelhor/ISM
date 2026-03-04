@@ -1,14 +1,14 @@
-import { 
-  StrapiSingleResponse, 
-  StrapiCollectionResponse, 
-  InstitutionalPageAttributes, 
-  ValueBlockAttributes, 
-  GovernanceInstanceAttributes, 
-  TimelineMilestoneAttributes, 
-  GovernanceMemberAttributes, 
-  PartnerApplicationPayload, 
+import {
+  StrapiSingleResponse,
+  StrapiCollectionResponse,
+  InstitutionalPageAttributes,
+  ValueBlockAttributes,
+  GovernanceInstanceAttributes,
+  TimelineMilestoneAttributes,
+  GovernanceMemberAttributes,
+  PartnerApplicationPayload,
   DonationPayload,
-  TransparencyDocument 
+  TransparencyDocument
 } from '../types';
 
 // Mock: GET /api/institutional-page
@@ -22,7 +22,7 @@ const mockPageResponse: StrapiSingleResponse<InstitutionalPageAttributes> = {
       visionStatement: "Ser o fator decisivo na construção de um mundo equitativo, próspero e regenerativo, onde a necessidade da assistência social como a conhecemos tenha sido mitigada pela eficácia de nossas soluções.",
       governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle e deliberação desenhada para garantir a perpetuidade da Missão, a transparência quântica e a máxima eficiência na alocação de recursos.",
       transparencyIntro: "O Princípio da Transparência Quântica garante acesso irrestrito e auditado à nossa saúde financeira. Operamos com padrões que excedem as exigências legais.",
-      logoImage: "https://picsum.photos/id/20/400/400", 
+      logoImage: "/logo-ism.png",
       heroImage: "https://picsum.photos/1920/1080?grayscale",
       logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso foco no Desenvolvimento Sustentável Integral. O arco exterior amarelo simboliza o Ciclo da Prosperidade e a natureza regenerativa de nosso trabalho.",
       motto: "Sapere Aude",
@@ -249,13 +249,13 @@ export const InstitutionalService = {
   getGovernanceMembers: async (): Promise<StrapiCollectionResponse<GovernanceMemberAttributes>> => {
     return new Promise(resolve => setTimeout(() => resolve(mockMembersResponse), 300));
   },
-  
+
   // POST Mocks
   submitPartnerApplication: async (data: PartnerApplicationPayload): Promise<{ success: boolean; id: string }> => {
     console.log("Submitting Partner Application to Strapi:", data);
     return new Promise(resolve => setTimeout(() => resolve({ success: true, id: `PARTNER-${Date.now()}` }), 1500));
   },
-  
+
   processDonation: async (data: DonationPayload): Promise<{ success: boolean; transactionId: string }> => {
     console.log("Processing Donation Gateway + Strapi Record:", data);
     return new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: `TXN-${Date.now()}` }), 2000));

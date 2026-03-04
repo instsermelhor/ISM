@@ -13,9 +13,12 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand Column */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Leaf className="text-brand-500" size={32} />
-              <h3 className="text-2xl font-bold">Instituto Ser Melhor</h3>
+            <div className="flex items-center gap-3 mb-2">
+              <img src="/logo-ism.png" alt="Logo Instituto Ser Melhor" className="w-14 h-14 object-contain" />
+              <h3 className="text-2xl font-bold flex flex-col leading-none">
+                <span className="text-[#009C3B] text-lg uppercase tracking-wider text-left">Instituto</span>
+                <span className="text-[#002776] text-left text-2xl">Ser Melhor</span>
+              </h3>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
               Trabalhando desde 2007 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.

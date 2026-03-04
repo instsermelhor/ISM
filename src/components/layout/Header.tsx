@@ -46,29 +46,26 @@ export const Header: React.FC = () => {
   }, []);
 
   return (
-    <header 
-      className={`fixed w-full z-50 transition-all duration-300 border-b ${
-        isScrolled 
-          ? 'bg-white shadow-md py-2 border-gray-100' 
+    <header
+      className={`fixed w-full z-50 transition-all duration-300 border-b ${isScrolled
+          ? 'bg-white shadow-md py-2 border-gray-100'
           : 'bg-white/95 backdrop-blur-sm py-4 border-transparent'
-      }`}
+        }`}
     >
       <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2 group z-50 relative">
-          <div className="p-2 rounded-full bg-brand-600 text-white shadow-lg group-hover:bg-brand-700 transition-colors">
-            <Leaf size={24} />
-          </div>
+          <img src="/logo-ism.png" alt="Logo Instituto Ser Melhor" className="w-12 h-12 object-contain" />
           <div className="flex flex-col leading-none">
-            <span className="text-sm font-bold text-[#302681] uppercase tracking-widest transition-colors">Instituto</span>
-            <span className="text-xl font-bold tracking-tight text-brand-600 group-hover:text-brand-800 transition-colors">Ser Melhor</span>
+            <span className="text-sm font-bold text-[#009C3B] uppercase tracking-widest transition-colors">Instituto</span>
+            <span className="text-xl font-bold tracking-tight text-[#002776] transition-colors">Ser Melhor</span>
           </div>
         </a>
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-6">
           {NAV_ITEMS.map((item) => (
-            <div 
+            <div
               key={item.label}
               className="relative group"
               onMouseEnter={() => setActiveDropdown(item.label)}
@@ -84,15 +81,14 @@ export const Header: React.FC = () => {
 
               {/* Dropdown Desktop */}
               {item.subItems && (
-                <div 
-                  className={`absolute top-full left-0 w-56 bg-white shadow-xl rounded-b-lg border-t-2 border-brand-500 overflow-hidden transition-all duration-300 origin-top ${
-                    activeDropdown === item.label ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0'
-                  }`}
+                <div
+                  className={`absolute top-full left-0 w-56 bg-white shadow-xl rounded-b-lg border-t-2 border-brand-500 overflow-hidden transition-all duration-300 origin-top ${activeDropdown === item.label ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0'
+                    }`}
                 >
                   <ul className="py-2">
                     {item.subItems.map((sub) => (
                       <li key={sub.label}>
-                        <a 
+                        <a
                           href={sub.href}
                           className="block px-6 py-3 text-sm text-gray-600 hover:bg-brand-50 hover:text-brand-700 transition-colors"
                         >
@@ -134,14 +130,14 @@ export const Header: React.FC = () => {
         <nav className="flex flex-col space-y-4">
           {NAV_ITEMS.map((item) => (
             <div key={item.label} className="border-b border-gray-100 pb-2">
-              <div 
+              <div
                 className="flex justify-between items-center py-2 cursor-pointer"
                 onClick={() => item.subItems ? setMobileExpanded(mobileExpanded === item.label ? null : item.label) : setIsOpen(false)}
               >
-                <a 
+                <a
                   href={item.href || '#'}
                   className="text-lg font-bold text-secondary-900 uppercase"
-                  onClick={(e) => { if(item.subItems) e.preventDefault(); }}
+                  onClick={(e) => { if (item.subItems) e.preventDefault(); }}
                 >
                   {item.label}
                 </a>
@@ -149,12 +145,12 @@ export const Header: React.FC = () => {
                   <ChevronDown size={20} className={`text-brand-500 transition-transform ${mobileExpanded === item.label ? 'rotate-180' : ''}`} />
                 )}
               </div>
-              
+
               {/* Mobile Submenu */}
               {item.subItems && (
                 <div className={`pl-4 space-y-3 overflow-hidden transition-all duration-300 ${mobileExpanded === item.label ? 'max-h-60 mt-2' : 'max-h-0'}`}>
                   {item.subItems.map((sub) => (
-                    <a 
+                    <a
                       key={sub.label}
                       href={sub.href}
                       className="block text-gray-600 text-sm py-1 active:text-brand-600"
@@ -169,7 +165,7 @@ export const Header: React.FC = () => {
           ))}
 
           <div className="flex flex-col gap-4 mt-8">
-            <a 
+            <a
               href="#donate"
               onClick={() => setIsOpen(false)}
               className="w-full flex justify-center items-center gap-2 px-6 py-4 rounded-full bg-brand-600 text-white font-bold text-sm uppercase tracking-wider shadow-md hover:bg-brand-700"
@@ -177,7 +173,7 @@ export const Header: React.FC = () => {
               <Heart size={18} fill="currentColor" />
               Apoie Agora
             </a>
-            <a 
+            <a
               href="#partner"
               onClick={() => setIsOpen(false)}
               className="w-full flex justify-center items-center gap-2 px-6 py-4 rounded-full border-2 border-brand-600 text-brand-600 font-bold text-sm uppercase tracking-wider hover:bg-brand-50"
