@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ISM — Acesso Rápido</title>
+  <link rel="icon" type="image/png" href="public/logo-ism.png" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a0f1a 0%, #0d1829 50%, #0a1a12 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Fundo animado */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: float 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .bg-orb:nth-child(1) { width: 600px; height: 600px; background: #16a34a; top: -150px; right: -150px; animation-delay: 0s; }
+    .bg-orb:nth-child(2) { width: 400px; height: 400px; background: #1d4ed8; bottom: -100px; left: -100px; animation-delay: -3s; }
+    .bg-orb:nth-child(3) { width: 300px; height: 300px; background: #16a34a; top: 50%; left: 50%; animation-delay: -5s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(1.05); }
+    }
+
+    /* Grid de partículas */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(22,163,74,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22,163,74,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      z-index: 10;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      padding: 48px 56px;
+      max-width: 520px;
+      width: 92%;
+      backdrop-filter: blur(20px);
+      box-shadow:
+        0 0 0 1px rgba(22,163,74,0.1),
+        0 32px 80px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      animation: cardIn 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(32px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Logo */
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .logo-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #16a34a, #4ade80);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 8px 24px rgba(22,163,74,0.4);
+      flex-shrink: 0;
+    }
+    .logo-text .name  { color: #fff; font-weight: 900; font-size: 18px; letter-spacing: -0.3px; }
+    .logo-text .sub   { color: rgba(255,255,255,0.35); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+    h1 {
+      color: #fff;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+    h1 span { background: linear-gradient(90deg, #4ade80, #16a34a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .subtitle {
+      color: rgba(255,255,255,0.4);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    /* Botões */
+    .btn-group { display: flex; flex-direction: column; gap: 12px; }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 22px;
+      border-radius: 16px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn:hover { transform: translateY(-2px) scale(1.01); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(22,163,74,0.4), 0 1px 0 rgba(255,255,255,0.1) inset;
+    }
+    .btn-primary:hover { box-shadow: 0 8px 32px rgba(22,163,74,0.55); }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.18); }
+
+    .btn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .btn-primary .btn-icon  { background: rgba(0,0,0,0.15); }
+    .btn-secondary .btn-icon { background: rgba(255,255,255,0.06); }
+
+    .btn-label { flex: 1; }
+    .btn-label .title  { display: block; }
+    .btn-label .desc   { display: block; font-size: 11px; font-weight: 500; opacity: 0.65; margin-top: 1px; }
+
+    .btn-arrow { opacity: 0.5; font-size: 18px; transition: transform 0.2s; }
+    .btn:hover .btn-arrow { opacity: 1; transform: translateX(3px); }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.08);
+    }
+    .divider span { color: rgba(255,255,255,0.2); font-size: 11px; font-weight: 600; }
+
+    /* Credenciais */
+    .creds-box {
+      margin-top: 28px;
+      padding: 16px 18px;
+      background: rgba(22,163,74,0.06);
+      border: 1px solid rgba(22,163,74,0.15);
+      border-radius: 14px;
+    }
+    .creds-box .creds-title {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #4ade80;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cred-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .cred-row:last-child { border-bottom: none; }
+    .cred-label { font-size: 11px; color: rgba(255,255,255,0.35); }
+    .cred-value { font-size: 12px; color: rgba(255,255,255,0.75); font-family: monospace; font-weight: 600; }
+
+    /* Footer */
+    .footer {
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+    }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 6px #4ade80;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .version { font-size: 10px; color: rgba(255,255,255,0.2); font-family: monospace; }
+  </style>
+</head>
+<body>
+  <!-- Background -->
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="grid-bg"></div>
+
+  <div class="card">
+    <!-- Logo -->
+    <div class="logo-wrap">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-text">
+        <div class="name">Instituto Ser Melhor</div>
+        <div class="sub">Sistema de Gestão</div>
+      </div>
+    </div>
+
+    <!-- Heading -->
+    <h1>Acesso <span>Rápido</span></h1>
+    <p class="subtitle">Atalhos locais para o site institucional e o painel de administração do Instituto.</p>
+
+    <!-- Buttons -->
+    <div class="btn-group">
+      <a href="http://localhost:3000" target="_blank" class="btn btn-secondary">
+        <div class="btn-icon">🌐</div>
+        <span class="btn-label">
+          <span class="title">Site Institucional</span>
+          <span class="desc">localhost:3000 — Página pública do Instituto</span>
+        </span>
+        <span class="btn-arrow">›</span>
+      </a>
+
+      <div class="divider"><span>ou</span></div>
+
+      <a href="http://localhost:3001/admin" target="_blank" class="btn btn-primary">
+        <div class="btn-icon">🔐</div>
+        <span class="btn-label">
+          <span class="title">Painel Administrativo</span>
+          <span class="desc">localhost:3001/admin — CMS & Gestão</span>
+        </span>
+        <span class="btn-arrow">›</span>
+      </a>
+    </div>
+
+    <!-- Credenciais -->
+    <div class="creds-box">
+      <div class="creds-title">🔑 Credenciais do Super Admin</div>
+      <div class="cred-row">
+        <span class="cred-label">Login (e-mail)</span>
+        <span class="cred-value">instsermelhor.adm@gmail.com</span>
+      </div>
+      <div class="cred-row">
+        <span class="cred-label">Papel</span>
+        <span class="cred-value">ADMIN — Acesso Total</span>
+      </div>
+      <div class="cred-row" style="border-bottom: none;">
+        <span class="cred-label">⚠️ Guarde a senha em local seguro</span>
+        <span class="cred-value" style="color: #fbbf24;">Nunca compartilhe</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="status-dot">
+        <div class="dot" id="statusDot"></div>
+        <span id="statusText">Verificando servidores…</span>
+      </div>
+      <span class="version">ISM Admin v2.0</span>
+    </div>
+  </div>
+
+  <script>
+    // Verifica se os servidores estão online
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+
+    async function checkServers() {
+      let siteOk = false, adminOk = false;
+
+      try {
+        const r = await fetch('http://localhost:3000', { mode: 'no-cors', cache: 'no-cache' });
+        siteOk = true;
+      } catch {}
+      try {
+        const r = await fetch('http://localhost:3001', { mode: 'no-cors', cache: 'no-cache' });
+        adminOk = true;
+      } catch {}
+
+      if (siteOk && adminOk) {
+        dot.style.background = '#4ade80';
+        dot.style.boxShadow = '0 0 6px #4ade80';
+        txt.textContent = 'Ambos os servidores online';
+      } else if (siteOk || adminOk) {
+        dot.style.background = '#fbbf24';
+        dot.style.boxShadow = '0 0 6px #fbbf24';
+        txt.textContent = siteOk ? 'Site online · Admin offline' : 'Admin online · Site offline';
+      } else {
+        dot.style.background = '#ef4444';
+        dot.style.boxShadow = '0 0 6px #ef4444';
+        txt.textContent = 'Servidores offline — rode npm run dev';
+      }
+    }
+
+    checkServers();
+    setInterval(checkServers, 15000);
+  </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ const mockPageResponse: StrapiSingleResponse<InstitutionalPageAttributes> = {
   data: {
     id: 1,
     attributes: {
-      title: "Institucional - Instituto Ser Melhor",
+      title: "Instituto Ser Melhor",
       introduction: "Somos uma organização não-governamental brasileira que atua como catalisadora de transformações sociais e ambientais. Nossa história é marcada pela busca incessante de redefinir o conceito de impacto sistêmico.",
       missionStatement: "Promover a completa emancipação humana e o desenvolvimento sustentável integral, atuando como catalisador inigualável de transformações sociais, ambientais, educacionais e culturais.",
       visionStatement: "Ser o fator decisivo na construção de um mundo equitativo, próspero e regenerativo, onde a necessidade da assistência social como a conhecemos tenha sido mitigada pela eficácia de nossas soluções.",
@@ -252,12 +252,16 @@ export const InstitutionalService = {
 
   // POST Mocks
   submitPartnerApplication: async (data: PartnerApplicationPayload): Promise<{ success: boolean; id: string }> => {
-    console.log("Submitting Partner Application to Strapi:", data);
+    if (import.meta.env.DEV) {
+      console.log('[DEV] Partner application submitted:', { type: data.type, status: data.status });
+    }
     return new Promise(resolve => setTimeout(() => resolve({ success: true, id: `PARTNER-${Date.now()}` }), 1500));
   },
 
   processDonation: async (data: DonationPayload): Promise<{ success: boolean; transactionId: string }> => {
-    console.log("Processing Donation Gateway + Strapi Record:", data);
+    if (import.meta.env.DEV) {
+      console.log('[DEV] Donation processed:', { amount: data.amount, currency: data.currency, type: data.type });
+    }
     return new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: `TXN-${Date.now()}` }), 2000));
   }
 };

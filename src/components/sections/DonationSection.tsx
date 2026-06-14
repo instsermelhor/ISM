@@ -1,60 +1,91 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Heart } from 'lucide-react';
 import { DonationForm } from '../payment/DonationForm';
+import { motion, useInView } from 'framer-motion';
 
 export const DonationSection: React.FC = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-80px' });
+
   return (
-    <section id="donate" className="py-24 bg-gradient-to-br from-brand-900 to-secondary-900 text-white">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="flex flex-col items-center text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500/20 border border-brand-500/50 rounded-full text-brand-400 font-bold text-xs uppercase tracking-widest mb-4">
-                <Heart size={14} fill="currentColor" />
-                Apoie Agora
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">Fundo de Sustentabilidade Perpétua</h2>
-            <p className="text-gray-300 max-w-2xl text-lg">
-                Sua doação não é apenas um ato de caridade; é um investimento direto na transformação sistêmica.
-            </p>
-        </div>
+    <section id="donate" className="py-24 relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-secondary-950 via-secondary-900 to-brand-950" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-full opacity-5 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-600/8 rounded-full blur-[100px]" />
+      </div>
 
-        <div className="max-w-4xl mx-auto bg-white text-secondary-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row min-h-[500px]">
-            
-            {/* Left Panel: Impact Context */}
-            <div className="md:w-5/12 bg-secondary-100 p-8 flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                <div className="relative z-10">
-                    <h3 className="font-bold text-xl mb-4">Seu impacto direto</h3>
-                    <ul className="space-y-4 text-sm text-gray-600">
-                        <li className="flex gap-3">
-                            <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center shrink-0 font-bold text-xs">1</div>
-                            <span>Financiamento de bolsas para jovens líderes climáticos.</span>
-                        </li>
-                        <li className="flex gap-3">
-                            <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center shrink-0 font-bold text-xs">2</div>
-                            <span>Proteção de biomas através de tecnologia de monitoramento via satélite.</span>
-                        </li>
-                        <li className="flex gap-3">
-                            <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center shrink-0 font-bold text-xs">3</div>
-                            <span>Independência total de verbas governamentais.</span>
-                        </li>
-                    </ul>
-                </div>
-                <div className="relative z-10 mt-8">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <p className="text-xs text-gray-400 uppercase font-bold mb-1">Total Arrecadado (2025)</p>
-                        <p className="text-2xl font-black text-brand-600">R$ 12.4M</p>
-                        <div className="w-full bg-gray-100 h-2 rounded-full mt-2 overflow-hidden">
-                            <div className="bg-brand-500 h-full w-[75%]"></div>
-                        </div>
+      <div className="relative z-10 container mx-auto px-4 md:px-6">
+        {/* Header */}
+        <motion.div
+          ref={ref}
+          initial={{ opacity: 0, y: 24 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7 }}
+          className="flex flex-col items-center text-center mb-14"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500/15 border border-brand-500/30 rounded-full text-brand-300 font-bold text-xs uppercase tracking-widest mb-5">
+            <Heart size={13} fill="currentColor" />
+            Apoie Agora
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
+            Fundo de Sustentabilidade<br className="hidden sm:block" />
+            <span className="text-gradient-brand"> Perpétua</span>
+          </h2>
+          <p className="text-secondary-300 max-w-2xl text-lg leading-relaxed">
+            Sua doação não é apenas um ato de caridade; é um investimento direto na transformação sistêmica.
+          </p>
+        </motion.div>
+
+        {/* Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="max-w-4xl mx-auto bg-white rounded-3xl overflow-hidden shadow-2xl shadow-black/30 flex flex-col md:flex-row min-h-[520px]"
+        >
+          {/* Left Panel: Impact Context */}
+          <div className="md:w-5/12 bg-secondary-900 p-8 flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-brand-500/10 rounded-full blur-[80px]" />
+            </div>
+            <div className="relative z-10">
+              <h3 className="font-bold text-xl mb-6 text-white">Seu impacto direto</h3>
+              <ul className="space-y-5">
+                {[
+                  'Financiamento de bolsas para jovens líderes climáticos.',
+                  'Proteção de biomas através de tecnologia de monitoramento via satélite.',
+                  'Independência total de verbas governamentais.',
+                ].map((item, i) => (
+                  <li key={i} className="flex gap-3 items-start">
+                    <div className="w-7 h-7 rounded-xl bg-brand-600/20 border border-brand-500/30 text-brand-400 flex items-center justify-center shrink-0 font-black text-xs">
+                      {i + 1}
                     </div>
-                </div>
+                    <span className="text-secondary-300 text-sm leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            {/* Right Panel: Form Component */}
-            <div className="md:w-7/12 p-8 md:p-12 relative">
-                <DonationForm />
+            <div className="relative z-10 mt-8">
+              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
+                <p className="text-xs text-secondary-400 uppercase font-bold tracking-widest mb-1">Total Arrecadado (2025)</p>
+                <p className="text-3xl font-black text-brand-400 mb-3">R$ 12,4M</p>
+                <div className="w-full bg-secondary-800 h-2 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-brand-500 to-brand-400 h-full rounded-full" style={{ width: '75%' }} />
+                </div>
+                <p className="text-xs text-secondary-500 mt-2">75% da meta 2025</p>
+              </div>
             </div>
-        </div>
+          </div>
+
+          {/* Right Panel: Form */}
+          <div className="md:w-7/12 p-8 md:p-10">
+            <DonationForm />
+          </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -25,26 +25,39 @@ import { AppData } from './types';
 
 // Fallback loader component
 const LoadingScreen = () => (
-  <div className="flex items-center justify-center h-screen bg-white">
-    <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
-        <p className="text-brand-800 font-medium animate-pulse">Carregando Instituto Ser Melhor...</p>
+  <div className="flex items-center justify-center h-screen bg-secondary-950">
+    <div className="flex flex-col items-center gap-6">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-secondary-800 border-t-brand-500 rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img src="/logo-ism.png" alt="Logo" className="w-8 h-8 object-contain" />
+        </div>
+      </div>
+      <div className="text-center">
+        <p className="text-white font-bold text-sm">Instituto Ser Melhor</p>
+        <p className="text-secondary-500 text-xs mt-1 animate-pulse-slow">Carregando...</p>
+      </div>
     </div>
   </div>
 );
 
 // Error component
 const ErrorScreen = ({ onRetry }: { onRetry: () => void }) => (
-  <div className="flex items-center justify-center h-screen bg-white">
-    <div className="flex flex-col items-center gap-4 text-center px-4">
-        <div className="text-red-500 font-bold text-xl mb-2">Erro ao carregar dados</div>
-        <p className="text-gray-600 mb-4">Não foi possível conectar ao sistema.</p>
-        <button 
-          onClick={onRetry}
-          className="px-6 py-2 bg-brand-600 text-white rounded-full font-bold hover:bg-brand-700 transition-colors"
-        >
-          Tentar Novamente
-        </button>
+  <div className="flex items-center justify-center h-screen bg-secondary-950">
+    <div className="flex flex-col items-center gap-5 text-center px-6 max-w-sm">
+      <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 text-2xl font-black">
+        !
+      </div>
+      <div>
+        <p className="text-white font-bold text-xl mb-2">Erro ao carregar dados</p>
+        <p className="text-secondary-400 text-sm leading-relaxed">Não foi possível conectar ao sistema. Verifique sua conexão e tente novamente.</p>
+      </div>
+      <button
+        onClick={onRetry}
+        className="px-8 py-3 bg-brand-600 text-white rounded-full font-bold text-sm hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/30"
+      >
+        Tentar Novamente
+      </button>
     </div>
   </div>
 );
