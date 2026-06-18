@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Eye, Save, RotateCcw, Upload, Plus, Trash2, MoveUp, MoveDown, CheckCircle, AlertCircle, Monitor, Smartphone, Tablet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, Save, RotateCcw, Plus, Trash2, MoveUp, MoveDown, CheckCircle, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -653,7 +653,7 @@ export const HeroHomePage: React.FC = () => {
       {/* ── Barra flutuante de salvamento ── */}
       <SaveBar
         isDirty={isDirty}
-        saveStatus={saveStatus}
+        saveStatus={saveStatus === 'error' ? 'idle' : saveStatus}
         onSave={handleSave}
         onDiscard={handleReset}
         message="Hero / Home possui alterações não salvas"

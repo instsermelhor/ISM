@@ -138,7 +138,7 @@ export const AnalyticsPage: React.FC = () => {
             <BarChart data={data?.topPages} layout="vertical" margin={{ left: 0, right: 10 }}>
               <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--gray-400)' }} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="path" tick={{ fontSize: 11, fill: 'var(--gray-600)', fontWeight: 600 }} tickLine={false} axisLine={false} width={70} />
-              <Tooltip formatter={(v: number) => [v.toLocaleString('pt-BR'), 'Pageviews']} />
+              <Tooltip formatter={(v: any) => [v ? Number(v).toLocaleString('pt-BR') : '0', 'Pageviews']} />
               <Bar dataKey="views" fill="#4ade80" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -153,7 +153,7 @@ export const AnalyticsPage: React.FC = () => {
                 {data?.leadsBySource.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-              <Tooltip formatter={(v: number) => [v, 'Leads']} />
+              <Tooltip formatter={(v: any) => [v, 'Leads']} />
             </PieChart>
           </ResponsiveContainer>
         </div>

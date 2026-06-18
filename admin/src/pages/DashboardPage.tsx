@@ -3,7 +3,7 @@ import { TrendingUp, TrendingDown, Users, Eye, Mail, Activity } from 'lucide-rea
 import { AnalyticsService, AuditService } from '../services/api';
 import type { AnalyticsSummary, AuditLog } from '../types';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell
 } from 'recharts';
 
@@ -231,7 +231,7 @@ export const DashboardPage: React.FC = () => {
                     <Pie data={analytics?.leadsBySource} dataKey="count" nameKey="source" cx="50%" cy="50%" innerRadius={30} outerRadius={50} strokeWidth={0}>
                       {analytics?.leadsBySource.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => [v, 'Leads']} />
+                    <Tooltip formatter={(v: any) => [v, 'Leads']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

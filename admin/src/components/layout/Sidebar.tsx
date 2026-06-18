@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  LayoutDashboard, PenLine, Layers, Newspaper, FileText,
-  Mail, Kanban, BarChart2, Activity, HeartPulse, Settings,
+  LayoutDashboard, Layers, Newspaper,
+  Mail, Kanban, BarChart2, Activity, HeartPulse,
   Users, Globe, ChevronDown, LogOut, Menu, X, Zap,
   DollarSign, CreditCard, Landmark, Target, UserCheck
 } from 'lucide-react';
@@ -67,11 +67,10 @@ const NAV: NavGroup[] = [
 ];
 
 export const Sidebar: React.FC = () => {
-  const { user, logout, can } = useAuth();
+  const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLogout = () => { logout(); navigate('/login'); };
 

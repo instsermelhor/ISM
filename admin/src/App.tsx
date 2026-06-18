@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
@@ -18,18 +17,18 @@ import { ServicesPage } from './pages/ServicesPage';
 import { UsersPage } from './pages/UsersPage';
 
 // Placeholder pages for sections under development
-const PlaceholderPage = ({ title, description }: { title: string; description: string }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16, color: 'var(--gray-400)' }}>
-    <div style={{ width: 80, height: 80, borderRadius: 20, background: 'var(--brand-50)', border: '2px dashed var(--brand-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-      🚧
-    </div>
-    <div style={{ textAlign: 'center' }}>
-      <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--gray-700)', marginBottom: 6 }}>{title}</h2>
-      <p style={{ fontSize: 14, color: 'var(--gray-400)', maxWidth: 300 }}>{description}</p>
-    </div>
-    <span className="badge badge-yellow" style={{ marginTop: 8 }}>Em Desenvolvimento</span>
-  </div>
-);
+// const PlaceholderPage = ({ title, description }: { title: string; description: string }) => (
+//   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16, color: 'var(--gray-400)' }}>
+//     <div style={{ width: 80, height: 80, borderRadius: 20, background: 'var(--brand-50)', border: '2px dashed var(--brand-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
+//       🚧
+//     </div>
+//     <div style={{ textAlign: 'center' }}>
+//       <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--gray-700)', marginBottom: 6 }}>{title}</h2>
+//       <p style={{ fontSize: 14, color: 'var(--gray-400)', maxWidth: 300 }}>{description}</p>
+//     </div>
+//     <span className="badge badge-yellow" style={{ marginTop: 8 }}>Em Desenvolvimento</span>
+//   </div>
+// );
 
 
 function App() {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Save, RotateCcw, Plus, Trash2, MoveUp, MoveDown,
   CheckCircle, Eye, EyeOff, ChevronDown, ChevronUp, UserCircle2
@@ -96,7 +96,7 @@ const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', bo
 const textareaStyle: React.CSSProperties = { ...inputStyle, resize: 'vertical', minHeight: 76, lineHeight: 1.6 };
 const btnPrimary: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 18px', borderRadius: 10, border: 'none', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: 13, cursor: 'pointer', boxShadow: '0 2px 8px rgba(22,163,74,0.3)', transition: 'all 0.15s' };
 const btnSecondary: React.CSSProperties = { ...btnPrimary, background: 'white', color: '#374151', boxShadow: 'none', border: '1px solid #e5e7eb' };
-const btnDanger: React.CSSProperties = { ...btnPrimary, background: '#fff1f2', color: '#ef4444', boxShadow: 'none', border: '1px solid #fecdd3' };
+// const btnDanger: React.CSSProperties = { ...btnPrimary, background: '#fff1f2', color: '#ef4444', boxShadow: 'none', border: '1px solid #fecdd3' };
 
 const Card: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
   <div style={{ background: 'white', borderRadius: 16, border: '1px solid #e5e7eb', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', ...style }}>

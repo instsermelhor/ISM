@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import {
   Plus, Trash2, Search, Shield, Eye, Edit3, Crown,
   CheckCircle, XCircle, Clock, Send, RefreshCw,
-  Lock, Unlock, ChevronDown, AlertTriangle, Copy,
-  UserCheck, UserX, Users, Key, Bell, Activity
+  Lock, Unlock, AlertTriangle, Copy,
+  UserCheck, Users, Key, Bell, Activity
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────

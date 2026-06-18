@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Save, RotateCcw, Plus, Trash2, MoveUp, MoveDown,
   CheckCircle, Eye, EyeOff, ChevronDown, ChevronUp,
-  FileText, ExternalLink, BarChart3, Handshake, Search, Filter
+  ExternalLink, Search
 } from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
 

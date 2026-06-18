@@ -1,6 +1,6 @@
 // Mock data service — simulates API (replace with real API calls)
 import type {
-  User, Post, Service, TeamMember, ContactLead, LeadStatus, PipelineCard,
+  User, Post, Service, ContactLead, LeadStatus, PipelineCard,
   AuditLog, HealthCheck, SiteSetting, AnalyticsSummary, TimeSeriesPoint
 } from '../types';
 
