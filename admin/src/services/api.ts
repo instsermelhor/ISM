@@ -12,17 +12,40 @@ import type {
 // Tabela de credenciais: cada usuário tem sua própria senha.
 // Em produção NUNCA armazene senhas em texto plano — use bcrypt + backend.
 const MOCK_CREDENTIALS: Record<string, string> = {
-  'instsermelhor.adm@gmail.com': '@@Rk08266570#',  // Super Admin
-  'admin@ism.org':   'admin123',                    // Admin legado (altere antes de ir a producão)
+  'admism@institutosermelhor.org': '@@Rk08266570#',  // Super Admin
+  'admin@ism.org':   'admin123',                      // Admin legado (altere antes de ir a produção)
   'editor@ism.org':  'editor123',
   'viewer@ism.org':  'viewer123',
+};
+
+// E-mails de recuperação de senha (primário e secundário por usuário)
+// Em produção, armazene isso de forma segura no backend.
+const RECOVERY_EMAILS: Record<string, { primary: string; secondary?: string; maskedPrimary: string; maskedSecondary?: string }> = {
+  'admism@institutosermelhor.org': {
+    primary: 'admism@institutosermelhor.org',
+    secondary: 'rikardo@institutosermelhor.org',
+    maskedPrimary: 'a****m@institutosermelhor.org',
+    maskedSecondary: 'r*****o@institutosermelhor.org',
+  },
+  'admin@ism.org': {
+    primary: 'admin@ism.org',
+    maskedPrimary: 'a***n@ism.org',
+  },
+  'editor@ism.org': {
+    primary: 'editor@ism.org',
+    maskedPrimary: 'e****r@ism.org',
+  },
+  'viewer@ism.org': {
+    primary: 'viewer@ism.org',
+    maskedPrimary: 'v****r@ism.org',
+  },
 };
 
 const MOCK_USERS: User[] = [
   {
     id: '0',
     name: 'Instituto Ser Melhor',
-    email: 'instsermelhor.adm@gmail.com',
+    email: 'admism@institutosermelhor.org',
     role: 'ADMIN',
     avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&bold=true&size=80',
     isActive: true,
@@ -37,8 +60,9 @@ const MOCK_USERS: User[] = [
 export const AuthService = {
   login: async (email: string, password: string): Promise<User> => {
     await delay(800);
-    const user = MOCK_USERS.find(u => u.email.toLowerCase() === email.toLowerCase());
-    const validPassword = MOCK_CREDENTIALS[email.toLowerCase()] || MOCK_CREDENTIALS[email];
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = MOCK_USERS.find(u => u.email.toLowerCase() === normalizedEmail);
+    const validPassword = MOCK_CREDENTIALS[normalizedEmail] || MOCK_CREDENTIALS[email.trim()];
 
     if (!user || !validPassword || password !== validPassword) {
       throw new Error('Credenciais inválidas. Verifique seu e-mail e senha.');
@@ -70,6 +94,79 @@ export const AuthService = {
   },
   isAuthenticated: (): boolean => !!localStorage.getItem('ism_admin_token'),
 };
+
+// ── PASSWORD RESET ─────────────────────────────────────────────
+export const PasswordResetService = {
+  /**
+   * Retorna as opções de e-mail de recuperação mascaradas para o usuário,
+   * sem revelar o endereço completo.
+   */
+  getRecoveryOptions: async (email: string): Promise<{
+    hasPrimary: boolean;
+    hasSecondary: boolean;
+    maskedPrimary?: string;
+    maskedSecondary?: string;
+  }> => {
+    await delay(600);
+    const normalizedEmail = email.trim().toLowerCase();
+    // Verifica se o e-mail existe no sistema
+    const userExists = MOCK_USERS.some(u => u.email.toLowerCase() === normalizedEmail);
+    if (!userExists) {
+      // Por segurança, não revelamos se o e-mail existe ou não
+      // Simulamos que encontrou para não vazar informação de cadastro
+      return { hasPrimary: true, hasSecondary: false, maskedPrimary: maskEmail(normalizedEmail) };
+    }
+    const recovery = RECOVERY_EMAILS[normalizedEmail];
+    if (!recovery) {
+      return { hasPrimary: true, hasSecondary: false, maskedPrimary: maskEmail(normalizedEmail) };
+    }
+    return {
+      hasPrimary: true,
+      hasSecondary: !!recovery.secondary,
+      maskedPrimary: recovery.maskedPrimary,
+      maskedSecondary: recovery.maskedSecondary,
+    };
+  },
+
+  /**
+   * Envia o link de recuperação de senha para o e-mail escolhido.
+   * Em produção, isso deve ser tratado pelo backend com token seguro e expiração.
+   */
+  sendResetLink: async (
+    accountEmail: string,
+    targetType: 'primary' | 'secondary'
+  ): Promise<{ success: boolean; maskedEmail: string }> => {
+    await delay(1200);
+    const normalizedEmail = accountEmail.trim().toLowerCase();
+    const recovery = RECOVERY_EMAILS[normalizedEmail];
+
+    let maskedEmail: string;
+    if (targetType === 'secondary' && recovery?.maskedSecondary) {
+      maskedEmail = recovery.maskedSecondary;
+    } else if (recovery?.maskedPrimary) {
+      maskedEmail = recovery.maskedPrimary;
+    } else {
+      maskedEmail = maskEmail(normalizedEmail);
+    }
+
+    // Simulação — em produção, dispara e-mail real via backend
+    console.info(
+      `[PasswordReset] Link enviado para ${maskedEmail} (conta: ${normalizedEmail}, tipo: ${targetType})`
+    );
+
+    return { success: true, maskedEmail };
+  },
+};
+
+/** Mascara parcialmente um e-mail para exibição segura */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!domain) return email;
+  const masked = local.length > 2
+    ? local[0] + '*'.repeat(local.length - 2) + local[local.length - 1]
+    : local[0] + '*';
+  return `${masked}@${domain}`;
+}
 
 // ── ANALYTICS ─────────────────────────────────────────────────
 export const AnalyticsService = {
