@@ -1,5 +1,11 @@
 import React from 'react';
-import { Mail, MapPin, Phone, Instagram, Facebook, Linkedin, Twitter, Heart } from 'lucide-react';
+import { Mail, MapPin, Phone, Instagram, Facebook, Linkedin, Twitter, Heart, Lock } from 'lucide-react';
+
+// Detecta ambiente: produção → domínio real, dev → localhost
+const ADMIN_URL =
+  typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? 'https://admin.institutosermelhor.org/login'
+    : 'http://localhost:3001/admin/login';
 
 interface Props {
   onOpenPrivacy: () => void;
@@ -180,20 +186,17 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
             </button>
             {/* Link discreto para o painel administrativo */}
             <a
-              href="http://localhost:3001/admin"
+              href={ADMIN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-secondary-600 text-xs hover:text-brand-400 transition-colors flex items-center gap-1 group"
-              title="Painel Administrativo"
+              className="text-secondary-600 text-xs hover:text-brand-400 transition-colors flex items-center gap-1.5 group"
+              title="Acesso ao Painel Administrativo — Instituto Ser Melhor"
+              aria-label="Área Restrita — Painel Administrativo"
             >
-              <svg
-                width="11" height="11" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              <Lock
+                size={11}
                 className="opacity-40 group-hover:opacity-100 transition-opacity"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
+              />
               Área Restrita
             </a>
           </div>
