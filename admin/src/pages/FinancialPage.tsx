@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type {
   FinancialSummary, Donation, Donor, BankConnection, BankTransaction, FinancialGoal,
-  DonationStatus, DonationMethod, DonorTier
+  DonationStatus, BankConnectionStatus, DonorTier
 } from '../types';
 import { FinancialService } from '../services/financial';
 import {
@@ -174,7 +174,7 @@ const OverviewTab: React.FC<{ summary: FinancialSummary }> = ({ summary }) => {
           <div style={{ fontWeight: 800, marginBottom: 16, color: '#111827' }}>⚡ Distribuição por Método</div>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={summary.byMethod} dataKey="amount" nameKey="method" cx="50%" cy="50%" outerRadius={80} label={({ method, percent }) => `${METHOD_ICONS[method] ?? ''} ${(percent * 100).toFixed(0)}%`}>
+              <Pie data={summary.byMethod} dataKey="amount" nameKey="method" cx="50%" cy="50%" outerRadius={80} label={({ method, percent }) => `${METHOD_ICONS[method as keyof typeof METHOD_ICONS] ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}>
                 {summary.byMethod.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
               </Pie>
               <Tooltip formatter={(v: any) => fmtFull(v)} />
@@ -559,23 +559,61 @@ const DonorsTab: React.FC = () => {
   );
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// BANKING TAB
-// ══════════════════════════════════════════════════════════════════════════════
 const BankingTab: React.FC = () => {
   const [connections, setConnections] = useState<BankConnection[]>([]);
   const [transactions, setTransactions] = useState<BankTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
+  
+  // Modals state
   const [showConnect, setShowConnect] = useState(false);
-  const [connectForm, setConnectForm] = useState({ bankCode: '001', provider: 'OPEN_BANKING', apiKey: '' });
+  const [editConn, setEditConn] = useState<BankConnection | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  // Connection Form Selector ('bank' or 'gateway')
+  const [connectType, setConnectType] = useState<'bank' | 'gateway'>('bank');
+
+  // Form states
+  const [connectForm, setConnectForm] = useState({
+    bankCode: '001',
+    provider: 'OPEN_BANKING',
+    apiKey: '',
+    accountName: 'Instituto Ser Melhor',
+    accountNumber: '',
+    agency: '',
+    accountType: 'CHECKING' as const,
+  });
+
+  const [editForm, setEditForm] = useState<{
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    agency: string;
+    accountType: 'CHECKING' | 'SAVINGS';
+    apiKey: string;
+    webhookUrl: string;
+    status: BankConnectionStatus;
+  }>({
+    bankName: '',
+    accountName: '',
+    accountNumber: '',
+    agency: '',
+    accountType: 'CHECKING',
+    apiKey: '',
+    webhookUrl: '',
+    status: 'CONNECTED',
+  });
+
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [conns, txs] = await Promise.all([FinancialService.getBankConnections(), FinancialService.getTransactions()]);
+      const [conns, txs] = await Promise.all([
+        FinancialService.getBankConnections(),
+        FinancialService.getTransactions()
+      ]);
       setConnections(conns);
       setTransactions(txs);
       setLoading(false);
@@ -584,24 +622,202 @@ const BankingTab: React.FC = () => {
 
   const handleSync = async (bankId: string) => {
     setSyncing(bankId);
-    await FinancialService.syncBank(bankId);
-    setSyncing(null);
-    setConnections(prev => prev.map(c => c.id === bankId ? { ...c, lastSyncAt: new Date().toISOString() } : c));
+    try {
+      const res = await FinancialService.syncBank(bankId);
+      setConnections(prev => prev.map(c => c.id === bankId ? { ...c, balance: res.balance, lastSyncAt: new Date().toISOString(), status: 'CONNECTED' } : c));
+    } catch (err) {
+      alert('Erro ao sincronizar');
+    } finally {
+      setSyncing(null);
+    }
   };
 
   const handleConnect = async () => {
-    if (!connectForm.apiKey) return alert('Informe a chave da API');
+    if (!connectForm.apiKey) return alert('Informe a chave da API / Token de Integração');
     setConnecting(true);
-    const newBank = await FinancialService.connectBank(connectForm);
-    setConnections(prev => [...prev, newBank]);
-    setConnecting(false);
-    setShowConnect(false);
-    setConnectForm({ bankCode: '001', provider: 'OPEN_BANKING', apiKey: '' });
+    try {
+      // If connecting a gateway, set the provider as the bankCode as well
+      const payload = {
+        ...connectForm,
+        bankCode: connectType === 'gateway' ? connectForm.provider : connectForm.bankCode,
+      };
+      const newBank = await FinancialService.connectBank(payload);
+      setConnections(prev => [...prev, newBank]);
+      setShowConnect(false);
+      setConnectForm({
+        bankCode: '001',
+        provider: 'OPEN_BANKING',
+        apiKey: '',
+        accountName: 'Instituto Ser Melhor',
+        accountNumber: '',
+        agency: '',
+        accountType: 'CHECKING',
+      });
+    } catch (err) {
+      alert('Erro ao conectar banco');
+    } finally {
+      setConnecting(false);
+    }
   };
 
-  const STATUS_BANK_COLORS: Record<string, string> = { CONNECTED: '#16a34a', DISCONNECTED: '#6b7280', ERROR: '#ef4444', PENDING: '#f59e0b' };
-  const STATUS_BANK_LABELS: Record<string, string> = { CONNECTED: '✅ Conectado', DISCONNECTED: '⚫ Desconectado', ERROR: '🔴 Erro', PENDING: '🟡 Aguardando' };
+  const handleEdit = (conn: BankConnection) => {
+    setEditConn(conn);
+    setEditForm({
+      bankName: conn.bankName,
+      accountName: conn.accountName,
+      accountNumber: conn.accountNumber,
+      agency: conn.agency,
+      accountType: conn.accountType,
+      apiKey: conn.apiKey || '',
+      webhookUrl: conn.webhookUrl || '',
+      status: conn.status,
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editConn) return;
+    setSaving(true);
+    try {
+      const updated = await FinancialService.updateBankConnection(editConn.id, editForm);
+      setConnections(prev => prev.map(c => c.id === editConn.id ? updated : c));
+      setEditConn(null);
+    } catch (err) {
+      alert('Erro ao salvar as alterações');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (bankId: string) => {
+    if (!confirm('Tem certeza que deseja remover esta conexão bancária? Todas as transações sincronizadas continuarão salvas, mas novas sincronizações serão interrompidas.')) return;
+    try {
+      await FinancialService.deleteBankConnection(bankId);
+      setConnections(prev => prev.filter(c => c.id !== bankId));
+      if (selectedBank === bankId) setSelectedBank(null);
+    } catch (err) {
+      alert('Erro ao excluir conexão');
+    }
+  };
+
+  const STATUS_BANK_COLORS: Record<string, string> = { 
+    CONNECTED: '#16a34a', DISCONNECTED: '#6b7280', ERROR: '#ef4444', PENDING: '#f59e0b' 
+  };
+  const STATUS_BANK_LABELS: Record<string, string> = { 
+    CONNECTED: '✅ Conectado', DISCONNECTED: '⚫ Desconectado', ERROR: '🔴 Erro', PENDING: '🟡 Aguardando' 
+  };
+
+  const isGatewayProvider = (provider: string) => {
+    return ['STRIPE', 'PAYPAL', 'MERCADO_PAGO', 'PAGSEGURO', 'ASAAS', 'EFI_BANK'].includes(provider);
+  };
+
+  const bankConnections = connections.filter(c => !isGatewayProvider(c.provider));
+  const gatewayConnections = connections.filter(c => isGatewayProvider(c.provider));
   const filteredTxs = selectedBank ? transactions.filter(t => t.bankConnectionId === selectedBank) : transactions;
+
+  const getProviderStyle = (provider: string) => {
+    switch (provider) {
+      case 'STRIPE':
+        return { gradient: 'linear-gradient(135deg, #635bff, #8073ff)', color: '#ffffff', logo: '💳 Stripe' };
+      case 'PAYPAL':
+        return { gradient: 'linear-gradient(135deg, #003087, #0079c1)', color: '#ffffff', logo: '🔵 PayPal' };
+      case 'MERCADO_PAGO':
+        return { gradient: 'linear-gradient(135deg, #00b1ea, #009ee3)', color: '#ffffff', logo: '🤝 Mercado Pago' };
+      case 'PAGSEGURO':
+        return { gradient: 'linear-gradient(135deg, #53d220, #2fb807)', color: '#ffffff', logo: '🟢 PagSeguro' };
+      case 'ASAAS':
+        return { gradient: 'linear-gradient(135deg, #0030b3, #0050ff)', color: '#ffffff', logo: '🚀 Asaas' };
+      case 'EFI_BANK':
+        return { gradient: 'linear-gradient(135deg, #f37021, #ff914d)', color: '#ffffff', logo: '🟠 Efí Bank' };
+      default:
+        return { gradient: 'linear-gradient(135deg, #ffffff, #f9fafb)', color: '#111827', logo: '🏦 ' + provider };
+    }
+  };
+
+  const renderConnectionCard = (b: BankConnection) => {
+    const isGateway = isGatewayProvider(b.provider);
+    const styleSettings = getProviderStyle(b.provider);
+    const isSelected = selectedBank === b.id;
+
+    return (
+      <div key={b.id} style={{
+        border: `2px solid ${isSelected ? '#16a34a' : '#e5e7eb'}`,
+        borderRadius: 16, padding: 20, cursor: 'pointer',
+        background: isSelected ? '#f0fdf4' : 'white',
+        boxShadow: isSelected ? '0 4px 20px rgba(22,163,74,0.1)' : '0 2px 8px rgba(0,0,0,0.02)',
+        transition: 'all 0.2s ease',
+        position: 'relative'
+      }} onClick={() => setSelectedBank(isSelected ? null : b.id)}>
+        
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+          <div>
+            <div style={{ fontWeight: 800, color: '#111827', fontSize: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+              {isGateway ? styleSettings.logo : `🏦 ${b.bankName}`}
+            </div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+              {isGateway ? `${b.accountName}` : `Ag: ${b.agency} • Cc: ${b.accountNumber}`}
+            </div>
+          </div>
+          <span style={{ background: STATUS_BANK_COLORS[b.status] + '20', color: STATUS_BANK_COLORS[b.status], padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+            {STATUS_BANK_LABELS[b.status]}
+          </span>
+        </div>
+
+        {/* Balance Display */}
+        {b.balance !== undefined && (
+          <div style={{ background: isGateway ? 'linear-gradient(135deg, #f8fafc, #f1f5f9)' : '#f0fdf4', borderRadius: 12, padding: '12px 16px', marginBottom: 14 }}>
+            <div style={{ fontSize: 11, color: isGateway ? '#64748b' : '#16a34a', fontWeight: 600 }}>SALDO ATUAL</div>
+            <div style={{ fontWeight: 900, fontSize: 22, color: isGateway ? '#1e293b' : '#15803d', marginTop: 2 }}>{fmtFull(b.balance)}</div>
+          </div>
+        )}
+
+        {/* Meta details */}
+        <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 16, lineHeight: '1.4' }}>
+          <div>Provedor: <strong style={{ color: '#374151' }}>{b.provider}</strong></div>
+          <div style={{ marginTop: 2 }}>Última sinc: <strong style={{ color: '#374151' }}>{b.lastSyncAt ? fmtDateTime(b.lastSyncAt) : '—'}</strong></div>
+        </div>
+
+        {/* Action buttons inside Card */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            disabled={syncing === b.id || b.status === 'ERROR'}
+            onClick={e => { e.stopPropagation(); handleSync(b.id); }}
+            style={{
+              flex: 1, background: syncing === b.id ? '#d1fae5' : '#16a34a', color: 'white',
+              border: 'none', borderRadius: 8, padding: '8px 12px', fontWeight: 700, fontSize: 12,
+              cursor: syncing === b.id || b.status === 'ERROR' ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+            }}
+          >
+            {syncing === b.id ? '🔄 Sincronizando...' : '🔄 Sincronizar'}
+          </button>
+          
+          <button
+            onClick={e => { e.stopPropagation(); handleEdit(b); }}
+            style={{
+              background: '#f3f4f6', color: '#374151', border: 'none', borderRadius: 8, padding: '8px 12px',
+              fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s'
+            }}
+            title="Editar Conexão"
+          >
+            ✏️ Editar
+          </button>
+
+          <button
+            onClick={e => { e.stopPropagation(); handleDelete(b.id); }}
+            style={{
+              background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: 8, padding: '8px 12px',
+              fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+            title="Excluir Conexão"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -609,59 +825,51 @@ const BankingTab: React.FC = () => {
         <>
           {/* Connections Grid */}
           <Card>
-            <SectionTitle icon="🏦" title="Conexões Bancárias" subtitle="Open Banking / APIs de Pagamento"
+            <SectionTitle icon="🏦" title="Conexões Bancárias & Recebimentos" subtitle="Open Banking & Gateways de Pagamento"
               action={
-                <button onClick={() => setShowConnect(true)}
+                <button onClick={() => { setConnectType('bank'); setShowConnect(true); }}
                   style={{ background: '#16a34a', color: 'white', border: 'none', borderRadius: 10, padding: '8px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                  + Conectar Banco
+                  + Conectar Conta / Gateway
                 </button>
               }
             />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 16 }}>
-              {connections.map(b => (
-                <div key={b.id} style={{
-                  border: `2px solid ${selectedBank === b.id ? '#16a34a' : '#e5e7eb'}`,
-                  borderRadius: 14, padding: 20, cursor: 'pointer',
-                  background: selectedBank === b.id ? '#f0fdf4' : 'white',
-                  transition: 'all 0.2s'
-                }} onClick={() => setSelectedBank(selectedBank === b.id ? null : b.id)}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                    <div>
-                      <div style={{ fontWeight: 800, color: '#111827', fontSize: 15 }}>🏦 {b.bankName}</div>
-                      <div style={{ fontSize: 12, color: '#6b7280' }}>Ag: {b.agency} • Cc: {b.accountNumber}</div>
-                    </div>
-                    <span style={{ background: STATUS_BANK_COLORS[b.status] + '20', color: STATUS_BANK_COLORS[b.status], padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-                      {STATUS_BANK_LABELS[b.status]}
-                    </span>
-                  </div>
-                  {b.balance !== undefined && (
-                    <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
-                      <div style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>SALDO ATUAL</div>
-                      <div style={{ fontWeight: 900, fontSize: 20, color: '#15803d' }}>{fmtFull(b.balance)}</div>
-                    </div>
-                  )}
-                  <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>
-                    Provedor: <strong>{b.provider}</strong> • Última sinc: {b.lastSyncAt ? fmtDateTime(b.lastSyncAt) : '—'}
-                  </div>
-                  <button
-                    disabled={syncing === b.id || b.status === 'ERROR'}
-                    onClick={e => { e.stopPropagation(); handleSync(b.id); }}
-                    style={{
-                      width: '100%', background: syncing === b.id ? '#d1fae5' : '#16a34a', color: 'white',
-                      border: 'none', borderRadius: 10, padding: '8px', fontWeight: 700, fontSize: 13,
-                      cursor: syncing === b.id || b.status === 'ERROR' ? 'not-allowed' : 'pointer', transition: 'all 0.2s'
-                    }}
-                  >
-                    {syncing === b.id ? '🔄 Sincronizando...' : '🔄 Sincronizar'}
-                  </button>
+
+            {/* Traditional Connections */}
+            <div style={{ marginBottom: 32 }}>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#374151', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🏦</span> Contas Bancárias Tradicionais (Open Banking)
+              </div>
+              {bankConnections.length === 0 ? (
+                <div style={{ padding: 24, textAlign: 'center', background: '#f9fafb', borderRadius: 12, border: '1px dashed #e5e7eb', color: '#6b7280', fontSize: 13 }}>
+                  Nenhuma conta bancária conectada.
                 </div>
-              ))}
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
+                  {bankConnections.map(b => renderConnectionCard(b))}
+                </div>
+              )}
+            </div>
+
+            {/* Gateways Connections */}
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: '#374151', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>💳</span> Gateways de Pagamento & Recebimento (APIs)
+              </div>
+              {gatewayConnections.length === 0 ? (
+                <div style={{ padding: 24, textAlign: 'center', background: '#f9fafb', borderRadius: 12, border: '1px dashed #e5e7eb', color: '#6b7280', fontSize: 13 }}>
+                  Nenhum gateway de pagamento conectado. Clique em "+ Conectar Conta / Gateway" para adicionar.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
+                  {gatewayConnections.map(b => renderConnectionCard(b))}
+                </div>
+              )}
             </div>
           </Card>
 
           {/* Transactions */}
           <Card>
-            <SectionTitle icon="📋" title="Extrato de Transações" subtitle={`${filteredTxs.length} transações ${selectedBank ? '(filtrado por banco)' : ''}`} />
+            <SectionTitle icon="📋" title="Extrato de Transações" subtitle={`${filteredTxs.length} transações ${selectedBank ? '(filtrado por banco/gateway)' : ''}`} />
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
@@ -703,60 +911,207 @@ const BankingTab: React.FC = () => {
       {showConnect && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
           onClick={() => setShowConnect(false)}>
-          <div style={{ background: 'white', borderRadius: 20, padding: 32, maxWidth: 480, width: '100%' }} onClick={e => e.stopPropagation()}>
-            <div style={{ fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 6 }}>🏦 Conectar Banco</div>
-            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>Integração via Open Banking / API Bancária</div>
+          <div style={{ background: 'white', borderRadius: 20, padding: 32, maxWidth: 520, width: '100%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 6 }}>🔌 Nova Integração Financeira</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>Conecte contas bancárias ou gateways de recebimento</div>
+
+            {/* Type selector */}
+            <div style={{ display: 'flex', background: '#f3f4f6', padding: 4, borderRadius: 10, marginBottom: 20 }}>
+              <button onClick={() => { setConnectType('bank'); setConnectForm(f => ({ ...f, provider: 'OPEN_BANKING' })); }}
+                style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', background: connectType === 'bank' ? 'white' : 'transparent', color: connectType === 'bank' ? '#111827' : '#6b7280', boxShadow: connectType === 'bank' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                🏦 Banco / Open Banking
+              </button>
+              <button onClick={() => { setConnectType('gateway'); setConnectForm(f => ({ ...f, provider: 'STRIPE' })); }}
+                style={{ flex: 1, padding: '8px', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', background: connectType === 'gateway' ? 'white' : 'transparent', color: connectType === 'gateway' ? '#111827' : '#6b7280', boxShadow: connectType === 'gateway' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
+                💳 Gateway de Recebimento
+              </button>
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {connectType === 'bank' ? (
+                <>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Banco</label>
+                    <select value={connectForm.bankCode} onChange={e => setConnectForm(f => ({ ...f, bankCode: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                      <option value="001">🏦 Banco do Brasil (001)</option>
+                      <option value="341">🏦 Itaú Unibanco (341)</option>
+                      <option value="237">🏦 Bradesco (237)</option>
+                      <option value="033">🏦 Santander (033)</option>
+                      <option value="104">🏦 Caixa Econômica (104)</option>
+                      <option value="260">💜 Nubank (260)</option>
+                      <option value="290">🔵 PagBank (290)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Provedor de Integração</label>
+                    <select value={connectForm.provider} onChange={e => setConnectForm(f => ({ ...f, provider: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                      <option value="OPEN_BANKING">Open Banking Brasil (oficial)</option>
+                      <option value="PLUGGY">Pluggy.ai</option>
+                      <option value="BELVO">Belvo</option>
+                      <option value="MANUAL">Manual (Importar extrato)</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Agência</label>
+                      <input type="text" value={connectForm.agency} onChange={e => setConnectForm(f => ({ ...f, agency: e.target.value }))}
+                        placeholder="Ex: 1234-5"
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Número da Conta</label>
+                      <input type="text" value={connectForm.accountNumber} onChange={e => setConnectForm(f => ({ ...f, accountNumber: e.target.value }))}
+                        placeholder="Ex: 12345-6"
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Nome do Titular</label>
+                      <input type="text" value={connectForm.accountName} onChange={e => setConnectForm(f => ({ ...f, accountName: e.target.value }))}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Tipo de Conta</label>
+                      <select value={connectForm.accountType} onChange={e => setConnectForm(f => ({ ...f, accountType: e.target.value as any }))}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                        <option value="CHECKING">Corrente</option>
+                        <option value="SAVINGS">Poupança</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Gateway de Pagamento</label>
+                    <select value={connectForm.provider} onChange={e => setConnectForm(f => ({ ...f, provider: e.target.value }))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                      <option value="STRIPE">💳 Stripe (Internacional/PIX/Cartão)</option>
+                      <option value="PAYPAL">🔵 PayPal (Global/Cartão)</option>
+                      <option value="MERCADO_PAGO">🤝 Mercado Pago (Nacional/PIX/Cartão)</option>
+                      <option value="PAGSEGURO">🟢 PagSeguro (UOL/Boleto/PIX/Cartão)</option>
+                      <option value="ASAAS">🚀 Asaas (Gestão de Cobranças/PIX)</option>
+                      <option value="EFI_BANK">🟠 Efí Bank (Antiga Gerencianet/PIX/Boleto)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Nome da Identificação</label>
+                    <input type="text" value={connectForm.accountName} onChange={e => setConnectForm(f => ({ ...f, accountName: e.target.value }))}
+                      placeholder="Ex: Stripe Doações Principais"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </>
+              )}
+
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Banco</label>
-                <select value={connectForm.bankCode} onChange={e => setConnectForm(f => ({ ...f, bankCode: e.target.value }))}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
-                  <option value="001">🏦 Banco do Brasil (001)</option>
-                  <option value="341">🏦 Itaú Unibanco (341)</option>
-                  <option value="237">🏦 Bradesco (237)</option>
-                  <option value="033">🏦 Santander (033)</option>
-                  <option value="104">🏦 Caixa Econômica (104)</option>
-                  <option value="260">💜 Nubank (260)</option>
-                  <option value="290">🔵 PagBank (290)</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Provedor de Integração</label>
-                <select value={connectForm.provider} onChange={e => setConnectForm(f => ({ ...f, provider: e.target.value }))}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
-                  <option value="OPEN_BANKING">Open Banking Brasil (oficial)</option>
-                  <option value="PLUGGY">Pluggy.ai</option>
-                  <option value="BELVO">Belvo</option>
-                  <option value="MANUAL">Manual (Importar extrato)</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>API Key / Client Secret</label>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>
+                  {connectType === 'gateway' ? 'Chave de API Secreta (Secret Key)' : 'Chave de API / Client Secret (Se aplicável)'}
+                </label>
                 <input type="password" value={connectForm.apiKey} onChange={e => setConnectForm(f => ({ ...f, apiKey: e.target.value }))}
-                  placeholder="sk_live_..."
+                  placeholder={connectType === 'gateway' ? 'sk_live_...' : 'Ex: Chave de acesso do open banking ou token Pluggy'}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
-                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>🔒 Chave criptografada com AES-256 antes de armazenar</p>
+                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>🔒 Armazenado de forma segura e criptografada com AES-256</p>
               </div>
 
-              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12, padding: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#166534', marginBottom: 6 }}>📋 Como funciona</div>
-                <ul style={{ fontSize: 12, color: '#166534', paddingLeft: 16, margin: 0, lineHeight: 1.8 }}>
-                  <li>Autenticação OAuth2 / Certificado ICP-Brasil</li>
-                  <li>Sincronização automática de transações (webhooks)</li>
-                  <li>Reconciliação automática com doações confirmadas</li>
-                  <li>Alertas para pagamentos não reconciliados</li>
-                </ul>
-              </div>
+              {connectType === 'gateway' && (
+                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: 14 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 6 }}>🔗 Endpoint Webhook Configurado</div>
+                  <code style={{ fontSize: 11, color: '#0f172a', wordBreak: 'break-all', display: 'block', padding: '6px 10px', background: '#e2e8f0', borderRadius: 6 }}>
+                    https://api.ism.org/webhooks/{connectForm.provider.toLowerCase()}
+                  </code>
+                  <p style={{ fontSize: 10, color: '#64748b', marginTop: 4, margin: 0 }}>Configure este webhook no painel do gateway para receber notificações automáticas de doações em tempo real.</p>
+                </div>
+              )}
 
-              <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                 <button onClick={() => setShowConnect(false)}
                   style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid #e5e7eb', background: 'white', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   Cancelar
                 </button>
                 <button onClick={handleConnect} disabled={connecting}
                   style={{ flex: 2, padding: '11px', borderRadius: 10, border: 'none', background: connecting ? '#86efac' : '#16a34a', color: 'white', fontWeight: 700, fontSize: 13, cursor: connecting ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
-                  {connecting ? '🔄 Conectando...' : '🏦 Estabelecer Conexão'}
+                  {connecting ? '🔄 Conectando...' : '🔌 Estabelecer Conexão'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editConn && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setEditConn(null)}>
+          <div style={{ background: 'white', borderRadius: 20, padding: 32, maxWidth: 520, width: '100%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 6 }}>✏️ Editar Integração</div>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>Editando configurações de: <strong style={{ color: '#111827' }}>{editConn.bankName}</strong></div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Nome de Exibição / Titular</label>
+                <input type="text" value={editForm.accountName} onChange={e => setEditForm(f => ({ ...f, accountName: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              {!isGatewayProvider(editConn.provider) ? (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Agência</label>
+                      <input type="text" value={editForm.agency} onChange={e => setEditForm(f => ({ ...f, agency: e.target.value }))}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Número da Conta</label>
+                      <input type="text" value={editForm.accountNumber} onChange={e => setEditForm(f => ({ ...f, accountNumber: e.target.value }))}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Tipo de Conta</label>
+                    <select value={editForm.accountType} onChange={e => setEditForm(f => ({ ...f, accountType: e.target.value as any }))}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                      <option value="CHECKING">Corrente</option>
+                      <option value="SAVINGS">Poupança</option>
+                    </select>
+                  </div>
+                </>
+              ) : null}
+
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Token de API / Chave Secreta</label>
+                <input type="password" value={editForm.apiKey} onChange={e => setEditForm(f => ({ ...f, apiKey: e.target.value }))}
+                  placeholder="Deixe em branco para manter a chave atual (oculta)"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>URL do Webhook</label>
+                <input type="text" value={editForm.webhookUrl} onChange={e => setEditForm(f => ({ ...f, webhookUrl: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box', background: '#f9fafb' }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Status da Conexão</label>
+                <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as any }))}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                  <option value="CONNECTED">Ativo / Conectado</option>
+                  <option value="DISCONNECTED">Inativo / Desconectado</option>
+                  <option value="ERROR">Erro de Autenticação</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button onClick={() => setEditConn(null)}
+                  style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid #e5e7eb', background: 'white', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <button onClick={handleUpdate} disabled={saving}
+                  style={{ flex: 2, padding: '11px', borderRadius: 10, border: 'none', background: saving ? '#86efac' : '#16a34a', color: 'white', fontWeight: 700, fontSize: 13, cursor: saving ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
+                  {saving ? '💾 Salvando...' : '💾 Salvar Alterações'}
                 </button>
               </div>
             </div>

@@ -96,7 +96,7 @@ export interface BankConnection {
   status: BankConnectionStatus;
   lastSyncAt?: string;
   balance?: number;
-  provider: 'OPEN_BANKING' | 'PLUGGY' | 'BELVO' | 'MANUAL';
+  provider: 'OPEN_BANKING' | 'PLUGGY' | 'BELVO' | 'MANUAL' | 'STRIPE' | 'PAYPAL' | 'MERCADO_PAGO' | 'PAGSEGURO' | 'ASAAS' | 'EFI_BANK';
   apiKey?: string; // Nunca exibir completo
   webhookUrl?: string;
   createdAt: string;

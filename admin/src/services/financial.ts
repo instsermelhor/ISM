@@ -11,7 +11,7 @@ const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min
 const fmt = (d: Date) => d.toISOString();
 
 const TIERS: DonorTier[] = ['SUPPORTER', 'CONTRIBUTOR', 'CHAMPION', 'PATRON', 'BENEFACTOR'];
-const CATEGORIES: DonorCategory[] = ['INDIVIDUAL', 'CORPORATE', 'FOUNDATION', 'GOVERNMENT'];
+// const _CATEGORIES: DonorCategory[] = ['INDIVIDUAL', 'CORPORATE', 'FOUNDATION', 'GOVERNMENT'];
 const METHODS: DonationMethod[] = ['PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'BOLETO', 'BANK_TRANSFER'];
 const STATUSES: DonationStatus[] = ['CONFIRMED', 'CONFIRMED', 'CONFIRMED', 'PENDING', 'FAILED'];
 const RECURRENCES: RecurrenceType[] = ['MONTHLY', 'MONTHLY', 'SINGLE', 'SINGLE', 'QUARTERLY', 'ANNUAL'];
@@ -105,7 +105,7 @@ const generateDonations = (donors: Donor[]): Donation[] => {
 const MOCK_DONORS = generateDonors();
 const MOCK_DONATIONS = generateDonations(MOCK_DONORS);
 
-const MOCK_BANK_CONNECTIONS: BankConnection[] = [
+let MOCK_BANK_CONNECTIONS: BankConnection[] = [
   {
     id: 'bank-1', bankName: 'Banco do Brasil', bankCode: '001',
     accountName: 'Instituto Ser Melhor', accountNumber: '12345-6', agency: '1234-5',
@@ -292,27 +292,70 @@ export const FinancialService = {
     return MOCK_BANK_CONNECTIONS;
   },
 
-  connectBank: async (payload: { bankCode: string; provider: string; apiKey: string }): Promise<BankConnection> => {
-    await delay(1500); // Simula handshake com API bancária
-    const bankNames: Record<string, string> = { '001': 'Banco do Brasil', '341': 'Itaú Unibanco', '237': 'Bradesco', '033': 'Santander', '104': 'Caixa Econômica', '260': 'Nubank' };
-    return {
+  connectBank: async (payload: { bankCode: string; provider: string; apiKey: string; accountName?: string; accountNumber?: string; agency?: string; accountType?: 'CHECKING' | 'SAVINGS' }): Promise<BankConnection> => {
+    await delay(1200); // Simula handshake com API bancária/gateway
+    const bankNames: Record<string, string> = {
+      '001': 'Banco do Brasil', '341': 'Itaú Unibanco', '237': 'Bradesco',
+      '033': 'Santander', '104': 'Caixa Econômica', '260': 'Nubank', '290': 'PagBank',
+      'STRIPE': 'Stripe', 'PAYPAL': 'PayPal', 'MERCADO_PAGO': 'Mercado Pago',
+      'PAGSEGURO': 'PagSeguro', 'ASAAS': 'Asaas', 'EFI_BANK': 'Efí Bank'
+    };
+    const isGateway = ['STRIPE', 'PAYPAL', 'MERCADO_PAGO', 'PAGSEGURO', 'ASAAS', 'EFI_BANK'].includes(payload.provider);
+    const newConn: BankConnection = {
       id: `bank-${Date.now()}`,
-      bankName: bankNames[payload.bankCode] ?? `Banco ${payload.bankCode}`,
-      bankCode: payload.bankCode,
-      accountName: 'Instituto Ser Melhor',
-      accountNumber: '—',
-      agency: '—',
-      accountType: 'CHECKING',
-      status: 'PENDING',
+      bankName: bankNames[payload.bankCode] || bankNames[payload.provider] || `Banco ${payload.bankCode}`,
+      bankCode: isGateway ? payload.provider : payload.bankCode,
+      accountName: payload.accountName || 'Instituto Ser Melhor',
+      accountNumber: payload.accountNumber || (isGateway ? 'API de Recebimento' : '—'),
+      agency: payload.agency || (isGateway ? 'Gateway' : '—'),
+      accountType: payload.accountType || 'CHECKING',
+      status: 'CONNECTED',
+      lastSyncAt: new Date().toISOString(),
+      balance: isGateway ? rand(1500, 25000) : rand(1000, 50000), // Random starting balance for gateway/bank
       provider: payload.provider as any,
+      apiKey: payload.apiKey,
+      webhookUrl: `https://api.ism.org/webhooks/${payload.provider.toLowerCase()}`,
       createdAt: new Date().toISOString(),
     };
+    MOCK_BANK_CONNECTIONS.push(newConn);
+    return newConn;
+  },
+
+  updateBankConnection: async (id: string, payload: Partial<BankConnection>): Promise<BankConnection> => {
+    await delay(1000);
+    const idx = MOCK_BANK_CONNECTIONS.findIndex(b => b.id === id);
+    if (idx === -1) throw new Error('Conexão não encontrada');
+    const updated = {
+      ...MOCK_BANK_CONNECTIONS[idx],
+      ...payload,
+      status: 'CONNECTED' as const, // Restaurar status conectado após edição/reautenticação
+      lastSyncAt: new Date().toISOString(),
+    };
+    MOCK_BANK_CONNECTIONS[idx] = updated;
+    return updated;
+  },
+
+  deleteBankConnection: async (id: string): Promise<boolean> => {
+    await delay(800);
+    const idx = MOCK_BANK_CONNECTIONS.findIndex(b => b.id === id);
+    if (idx === -1) return false;
+    MOCK_BANK_CONNECTIONS.splice(idx, 1);
+    return true;
   },
 
   syncBank: async (bankId: string): Promise<{ synced: number; balance: number }> => {
-    await delay(2000);
-    const conn = MOCK_BANK_CONNECTIONS.find(b => b.id === bankId);
-    return { synced: rand(5, 30), balance: conn?.balance ?? 0 };
+    await delay(1500);
+    const idx = MOCK_BANK_CONNECTIONS.findIndex(b => b.id === bankId);
+    if (idx === -1) throw new Error('Conexão não encontrada');
+    const conn = MOCK_BANK_CONNECTIONS[idx];
+    const newBalance = (conn.balance ?? 0) + rand(-500, 2000);
+    MOCK_BANK_CONNECTIONS[idx] = {
+      ...conn,
+      balance: newBalance,
+      lastSyncAt: new Date().toISOString(),
+      status: 'CONNECTED'
+    };
+    return { synced: rand(5, 30), balance: newBalance };
   },
 
   getTransactions: async (bankId?: string): Promise<BankTransaction[]> => {
