@@ -24,10 +24,14 @@ jobs:
         run: sudo apt-get install -y sshpass lftp
 
       - name: Deploy via SFTP
+        timeout-minutes: 5
         env:
           SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
         run: |
           lftp -e "
+            set net:timeout 30;
+            set net:max-retries 3;
+            set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -e ssh -p ${{ secrets.HOSTINGER_PORT }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }};
             mirror -R --delete --verbose dist-deploy/ /public_html/;
