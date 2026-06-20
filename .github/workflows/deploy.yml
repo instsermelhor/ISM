@@ -17,11 +17,33 @@ jobs:
           mkdir -p dist-deploy
           unzip dist-hostinger.zip -d dist-deploy
           rm -rf dist-deploy/dist
+          cat > dist-deploy/.htaccess << 'EOF'
+          Options -MultiViews
+          RewriteEngine On
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteRule ^ index.html [QSA,L]
+          EOF
           echo "=== Files to deploy ==="
           find dist-deploy -type f
 
       - name: Install tools
         run: sudo apt-get install -y sshpass lftp
+
+      - name: List domains dir (diagnostic)
+        timeout-minutes: 2
+        env:
+          SFTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
+        run: |
+          echo "$SFTP_PASS" > /tmp/sftp_pass.txt
+          lftp -e "
+            set net:timeout 20;
+            set net:max-retries 2;
+            set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
+            open sftp://${{ secrets.HOSTINGER_HOST }};
+            ls -la domains/;
+            bye
+          " || true
+          rm -f /tmp/sftp_pass.txt
 
       - name: Deploy via SFTP
         timeout-minutes: 5
@@ -35,12 +57,7 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            pwd;
-            ls -la;
-            cd public_html;
-            pwd;
-            ls -la;
-            mirror -R --delete --verbose dist-deploy/ ./;
+            mirror -R --delete --verbose dist-deploy/ domains/honeydew-spoonbill-451427.hostingersite.com/public_html/;
             bye
           "
           rm -f /tmp/sftp_pass.txt
