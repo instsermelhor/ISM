@@ -1,0 +1,33 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract dist-hostinger.zip
+        run: |
+          mkdir -p dist-deploy
+          unzip dist-hostinger.zip -d dist-deploy
+          rm -rf dist-deploy/dist
+          echo "=== Files to deploy ==="
+          find dist-deploy -type f
+
+      - name: Install deploy tools
+        run: sudo apt-get install -y sshpass rsync
+
+      - name: Deploy via rsync over SSH
+        env:
+          SSHPASS: ${{ secrets.HOSTINGER_PASSWORD }}
+        run: |
+          sshpass -e rsync -avz --delete \
+            -e "ssh -p ${{ secrets.HOSTINGER_PORT }} -o StrictHostKeyChecking=no" \
+            dist-deploy/ \
+            ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~/public_html/
