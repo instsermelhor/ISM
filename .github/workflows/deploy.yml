@@ -17,18 +17,18 @@ jobs:
           mkdir -p dist-deploy
           unzip dist-hostinger.zip -d dist-deploy
           rm -rf dist-deploy/dist
-          cat > dist-deploy/.htaccess << 'HTEOF'
-Options -MultiViews
-RewriteEngine On
-
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-
-RewriteRule ^admin(/.*)?$ /admin/index.html [QSA,L]
-
-RewriteRule ^ /index.html [QSA,L]
-HTEOF
+          printf '%s\n' \
+            'Options -MultiViews' \
+            'RewriteEngine On' \
+            '' \
+            'RewriteCond %{REQUEST_FILENAME} -f [OR]' \
+            'RewriteCond %{REQUEST_FILENAME} -d' \
+            'RewriteRule ^ - [L]' \
+            '' \
+            'RewriteRule ^admin(/.*)?$ /admin/index.html [QSA,L]' \
+            '' \
+            'RewriteRule ^ /index.html [QSA,L]' \
+            > dist-deploy/.htaccess
           echo "=== Files to deploy ==="
           find dist-deploy -type f
 
