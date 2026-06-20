@@ -1,28 +1,3 @@
-name: Deploy to Hostinger
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Extract dist-hostinger.zip
-        run: |
-          mkdir -p dist-deploy
-          unzip dist-hostinger.zip -d dist-deploy
-          rm -rf dist-deploy/dist
-          echo "=== Files to deploy ==="
-          find dist-deploy -type f
-
-      - name: Install tools
-        run: sudo apt-get install -y sshpass lftp
-
       - name: Deploy via SFTP
         timeout-minutes: 5
         env:
@@ -35,7 +10,12 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            mirror -R --delete --verbose dist-deploy/ public_html/;
+            pwd;
+            ls -la;
+            cd public_html;
+            pwd;
+            ls -la;
+            mirror -R --delete --verbose dist-deploy/ ./;
             bye
           "
           rm -f /tmp/sftp_pass.txt
