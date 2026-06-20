@@ -17,33 +17,23 @@ jobs:
           mkdir -p dist-deploy
           unzip dist-hostinger.zip -d dist-deploy
           rm -rf dist-deploy/dist
-          cat > dist-deploy/.htaccess << 'EOF'
-          Options -MultiViews
-          RewriteEngine On
-          RewriteCond %{REQUEST_FILENAME} !-f
-          RewriteRule ^ index.html [QSA,L]
-          EOF
+          cat > dist-deploy/.htaccess << 'HTEOF'
+Options -MultiViews
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^admin(/.*)?$ /admin/index.html [QSA,L]
+
+RewriteRule ^ /index.html [QSA,L]
+HTEOF
           echo "=== Files to deploy ==="
           find dist-deploy -type f
 
       - name: Install tools
         run: sudo apt-get install -y sshpass lftp
-
-      - name: List domains dir (diagnostic)
-        timeout-minutes: 2
-        env:
-          SFTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
-        run: |
-          echo "$SFTP_PASS" > /tmp/sftp_pass.txt
-          lftp -e "
-            set net:timeout 20;
-            set net:max-retries 2;
-            set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
-            open sftp://${{ secrets.HOSTINGER_HOST }};
-            ls -la domains/;
-            bye
-          " || true
-          rm -f /tmp/sftp_pass.txt
 
       - name: Deploy via SFTP
         timeout-minutes: 5
