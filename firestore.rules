@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Formulários públicos ────────────────────────────────────────
+    // Qualquer visitante pode criar (submit), mas nunca ler, editar ou deletar.
+    // A leitura é feita exclusivamente via admin SDK / console Firebase.
+
+    match /partner_applications/{docId} {
+      allow create: if isValidPartnerApplication(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    match /donations/{docId} {
+      allow create: if isValidDonation(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    match /leads/{docId} {
+      allow create: if isValidLead(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    // ── Configurações do site (somente leitura pública) ────────────
+    match /settings/{key} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Bloqueia tudo o mais ───────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ── Funções de validação ───────────────────────────────────────────────────
+
+function isValidPartnerApplication(data) {
+  return data.keys().hasAll(['companyName', 'contactName', 'email', 'type'])
+    && data.companyName is string && data.companyName.size() > 0 && data.companyName.size() <= 200
+    && data.contactName is string && data.contactName.size() > 0 && data.contactName.size() <= 200
+    && data.email is string && data.email.size() > 3 && data.email.size() <= 320
+    && data.type is string;
+}
+
+function isValidDonation(data) {
+  return data.keys().hasAll(['amount', 'currency'])
+    && data.amount is number && data.amount > 0 && data.amount <= 1000000
+    && data.currency is string && data.currency.size() == 3;
+}
+
+function isValidLead(data) {
+  return data.keys().hasAll(['name', 'email', 'message'])
+    && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+    && data.email is string && data.email.size() > 3 && data.email.size() <= 320
+    && data.message is string && data.message.size() <= 5000;
+}

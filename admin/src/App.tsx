@@ -34,7 +34,7 @@ import { UsersPage } from './pages/UsersPage';
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename="/admin">
+      <BrowserRouter>
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />

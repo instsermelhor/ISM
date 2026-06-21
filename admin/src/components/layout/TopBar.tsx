@@ -10,10 +10,18 @@ const BREADCRUMB_MAP: Record<string, string> = {
   '/conteudo/servicos': 'Conteúdo / Serviços',
   '/conteudo/blog': 'Conteúdo / Blog & Notícias',
   '/conteudo/leads': 'Conteúdo / Leads',
+  // Financeiro
+  '/financeiro': 'Financeiro / Visão Geral',
+  '/financeiro/doacoes': 'Financeiro / Doações',
+  '/financeiro/doadores': 'Financeiro / Doadores',
+  '/financeiro/bancario': 'Financeiro / APIs Bancárias',
+  '/financeiro/metas': 'Financeiro / Metas',
+  // Gestão
   '/pipeline': 'Gestão / Pipeline Kanban',
   '/analytics': 'Gestão / Analytics',
   '/auditoria': 'Gestão / Auditoria',
   '/health': 'Gestão / Health Check',
+  // Configurações
   '/configuracoes': 'Configurações / Site & SEO',
   '/usuarios': 'Configurações / Usuários',
 };
@@ -80,7 +88,7 @@ export const TopBar: React.FC<TopBarProps> = () => {
 
       {/* View Site */}
       <a
-        href="http://localhost:3000"
+        href="https://www.institutosermelhor.org"
         target="_blank"
         rel="noreferrer"
         style={{

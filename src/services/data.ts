@@ -10,6 +10,11 @@ import {
   DonationPayload,
   TransparencyDocument
 } from '../types';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+
+// Flag: só usa Firestore se as variáveis de ambiente estiverem configuradas
+const FIREBASE_ENABLED = Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
 
 // Mock: GET /api/institutional-page
 const mockPageResponse: StrapiSingleResponse<InstitutionalPageAttributes> = {
@@ -250,18 +255,47 @@ export const InstitutionalService = {
     return new Promise(resolve => setTimeout(() => resolve(mockMembersResponse), 300));
   },
 
-  // POST Mocks
+  // POST — grava no Firestore (ou fallback mock em dev sem config)
   submitPartnerApplication: async (data: PartnerApplicationPayload): Promise<{ success: boolean; id: string }> => {
-    if (import.meta.env.DEV) {
-      console.log('[DEV] Partner application submitted:', { type: data.type, status: data.status });
+    if (!FIREBASE_ENABLED) {
+      // Fallback mock quando Firestore não está configurado
+      if (import.meta.env.DEV) {
+        console.warn('[DEV] Firebase não configurado. Usando mock. Configure .env.local para ativar Firestore.');
+        console.log('[DEV] Partner application data:', { type: data.type, status: data.status });
+      }
+      return new Promise(resolve => setTimeout(() => resolve({ success: true, id: `PARTNER-MOCK-${Date.now()}` }), 1500));
     }
-    return new Promise(resolve => setTimeout(() => resolve({ success: true, id: `PARTNER-${Date.now()}` }), 1500));
+
+    const docRef = await addDoc(collection(db, 'partner_applications'), {
+      ...data,
+      status: 'Novo',
+      submissionDate: new Date().toISOString(),
+      createdAt: serverTimestamp(),
+    });
+
+    if (import.meta.env.DEV) {
+      console.log('[Firestore] Partner application saved:', docRef.id);
+    }
+    return { success: true, id: docRef.id };
   },
 
   processDonation: async (data: DonationPayload): Promise<{ success: boolean; transactionId: string }> => {
-    if (import.meta.env.DEV) {
-      console.log('[DEV] Donation processed:', { amount: data.amount, currency: data.currency, type: data.type });
+    if (!FIREBASE_ENABLED) {
+      if (import.meta.env.DEV) {
+        console.warn('[DEV] Firebase não configurado. Usando mock.');
+        console.log('[DEV] Donation data:', { amount: data.amount, currency: data.currency, type: data.type });
+      }
+      return new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: `TXN-MOCK-${Date.now()}` }), 2000));
     }
-    return new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: `TXN-${Date.now()}` }), 2000));
+
+    const docRef = await addDoc(collection(db, 'donations'), {
+      ...data,
+      createdAt: serverTimestamp(),
+    });
+
+    if (import.meta.env.DEV) {
+      console.log('[Firestore] Donation saved:', docRef.id);
+    }
+    return { success: true, transactionId: docRef.id };
   }
 };

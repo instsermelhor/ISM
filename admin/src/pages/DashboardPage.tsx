@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Users, Eye, Mail, Activity } from 'lucide-react';
 import { AnalyticsService, AuditService } from '../services/api';
 import type { AnalyticsSummary, AuditLog } from '../types';
@@ -246,7 +247,7 @@ export const DashboardPage: React.FC = () => {
         <div className="card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 800, color: 'var(--gray-900)' }}>Atividade Recente</h3>
-            <a href="/auditoria" style={{ fontSize: 12, color: 'var(--brand-600)', fontWeight: 600, textDecoration: 'none' }}>Ver tudo →</a>
+            <Link to="/auditoria" style={{ fontSize: 12, color: 'var(--brand-600)', fontWeight: 600, textDecoration: 'none' }}>Ver tudo →</Link>
           </div>
           <AuditFeed logs={logs} />
         </div>
