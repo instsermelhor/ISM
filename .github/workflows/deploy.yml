@@ -12,11 +12,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract dist-hostinger.zip
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Extract main site from zip
         run: |
           mkdir -p dist-deploy
           unzip dist-hostinger.zip -d dist-deploy
-          rm -rf dist-deploy/dist
+          rm -rf dist-deploy/admin dist-deploy/dist
           printf '%s\n' \
             'Options -MultiViews' \
             'RewriteEngine On' \
@@ -27,13 +34,34 @@ jobs:
             '' \
             'RewriteRule ^ /index.html [QSA,L]' \
             > dist-deploy/.htaccess
-          echo "=== Files to deploy ==="
+          echo "=== Main site files ==="
           find dist-deploy -type f
 
-      - name: Install tools
+      - name: Build admin panel
+        run: |
+          cd admin
+          npm ci
+          npm run build
+
+      - name: Create admin .htaccess
+        run: |
+          printf '%s\n' \
+            'Options -MultiViews' \
+            'RewriteEngine On' \
+            '' \
+            'RewriteCond %{REQUEST_FILENAME} -f [OR]' \
+            'RewriteCond %{REQUEST_FILENAME} -d' \
+            'RewriteRule ^ - [L]' \
+            '' \
+            'RewriteRule ^ /index.html [QSA,L]' \
+            > admin/dist/.htaccess
+          echo "=== Admin panel files ==="
+          find admin/dist -type f
+
+      - name: Install deployment tools
         run: sudo apt-get install -y sshpass lftp
 
-      - name: Deploy site principal
+      - name: Deploy main site
         timeout-minutes: 5
         env:
           SFTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
@@ -45,20 +73,16 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            mirror -R --delete --exclude ^admin/ --verbose dist-deploy/ domains/institutosermelhor.org/public_html/;
+            mirror -R --delete --verbose dist-deploy/ domains/institutosermelhor.org/public_html/;
             bye
           "
           rm -f /tmp/sftp_pass.txt
 
-      - name: Deploy admin
+      - name: Deploy admin panel
         timeout-minutes: 5
         env:
           SFTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
         run: |
-          printf '%s\n' \
-            'RewriteEngine On' \
-            'RewriteRule ^$ /admin/ [R=301,L]' \
-            > /tmp/admin_root_htaccess
           echo "$SFTP_PASS" > /tmp/sftp_pass.txt
           lftp -e "
             set net:timeout 30;
@@ -66,8 +90,7 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            mirror -R --delete --verbose dist-deploy/admin/ domains/admin.institutosermelhor.org/public_html/admin/;
-            put /tmp/admin_root_htaccess -o domains/admin.institutosermelhor.org/public_html/.htaccess;
+            mirror -R --delete --verbose admin/dist/ domains/admin.institutosermelhor.org/public_html/;
             bye
           "
-          rm -f /tmp/sftp_pass.txt /tmp/admin_root_htaccess
+          rm -f /tmp/sftp_pass.txt
