@@ -25,17 +25,25 @@ jobs:
             'RewriteCond %{REQUEST_FILENAME} -d' \
             'RewriteRule ^ - [L]' \
             '' \
-            'RewriteRule ^admin(/.*)?$ /admin/index.html [QSA,L]' \
-            '' \
             'RewriteRule ^ /index.html [QSA,L]' \
             > dist-deploy/.htaccess
+          printf '%s\n' \
+            'Options -MultiViews' \
+            'RewriteEngine On' \
+            '' \
+            'RewriteCond %{REQUEST_FILENAME} -f [OR]' \
+            'RewriteCond %{REQUEST_FILENAME} -d' \
+            'RewriteRule ^ - [L]' \
+            '' \
+            'RewriteRule ^ /index.html [QSA,L]' \
+            > dist-deploy/admin/.htaccess
           echo "=== Files to deploy ==="
           find dist-deploy -type f
 
       - name: Install tools
         run: sudo apt-get install -y sshpass lftp
 
-      - name: Deploy via SFTP
+      - name: Deploy site principal
         timeout-minutes: 5
         env:
           SFTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
@@ -47,7 +55,24 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            mirror -R --delete --verbose dist-deploy/ domains/institutosermelhor.org/public_html/;
+            mirror -R --delete --exclude ^admin/ --verbose dist-deploy/ domains/institutosermelhor.org/public_html/;
+            bye
+          "
+          rm -f /tmp/sftp_pass.txt
+
+      - name: Deploy admin
+        timeout-minutes: 5
+        env:
+          SFTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
+        run: |
+          echo "$SFTP_PASS" > /tmp/sftp_pass.txt
+          lftp -e "
+            set net:timeout 30;
+            set net:max-retries 3;
+            set net:reconnect-interval-base 5;
+            set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
+            open sftp://${{ secrets.HOSTINGER_HOST }};
+            mirror -R --delete --verbose dist-deploy/admin/ domains/admin.institutosermelhor.org/public_html/;
             bye
           "
           rm -f /tmp/sftp_pass.txt
