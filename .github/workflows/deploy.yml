@@ -27,18 +27,6 @@ jobs:
             '' \
             'RewriteRule ^ /index.html [QSA,L]' \
             > dist-deploy/.htaccess
-          printf '%s\n' \
-            'Options -MultiViews' \
-            'RewriteEngine On' \
-            '' \
-            'RewriteRule ^admin/assets/(.*)$ /assets/$1 [L]' \
-            '' \
-            'RewriteCond %{REQUEST_FILENAME} -f [OR]' \
-            'RewriteCond %{REQUEST_FILENAME} -d' \
-            'RewriteRule ^ - [L]' \
-            '' \
-            'RewriteRule ^ /index.html [QSA,L]' \
-            > dist-deploy/admin/.htaccess
           echo "=== Files to deploy ==="
           find dist-deploy -type f
 
@@ -67,6 +55,10 @@ jobs:
         env:
           SFTP_PASS: ${{ secrets.HOSTINGER_PASSWORD }}
         run: |
+          printf '%s\n' \
+            'RewriteEngine On' \
+            'RewriteRule ^$ /admin/ [R=301,L]' \
+            > /tmp/admin_root_htaccess
           echo "$SFTP_PASS" > /tmp/sftp_pass.txt
           lftp -e "
             set net:timeout 30;
@@ -74,7 +66,8 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            mirror -R --delete --verbose dist-deploy/admin/ domains/admin.institutosermelhor.org/public_html/;
+            mirror -R --delete --verbose dist-deploy/admin/ domains/admin.institutosermelhor.org/public_html/admin/;
+            put /tmp/admin_root_htaccess -o domains/admin.institutosermelhor.org/public_html/.htaccess;
             bye
           "
-          rm -f /tmp/sftp_pass.txt
+          rm -f /tmp/sftp_pass.txt /tmp/admin_root_htaccess
