@@ -47,7 +47,7 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            mirror -R --delete --verbose dist-deploy/ domains/honeydew-spoonbill-451427.hostingersite.com/public_html/;
+            mirror -R --delete --verbose dist-deploy/ domains/institutosermelhor.org/public_html/;
             bye
           "
           rm -f /tmp/sftp_pass.txt
