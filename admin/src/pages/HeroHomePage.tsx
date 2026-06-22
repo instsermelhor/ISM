@@ -38,7 +38,7 @@ const DEFAULT_DATA: HeroData = {
   subtitle: 'Somos uma organização não-governamental brasileira que atua como catalisadora de transformações sociais e ambientais. Nossa história é marcada pela busca incessante de redefinir o conceito de impacto sistêmico.',
   heroImageUrl: 'https://picsum.photos/1920/1080?grayscale',
   motto: 'Sapere Aude',
-  mottoExplanation: 'Significa \'Ousa Saber\'. Reflete nosso Valor de Excelência Inflexível e a importância da Educação Transformadora, posicionando o Instituto como promotor da autossuficiência intelectual.',
+  mottoExplanation: 'Significa \'Ouse Saber\'. Reflete nosso Valor de Excelência Inflexível e a importância da Educação Transformadora, posicionando o Instituto como promotor da autossuficiência intelectual.',
   stats: [
     { id: '1', value: '15+', label: 'Anos de Impacto', icon: '🌿' },
     { id: '2', value: '1M+', label: 'Vidas Impactadas', icon: '👥' },
