@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Bell, Search, ExternalLink } from 'lucide-react';
+import { Bell, Search, ExternalLink, Radio } from 'lucide-react';
+
+// URL do site principal — definida em .env.local (dev: localhost:3000)
+const SITE_URL: string = (import.meta.env.VITE_SITE_URL as string) || 'http://localhost:3000';
+const IS_DEV = import.meta.env.DEV;
 
 const BREADCRUMB_MAP: Record<string, string> = {
   '/': 'Dashboard',
@@ -86,17 +90,40 @@ export const TopBar: React.FC<TopBarProps> = () => {
         />
       </div>
 
-      {/* View Site */}
+      {/* Environment badge */}
+      {IS_DEV && (
+        <span style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          fontSize: 10, fontWeight: 700, color: '#92400e',
+          background: '#fef3c7', border: '1px solid #fcd34d',
+          borderRadius: 6, padding: '3px 8px', letterSpacing: '0.05em',
+          textTransform: 'uppercase'
+        }}>
+          <Radio size={10} />
+          DEV
+        </span>
+      )}
+
+      {/* View Site — aponta para VITE_SITE_URL */}
       <a
-        href="https://www.institutosermelhor.org"
+        href={SITE_URL}
         target="_blank"
         rel="noreferrer"
+        title={`Abrir site principal (${SITE_URL})`}
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           fontSize: 12, fontWeight: 600, color: 'var(--brand-600)',
           textDecoration: 'none', padding: '6px 12px',
           border: '1px solid var(--brand-200)', borderRadius: 8,
-          background: 'var(--brand-50)'
+          background: 'var(--brand-50)', transition: 'all 0.15s ease'
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLAnchorElement).style.background = 'var(--brand-100)';
+          (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--brand-400)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLAnchorElement).style.background = 'var(--brand-50)';
+          (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--brand-200)';
         }}
       >
         <ExternalLink size={13} />

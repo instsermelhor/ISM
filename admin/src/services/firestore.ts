@@ -165,10 +165,19 @@ export const FirestoreService = {
     const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID ?? 'ismbd-27e84';
 
     try {
-      const [partnersSnap, donationsSnap, leadsSnap] = await Promise.all([
+      const [
+        partnersSnap, donationsSnap, leadsSnap,
+        pageSnap, valuesSnap, govSnap, tlSnap, membersSnap,
+      ] = await Promise.all([
         getCountFromServer(collection(db, 'partner_applications')),
         getCountFromServer(collection(db, 'donations')),
         getCountFromServer(collection(db, 'leads')),
+        // Coleções institucionais (lidas pelo site principal)
+        getCountFromServer(collection(db, 'institutional_page')),
+        getCountFromServer(collection(db, 'value_blocks')),
+        getCountFromServer(collection(db, 'governance_instances')),
+        getCountFromServer(collection(db, 'timeline_milestones')),
+        getCountFromServer(collection(db, 'governance_members')),
       ]);
 
       return {
@@ -176,24 +185,16 @@ export const FirestoreService = {
         projectId,
         lastSync: new Date(),
         collections: [
-          {
-            name: 'partner_applications',
-            label: 'Candidaturas de Parceria',
-            count: partnersSnap.data().count,
-            lastSync: new Date(),
-          },
-          {
-            name: 'donations',
-            label: 'Doações',
-            count: donationsSnap.data().count,
-            lastSync: new Date(),
-          },
-          {
-            name: 'leads',
-            label: 'Leads de Contato',
-            count: leadsSnap.data().count,
-            lastSync: new Date(),
-          },
+          // Coleções do site → admin
+          { name: 'partner_applications', label: 'Candidaturas de Parceria', count: partnersSnap.data().count, lastSync: new Date() },
+          { name: 'donations',            label: 'Doações',                  count: donationsSnap.data().count, lastSync: new Date() },
+          { name: 'leads',                label: 'Leads de Contato',         count: leadsSnap.data().count,     lastSync: new Date() },
+          // Coleções institucionais (admin → site)
+          { name: 'institutional_page',    label: 'Página Institucional',         count: pageSnap.data().count,    lastSync: new Date() },
+          { name: 'value_blocks',          label: 'Valores / Pilares',            count: valuesSnap.data().count,  lastSync: new Date() },
+          { name: 'governance_instances',  label: 'Instâncias de Governança',     count: govSnap.data().count,     lastSync: new Date() },
+          { name: 'timeline_milestones',   label: 'Marcos Históricos',            count: tlSnap.data().count,      lastSync: new Date() },
+          { name: 'governance_members',    label: 'Membros / Equipe',             count: membersSnap.data().count, lastSync: new Date() },
         ],
       };
     } catch {
@@ -202,9 +203,14 @@ export const FirestoreService = {
         projectId,
         lastSync: null,
         collections: [
-          { name: 'partner_applications', label: 'Candidaturas de Parceria', count: 0, lastSync: null },
-          { name: 'donations', label: 'Doações', count: 0, lastSync: null },
-          { name: 'leads', label: 'Leads de Contato', count: 0, lastSync: null },
+          { name: 'partner_applications',  label: 'Candidaturas de Parceria',     count: 0, lastSync: null },
+          { name: 'donations',             label: 'Doações',                       count: 0, lastSync: null },
+          { name: 'leads',                 label: 'Leads de Contato',             count: 0, lastSync: null },
+          { name: 'institutional_page',    label: 'Página Institucional',         count: 0, lastSync: null },
+          { name: 'value_blocks',          label: 'Valores / Pilares',            count: 0, lastSync: null },
+          { name: 'governance_instances',  label: 'Instâncias de Governança',     count: 0, lastSync: null },
+          { name: 'timeline_milestones',   label: 'Marcos Históricos',            count: 0, lastSync: null },
+          { name: 'governance_members',    label: 'Membros / Equipe',             count: 0, lastSync: null },
         ],
       };
     }
