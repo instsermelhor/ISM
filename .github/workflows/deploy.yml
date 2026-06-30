@@ -17,13 +17,18 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: admin/package-lock.json
 
-      - name: Extract main site from zip
+      - name: Build main site
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
         run: |
-          mkdir -p dist-deploy
-          unzip dist-hostinger.zip -d dist-deploy
-          rm -rf dist-deploy/admin dist-deploy/dist
+          npm ci
+          npm run build
           printf '%s\n' \
             'Options -MultiViews' \
             'RewriteEngine On' \
@@ -33,18 +38,21 @@ jobs:
             'RewriteRule ^ - [L]' \
             '' \
             'RewriteRule ^ /index.html [QSA,L]' \
-            > dist-deploy/.htaccess
-          echo "=== Main site files ==="
-          find dist-deploy -type f
+            > dist/.htaccess
 
       - name: Build admin panel
+        env:
+          VITE_SITE_URL: https://institutosermelhor.org
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
         run: |
           cd admin
           npm ci
           npm run build
-
-      - name: Create admin .htaccess
-        run: |
           printf '%s\n' \
             'Options -MultiViews' \
             'RewriteEngine On' \
@@ -54,9 +62,7 @@ jobs:
             'RewriteRule ^ - [L]' \
             '' \
             'RewriteRule ^ /index.html [QSA,L]' \
-            > admin/dist/.htaccess
-          echo "=== Admin panel files ==="
-          find admin/dist -type f
+            > dist/.htaccess
 
       - name: Install deployment tools
         run: sudo apt-get install -y sshpass lftp
@@ -73,7 +79,7 @@ jobs:
             set net:reconnect-interval-base 5;
             set sftp:connect-program 'sshpass -f /tmp/sftp_pass.txt ssh -p ${{ secrets.HOSTINGER_PORT }} -l ${{ secrets.HOSTINGER_USER }} -o StrictHostKeyChecking=no';
             open sftp://${{ secrets.HOSTINGER_HOST }};
-            mirror -R --delete --verbose dist-deploy/ domains/institutosermelhor.org/public_html/;
+            mirror -R --delete --verbose dist/ domains/institutosermelhor.org/public_html/;
             bye
           "
           rm -f /tmp/sftp_pass.txt
