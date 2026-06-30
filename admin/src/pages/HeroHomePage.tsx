@@ -234,7 +234,7 @@ export const HeroHomePage: React.FC = () => {
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
-      await InstitutionalFirestoreService.savePage({
+      const savePromise = InstitutionalFirestoreService.savePage({
         eyebrowText: data.eyebrowText,
         title: data.title,
         introduction: data.subtitle,
@@ -242,11 +242,18 @@ export const HeroHomePage: React.FC = () => {
         motto: data.motto,
         mottoExplanation: data.mottoExplanation,
       } as any);
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('TIMEOUT: Firestore não respondeu em 10s — verifique as regras do banco e a conexão')), 10000)
+      );
+
+      await Promise.race([savePromise, timeoutPromise]);
       setSavedVersion(data);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       setSaveStatus('saved');
     } catch (err) {
       console.error('[Firestore] Erro ao salvar hero:', err);
+      alert('Erro ao salvar:\n' + (err as Error).message);
       setSaveStatus('error');
     }
     setTimeout(() => setSaveStatus('idle'), 3000);
@@ -459,7 +466,7 @@ export const HeroHomePage: React.FC = () => {
                           style={inputStyle} placeholder="#donate" />
                       </div>
                       <div>
-                        <label style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 4 }}>ESTILO</label>
+                        <label style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', style: 'block', marginBottom: 4 }}>ESTILO</label>
                         <select value={btn.variant} onChange={e => updateCta(btn.id, 'variant', e.target.value as any)}
                           style={{ ...inputStyle, cursor: 'pointer' }}>
                           <option value="primary">🟢 Primário</option>
