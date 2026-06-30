@@ -3,9 +3,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── Formulários públicos ────────────────────────────────────────
-    // Qualquer visitante pode criar (submit), mas nunca ler, editar ou deletar.
-    // A leitura é feita exclusivamente via admin SDK / console Firebase.
-
     match /partner_applications/{docId} {
       allow create: if isValidPartnerApplication(request.resource.data);
       allow read, update, delete: if false;
@@ -25,6 +22,32 @@ service cloud.firestore {
     match /settings/{key} {
       allow read: if true;
       allow write: if false;
+    }
+
+    // ── CMS institucional (leitura pública, escrita só admin auth) ──
+    match /institutional_page/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /value_blocks/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /governance_instances/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /timeline_milestones/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /governance_members/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
     // ── Bloqueia tudo o mais ───────────────────────────────────────
