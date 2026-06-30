@@ -14,9 +14,9 @@ const floatingStats = [
 ];
 
 export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) => {
+  const eyebrowText = (data as any).eyebrowText || 'Desde 2007 · Transformação Social';
+
   return (
-    // FIX: min-h-screen + flex flex-col garante que os stats nunca se
-    // sobreponham ao conteúdo — eles empurram o layout para baixo naturalmente.
     <section className="relative min-h-screen w-full overflow-hidden bg-secondary-950 flex flex-col">
 
       {/* Background Image */}
@@ -50,7 +50,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) =>
         <div className="absolute top-1/3 left-1/6 w-64 h-64 bg-brand-400/6 rounded-full blur-[100px]" />
       </div>
 
-      {/* ── Conteúdo principal — ocupa espaço disponível e centraliza verticalmente ── */}
+      {/* Conteúdo principal */}
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-6 text-center sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -58,7 +58,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) =>
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-5xl w-full"
         >
-          {/* Eyebrow badge */}
+          {/* Eyebrow badge — lido do Firestore */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -67,7 +67,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) =>
           >
             <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse-slow" />
             <span className="text-brand-300 text-xs font-bold uppercase tracking-[0.2em]">
-              Desde 2007 · Transformação Social
+              {eyebrowText}
             </span>
           </motion.div>
 
@@ -126,7 +126,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) =>
         </motion.div>
       </div>
 
-      {/* ── Stats bar — parte inferior da section, NUNCA sobrepõe o conteúdo ── */}
+      {/* Stats bar */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -150,7 +150,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) =>
         </div>
       </motion.div>
 
-      {/* Scroll Indicator — hidden when stats are visible */}
+      {/* Scroll Indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
