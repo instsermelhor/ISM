@@ -26,9 +26,15 @@ const benefits = [
   },
 ];
 
-export const PartnerSection: React.FC = () => {
+export const PartnerSection: React.FC<{ servicesPage?: Record<string, any> | null }> = ({ servicesPage }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
+
+  const dynamicBenefits = servicesPage?.partnerBenefits?.length ? servicesPage.partnerBenefits : benefits;
+  const dynamicBadges: string[] = servicesPage?.trustBadges?.length ? servicesPage.trustBadges : ['ISO 9001', 'ODS ONU', 'LGPD Compliant'];
+  const title = servicesPage?.partnerTitle || null;
+  const subtitle = servicesPage?.partnerSubtitle || null;
+  const badge = servicesPage?.partnerBadge || 'Seja Parceiro';
 
   return (
     <section id="partner" className="py-24 bg-white section-pattern overflow-hidden">
@@ -45,41 +51,44 @@ export const PartnerSection: React.FC = () => {
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary-100 text-secondary-700 text-xs font-bold uppercase tracking-widest rounded-full mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-secondary-500" />
-              Seja Parceiro
+              {badge}
             </div>
 
             <h2 className="text-4xl md:text-5xl font-black text-secondary-900 mb-5 leading-tight">
-              Construa o Futuro{' '}
-              <span className="text-gradient-brand">Conosco</span>
+              {title ? title : (<>Construa o Futuro{' '}<span className="text-gradient-brand">Conosco</span></>)}
             </h2>
             <p className="text-lg text-secondary-500 mb-10 leading-relaxed">
-              Buscamos alianças estratégicas com organizações e líderes que compartilham nossa visão de excelência. Junte-se à nossa Rede de Colaboração de Elite e amplifique seu impacto ESG.
+              {subtitle || 'Buscamos alianças estratégicas com organizações e líderes que compartilham nossa visão de excelência. Junte-se à nossa Rede de Colaboração de Elite e amplifique seu impacto ESG.'}
             </p>
 
             {/* Benefits Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {benefits.map(({ Icon, title, description }, i) => (
-                <motion.div
-                  key={title}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
-                  className="flex gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-all duration-200 group"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-secondary-600 group-hover:bg-brand-600 group-hover:text-white group-hover:border-brand-600 transition-all duration-200 shrink-0 shadow-sm">
-                    <Icon size={18} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-secondary-900 text-sm mb-1">{title}</h4>
-                    <p className="text-xs text-secondary-400 leading-relaxed">{description}</p>
-                  </div>
-                </motion.div>
-              ))}
+              {(dynamicBenefits as any[]).map((b: any, i: number) => {
+                const Icon = b.Icon || Building2;
+                const emoji = b.icon;
+                return (
+                  <motion.div
+                    key={b.id || b.title}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
+                    className="flex gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-brand-200 hover:bg-brand-50/30 transition-all duration-200 group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-secondary-600 group-hover:bg-brand-600 group-hover:text-white group-hover:border-brand-600 transition-all duration-200 shrink-0 shadow-sm">
+                      {emoji ? <span className="text-xl">{emoji}</span> : <Icon size={18} />}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-secondary-900 text-sm mb-1">{b.title}</h4>
+                      <p className="text-xs text-secondary-400 leading-relaxed">{b.description}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Trust badges */}
             <div className="mt-10 flex items-center gap-4 flex-wrap">
-              {['ISO 9001', 'ODS ONU', 'LGPD Compliant'].map((badge) => (
+              {dynamicBadges.map((badge: string) => (
                 <span
                   key={badge}
                   className="px-3 py-1.5 rounded-full border border-secondary-200 text-secondary-500 text-xs font-bold uppercase tracking-wider"

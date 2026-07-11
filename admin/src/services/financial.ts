@@ -242,6 +242,38 @@ const buildSummary = (donations: Donation[]): FinancialSummary => {
 // ── EXPORTED SERVICES ───────────────────────────────────────────
 export const FinancialService = {
   getSummary: async (): Promise<FinancialSummary> => {
+    try {
+      const { FirestoreService } = await import('./firestore');
+      const firestoreDonations = await FirestoreService.getDonations();
+
+      if (firestoreDonations && firestoreDonations.length > 0) {
+        // Map Firestore donation records to the Donation shape expected by buildSummary
+        const mapped: Donation[] = firestoreDonations.map((d: any) => {
+          const dt = d.createdAt?.toDate?.()?.toISOString?.() || d.createdAt || new Date().toISOString();
+          return {
+            id: d.id,
+            amount: Number(d.amount || d.donationAmount || 0),
+            status: ((d.status === 'CONFIRMED' || d.status === 'PENDING' || d.status === 'FAILED') ? d.status : 'CONFIRMED') as DonationStatus,
+            recurrence: (d.recurrence || d.type === 'monthly' ? 'MONTHLY' : 'SINGLE') as RecurrenceType,
+            method: (d.method || d.paymentMethod || 'PIX') as DonationMethod,
+            currency: 'BRL',
+            createdAt: dt,
+            updatedAt: dt,
+            donor: {
+              id: d.donorId || d.id,
+              name: d.donorName || d.name || 'Anônimo',
+              email: d.donorEmail || d.email || '',
+              avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(d.donorName || 'A')}`,
+              tier: 'SUPPORTER' as DonorTier,
+              isAnonymous: Boolean(d.isAnonymous),
+            },
+          };
+        });
+        return buildSummary([...mapped, ...MOCK_DONATIONS]);
+      }
+    } catch (err) {
+      console.error('[FinancialService] Erro ao carregar resumo do Firestore:', err);
+    }
     await delay(700);
     return buildSummary(MOCK_DONATIONS);
   },
@@ -250,6 +282,47 @@ export const FinancialService = {
     status?: string; method?: string; search?: string;
     dateFrom?: string; dateTo?: string; page?: number;
   }): Promise<{ data: Donation[]; total: number }> => {
+    try {
+      const { FirestoreService } = await import('./firestore');
+      const firestoreDonations = await FirestoreService.getDonations();
+
+      if (firestoreDonations && firestoreDonations.length > 0) {
+        let data: Donation[] = firestoreDonations.map((d: any) => {
+          const dt = d.createdAt?.toDate?.()?.toISOString?.() || d.createdAt || new Date().toISOString();
+          return {
+            id: d.id,
+            amount: Number(d.amount || d.donationAmount || 0),
+            status: (['CONFIRMED', 'PENDING', 'FAILED', 'REFUNDED', 'CHARGEBACK'].includes(d.status) ? d.status : 'CONFIRMED') as DonationStatus,
+            recurrence: (d.type === 'monthly' ? 'MONTHLY' : 'SINGLE') as RecurrenceType,
+            method: (d.method || d.paymentMethod || 'PIX') as DonationMethod,
+            currency: 'BRL',
+            createdAt: dt,
+            updatedAt: dt,
+            donor: {
+              id: d.donorId || d.id,
+              name: d.donorName || d.name || 'Anônimo',
+              email: d.donorEmail || d.email || '',
+              avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(d.donorName || 'A')}&backgroundColor=16a34a&textColor=ffffff`,
+              tier: 'SUPPORTER' as DonorTier,
+              isAnonymous: Boolean(d.isAnonymous),
+            },
+          };
+        });
+
+        if (filters?.status) data = data.filter(d => d.status === filters.status);
+        if (filters?.method) data = data.filter(d => d.method === filters.method);
+        if (filters?.search) {
+          const q = filters.search.toLowerCase();
+          data = data.filter(d => d.donor.name.toLowerCase().includes(q) || d.donor.email.toLowerCase().includes(q) || d.id.includes(q));
+        }
+        const page = filters?.page ?? 1;
+        const perPage = 20;
+        return { data: data.slice((page - 1) * perPage, page * perPage), total: data.length };
+      }
+    } catch (err) {
+      console.error('[FinancialService] Erro ao carregar doações do Firestore:', err);
+    }
+
     await delay(500);
     let data = [...MOCK_DONATIONS];
     if (filters?.status) data = data.filter(d => d.status === filters.status);

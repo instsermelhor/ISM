@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Save, RotateCcw, Plus, Trash2, MoveUp, MoveDown, CheckCircle, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
+import { ImageUploadInput } from '../components/ui/ImageUploadInput';
 import { InstitutionalFirestoreService } from '../services/institutional';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -373,21 +374,15 @@ export const HeroHomePage: React.FC = () => {
             </Card>
 
             <Card>
-              <SectionHeader icon={<span style={{ fontSize: 18 }}>🖼️</span>} title="Imagem de Fundo do Hero" description="URL da imagem principal (recomendado: 1920×1080px)" />
-              <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <Field label="URL da Imagem">
-                  <input value={data.heroImageUrl} onChange={e => set('heroImageUrl', e.target.value)}
-                    style={inputStyle} placeholder="https://..." />
-                </Field>
-                {data.heroImageUrl && (
-                  <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb', position: 'relative' }}>
-                    <img src={data.heroImageUrl} alt="Preview" style={{ width: '100%', height: 160, objectFit: 'cover' }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))', display: 'flex', alignItems: 'flex-end', padding: 12 }}>
-                      <span style={{ color: 'white', fontSize: 11, fontWeight: 600 }}>✅ Imagem carregada</span>
-                    </div>
-                  </div>
-                )}
+              <SectionHeader icon={<span style={{ fontSize: 18 }}>🖼️</span>} title="Imagem de Fundo do Hero" description="Imagem principal (recomendado: 1920×1080px)" />
+              <div style={{ padding: 24 }}>
+                <ImageUploadInput
+                  value={data.heroImageUrl}
+                  onChange={v => set('heroImageUrl', v)}
+                  folder="hero"
+                  previewHeight={160}
+                  placeholder="https://... (1920×1080px recomendado)"
+                />
               </div>
             </Card>
 
@@ -466,7 +461,7 @@ export const HeroHomePage: React.FC = () => {
                           style={inputStyle} placeholder="#donate" />
                       </div>
                       <div>
-                        <label style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', style: 'block', marginBottom: 4 }}>ESTILO</label>
+                        <label style={{ fontSize: 10, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 4 }}>ESTILO</label>
                         <select value={btn.variant} onChange={e => updateCta(btn.id, 'variant', e.target.value as any)}
                           style={{ ...inputStyle, cursor: 'pointer' }}>
                           <option value="primary">🟢 Primário</option>
@@ -579,11 +574,15 @@ export const HeroHomePage: React.FC = () => {
                     <span style={{ fontSize: 11, color: data.metaDescription.length > 160 ? '#ef4444' : data.metaDescription.length > 150 ? '#f59e0b' : '#16a34a', fontWeight: 600 }}>{data.metaDescription.length} chars</span>
                   </div>
                 </Field>
-                <Field label="Imagem Open Graph (og:image)" hint="Para compartilhamento em redes sociais">
-                  <input value={data.ogImage} onChange={e => set('ogImage', e.target.value)}
-                    style={inputStyle} placeholder="https://institutosermelhor.org/og-image.jpg" />
-                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Recomendado: 1200×630px • Formato: JPG/PNG</div>
-                </Field>
+                <ImageUploadInput
+                  value={data.ogImage}
+                  onChange={v => set('ogImage', v)}
+                  label="Imagem Open Graph (og:image)"
+                  hint="Para compartilhamento em redes sociais — 1200×630px"
+                  folder="seo"
+                  previewHeight={80}
+                  placeholder="https://institutosermelhor.org/og-image.jpg"
+                />
               </div>
             </Card>
           </>}

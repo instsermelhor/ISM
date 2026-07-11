@@ -141,5 +141,27 @@ export interface AppData {
   timelineMilestones: StrapiItem<TimelineMilestoneAttributes>[];
   governanceMembers: StrapiItem<GovernanceMemberAttributes>[];
   financials: FinancialEntry[];
+  programs: ProgramData[];
   // Removed standalone transparencyDocuments as they are now part of 'page'
+}
+
+// ── Programas & Serviços (publicados pelo Admin Panel) ─────────────────────
+export interface ProgramData {
+  id: string;
+  order: number;
+  title: string;
+  slug: string;
+  description: string;
+  longDescription: string;
+  iconEmoji: string;
+  imageUrl: string;
+  isPublished: boolean;
+  targetAudience: string;
+  tags: string[];
+  ctaLabel: string;
+  ctaUrl: string;
+  impactMetric: string;
+  impactValue: string;
+  linkUrl: string;
+  linkLabel: string;
 }

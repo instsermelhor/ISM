@@ -13,6 +13,7 @@ import { GovernanceStructure } from './components/sections/GovernanceStructure';
 import { TransparencyReport } from './components/sections/TransparencyReport';
 import { PartnerSection } from './components/sections/PartnerSection';
 import { DonationSection } from './components/sections/DonationSection';
+import { ProgramsSection } from './components/sections/ProgramsSection';
 
 // UI & Legal
 import { Modal } from './components/ui/Modal';
@@ -64,6 +65,7 @@ const ErrorScreen = ({ onRetry }: { onRetry: () => void }) => (
 
 function App() {
   const [data, setData] = useState<AppData | null>(null);
+  const [servicesPage, setServicesPage] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState(false);
 
   // Modal State
@@ -78,14 +80,20 @@ function App() {
         valuesRes, 
         governanceInstRes, 
         timelineRes, 
-        membersRes
+        membersRes,
+        programsRes,
+        servicesPageRes
       ] = await Promise.all([
         InstitutionalService.getPage(),
         InstitutionalService.getValueBlocks(),
         InstitutionalService.getGovernanceInstances(),
         InstitutionalService.getTimelineMilestones(),
-        InstitutionalService.getGovernanceMembers()
+        InstitutionalService.getGovernanceMembers(),
+        InstitutionalService.getPrograms(),
+        InstitutionalService.getServicesPage(),
       ]);
+
+      setServicesPage(servicesPageRes);
 
       setData({
         page: pageRes.data,
@@ -93,11 +101,14 @@ function App() {
         governanceInstances: governanceInstRes.data,
         timelineMilestones: timelineRes.data,
         governanceMembers: membersRes.data,
-        financials: [ 
-           { id: 1, name: 'Programas', value: 75, color: '#16a34a' },
-           { id: 2, name: 'Admin', value: 15, color: '#1e293b' },
-           { id: 3, name: 'Captação', value: 10, color: '#94a3b8' }
-        ]
+        programs: programsRes,
+        financials: servicesPageRes?.financialSlices?.length
+          ? servicesPageRes.financialSlices.map((s: any, i: number) => ({ id: i + 1, name: s.name, value: Number(s.value), color: s.color }))
+          : [
+              { id: 1, name: 'Programas', value: 75, color: '#16a34a' },
+              { id: 2, name: 'Admin', value: 15, color: '#1e293b' },
+              { id: 3, name: 'Captação', value: 10, color: '#94a3b8' },
+            ]
       });
     } catch (error) {
       console.error("Failed to fetch institutional data", error);
@@ -126,19 +137,22 @@ function App() {
         <HeroInstitutional data={data.page.attributes} />
         <MissionVisionValues data={data.page.attributes} />
         <ValuesSection values={data.valueBlocks} />
+        <ProgramsSection programs={data.programs} servicesPage={servicesPage} />
         <TimelineSection milestones={data.timelineMilestones} />
-        <IdentityAndNetwork pageData={data.page.attributes} />
+        <IdentityAndNetwork pageData={data.page.attributes} networkCards={servicesPage?.networkCards} />
         <GovernanceStructure 
           intro={data.page.attributes.governanceIntro}
           instances={data.governanceInstances}
           members={data.governanceMembers} 
         />
         <TransparencyReport 
-          intro={data.page.attributes.transparencyIntro}
-          documents={data.page.attributes.transparencyDocuments} 
-          financials={data.financials} 
+          intro={servicesPage?.transparencyIntro || data.page.attributes.transparencyIntro}
+          documents={servicesPage?.transparencyDocuments?.length ? servicesPage.transparencyDocuments : data.page.attributes.transparencyDocuments} 
+          financials={data.financials}
+          efficiencyPct={servicesPage?.efficiencyPct}
+          integrityPillars={servicesPage?.integrityPillars}
         />
-        <PartnerSection />
+        <PartnerSection servicesPage={servicesPage} />
         <DonationSection />
       </InstitutionalWrapper>
 

@@ -5,10 +5,21 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { DocumentCard } from '../ui/DocumentCard';
 import { motion, useInView } from 'framer-motion';
 
+interface IntegrityPillar {
+  id?: string;
+  icon?: string;
+  title: string;
+  body: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
 interface Props {
   documents: TransparencyDocument[];
   financials: FinancialEntry[];
   intro: string;
+  efficiencyPct?: number;
+  integrityPillars?: IntegrityPillar[];
 }
 
 const integrityPillars = [
@@ -44,7 +55,9 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-export const TransparencyReport: React.FC<Props> = ({ documents, financials, intro }) => {
+export const TransparencyReport: React.FC<Props> = ({ documents, financials, intro, efficiencyPct, integrityPillars: dynamicPillars }) => {
+  const pillarsToRender = (dynamicPillars && dynamicPillars.length > 0) ? dynamicPillars : integrityPillars;
+  const effPct = efficiencyPct !== undefined ? efficiencyPct : 90;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
@@ -138,7 +151,7 @@ export const TransparencyReport: React.FC<Props> = ({ documents, financials, int
             </div>
             <div className="mt-4 text-center border-t border-secondary-800 pt-4">
               <p className="text-secondary-300 text-sm">
-                <span className="text-brand-400 font-black text-3xl">90%</span> de Eficiência Operacional
+                <span className="text-brand-400 font-black text-3xl">{effPct}%</span> de Eficiência Operacional
               </p>
               <p className="text-xs text-secondary-500 mt-1">Recursos destinados diretamente à atividade-fim.</p>
             </div>
@@ -173,32 +186,37 @@ export const TransparencyReport: React.FC<Props> = ({ documents, financials, int
 
         {/* Row 2: Integrity Pillars */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {integrityPillars.map(({ Icon, title, body, cta }, i) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 24 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: 0.2 + i * 0.1 }}
-              className="bg-gradient-to-br from-secondary-800/60 to-secondary-900/60 p-7 rounded-3xl border border-secondary-800 hover:border-brand-500/30 transition-all duration-300 group backdrop-blur-sm"
-            >
-              <div className="w-11 h-11 bg-secondary-700 rounded-xl flex items-center justify-center mb-5 text-brand-400 group-hover:bg-brand-600 group-hover:text-white transition-all duration-250">
-                <Icon size={22} />
-              </div>
-              <h4 className="text-base font-bold text-white mb-3">{title}</h4>
-              <p className="text-secondary-400 text-sm leading-relaxed mb-4"
-                dangerouslySetInnerHTML={{ __html: body.replace(/LGPD|GDPR/g, '<strong class="text-secondary-200">$&</strong>').replace(/voluntário/g, '<strong class="text-secondary-200">$&</strong>') }}
-              />
-              {cta && (
-                <a
-                  href={cta.href}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-400 hover:text-white uppercase tracking-wider transition-colors group/link"
-                >
-                  {cta.label}
-                  <ExternalLink size={10} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
-                </a>
-              )}
-            </motion.div>
-          ))}
+          {(pillarsToRender as any[]).map((pillar: any, i: number) => {
+            const Icon = pillar.Icon || ShieldCheck;
+            const title = pillar.title;
+            const body = pillar.body;
+            const cta = pillar.cta || (pillar.ctaLabel ? { label: pillar.ctaLabel, href: pillar.ctaHref || '#' } : null);
+            const emoji = pillar.icon;
+            return (
+              <motion.div
+                key={pillar.id || title}
+                initial={{ opacity: 0, y: 24 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.2 + i * 0.1 }}
+                className="bg-gradient-to-br from-secondary-800/60 to-secondary-900/60 p-7 rounded-3xl border border-secondary-800 hover:border-brand-500/30 transition-all duration-300 group backdrop-blur-sm"
+              >
+                <div className="w-11 h-11 bg-secondary-700 rounded-xl flex items-center justify-center mb-5 text-brand-400 group-hover:bg-brand-600 group-hover:text-white transition-all duration-250">
+                  {emoji ? <span className="text-xl">{emoji}</span> : <Icon size={22} />}
+                </div>
+                <h4 className="text-base font-bold text-white mb-3">{title}</h4>
+                <p className="text-secondary-400 text-sm leading-relaxed mb-4">{body}</p>
+                {cta && (
+                  <a
+                    href={cta.href}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-400 hover:text-white uppercase tracking-wider transition-colors group/link"
+                  >
+                    {cta.label}
+                    <ExternalLink size={10} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
+                  </a>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
 
       </div>

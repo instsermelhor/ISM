@@ -26,7 +26,8 @@ import {
   GovernanceMemberAttributes,
   PartnerApplicationPayload,
   DonationPayload,
-  TransparencyDocument
+  TransparencyDocument,
+  ProgramData
 } from '../types';
 import {
   collection, addDoc, getDoc, getDocs,
@@ -248,7 +249,43 @@ export const InstitutionalService = {
     }
   },
 
-  // ── Formulários — gravados pelo site, lidos pelo admin ──────────────────
+  // ── Programas / Serviços (publicados pelo Admin) ────────────────────────
+
+  /** Retorna todos os programas cadastrados no Admin */
+  getPrograms: async (): Promise<ProgramData[]> => {
+    const mockPrograms: ProgramData[] = [
+      { id: '1', order: 1, title: 'Educação Transformadora', slug: 'educacao-transformadora', description: 'Programa de desenvolvimento de líderes comunitários com metodologia baseada em evidências.', longDescription: '', iconEmoji: '📚', imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80', isPublished: true, targetAudience: 'Jovens de 16 a 29 anos', tags: ['Educação', 'Jovens'], ctaLabel: 'Saiba Mais', ctaUrl: '#', impactMetric: 'Jovens Capacitados', impactValue: '50.000+', linkUrl: '', linkLabel: '' },
+      { id: '2', order: 2, title: 'Proteção de Biomas', slug: 'protecao-biomas', description: 'Monitoramento e recuperação de biomas ameaçados com tecnologia de satélite.', longDescription: '', iconEmoji: '🌿', imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80', isPublished: true, targetAudience: 'Comunidades ribeirinhas', tags: ['Meio Ambiente'], ctaLabel: 'Ver Relatório', ctaUrl: '#', impactMetric: 'Hectares Recuperados', impactValue: '120.000', linkUrl: '', linkLabel: '' },
+      { id: '3', order: 3, title: 'Saúde & Bem-Estar Comunitário', slug: 'saude-comunidade', description: 'Clínicas móveis e campanhas de prevenção em regiões sem cobertura de saúde pública.', longDescription: '', iconEmoji: '❤️', imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80', isPublished: true, targetAudience: 'Famílias em regiões de baixo IDH', tags: ['Saúde'], ctaLabel: 'Conhecer Programa', ctaUrl: '#', impactMetric: 'Atendimentos/ano', impactValue: '200.000', linkUrl: '', linkLabel: '' },
+    ];
+    if (!FIREBASE_ENABLED) return mockPrograms;
+    try {
+      const q = query(collection(db, 'programs'), orderBy('order'));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as ProgramData));
+      }
+      return mockPrograms;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar programs:', err);
+      return mockPrograms;
+    }
+  },
+
+  /** Retorna configuração da página de serviços (transparência, parcerias, etc.) */
+  getServicesPage: async (): Promise<Record<string, any> | null> => {
+    if (!FIREBASE_ENABLED) return null;
+    try {
+      const snap = await getDoc(doc(db, 'services_page', 'main'));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar services_page:', err);
+      return null;
+    }
+  },
+
+
+
 
   /** Submissão de candidatura de parceria */
   submitPartnerApplication: async (data: PartnerApplicationPayload): Promise<{ success: boolean; id: string }> => {

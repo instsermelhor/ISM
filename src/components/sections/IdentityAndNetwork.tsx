@@ -7,6 +7,7 @@ import { motion, useInView } from 'framer-motion';
 
 interface Props {
   pageData: InstitutionalPageAttributes;
+  networkCards?: { id?: string; icon: string; title: string; description: string }[] | null;
 }
 
 const networkCards = [
@@ -30,11 +31,12 @@ const networkCards = [
   },
 ];
 
-export const IdentityAndNetwork: React.FC<Props> = ({ pageData }) => {
+export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dynamicCards }) => {
   const networkRef = useRef(null);
   const symbolRef = useRef(null);
   const networkInView = useInView(networkRef, { once: true, margin: '-80px' });
   const symbolInView = useInView(symbolRef, { once: true, margin: '-80px' });
+  const cardsToRender = (dynamicCards && dynamicCards.length > 0) ? dynamicCards : networkCards;
 
   return (
     <section id="identity" className="bg-white">
@@ -70,21 +72,25 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData }) => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {networkCards.map(({ Icon, title, description }, i) => (
-              <motion.div
-                key={title}
-                initial={{ opacity: 0, y: 24 }}
-                animate={networkInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, delay: 0.1 + i * 0.12 }}
-                className="glass rounded-2xl p-8 hover:border-brand-500/40 hover:bg-white/10 transition-all duration-300 group"
-              >
-                <div className="w-12 h-12 rounded-xl bg-brand-600/15 border border-brand-500/20 text-brand-400 flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white group-hover:border-brand-600 transition-all duration-250">
-                  <Icon size={22} />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-3">{title}</h3>
-                <p className="text-secondary-400 text-sm leading-relaxed">{description}</p>
-              </motion.div>
-            ))}
+            {(cardsToRender as any[]).map((card: any, i: number) => {
+              const Icon = card.Icon || Globe;
+              const emoji = card.icon;
+              return (
+                <motion.div
+                  key={card.id || card.title}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={networkInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.6, delay: 0.1 + i * 0.12 }}
+                  className="glass rounded-2xl p-8 hover:border-brand-500/40 hover:bg-white/10 transition-all duration-300 group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-brand-600/15 border border-brand-500/20 text-brand-400 flex items-center justify-center mb-6 group-hover:bg-brand-600 group-hover:text-white group-hover:border-brand-600 transition-all duration-250">
+                    {emoji ? <span className="text-2xl">{emoji}</span> : <Icon size={22} />}
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-3">{card.title}</h3>
+                  <p className="text-secondary-400 text-sm leading-relaxed">{card.description}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>

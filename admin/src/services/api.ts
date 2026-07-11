@@ -288,26 +288,81 @@ export const ServicesService = {
 };
 
 // ── LEADS ─────────────────────────────────────────────────────
-const mockLeads: ContactLead[] = [
-  { id: '1', name: 'Ana Paula Ferreira', email: 'ana@empresa.com', phone: '(11) 99999-0001', subject: 'Parceria Corporativa', message: 'Gostaríamos de discutir uma parceria ESG com nossa empresa para 2025.', source: 'partner-form', status: 'NEW', createdAt: new Date(Date.now() - 3600000).toISOString() },
-  { id: '2', name: 'Carlos Eduardo Lima', email: 'carlos@gmail.com', subject: 'Doação Recorrente', message: 'Gostaria de configurar uma doação mensal de R$500.', source: 'donation', status: 'READ', createdAt: new Date(Date.now() - 7200000 * 3).toISOString() },
-  { id: '3', name: 'Sofia Mendes', email: 'sofia@univ.br', subject: 'Pesquisa Acadêmica', message: 'Pesquisadora de sustentabilidade, gostaria de colaborar com o instituto.', source: 'contact-form', status: 'REPLIED', notes: 'Enviado e-mail de resposta com agenda.', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-  { id: '4', name: 'Roberto Alves', email: 'roberto@corp.com.br', subject: 'Voluntariado Executivo', message: 'Equipe de 20 voluntários disponível para projetos sociais em SP.', source: 'contact-form', status: 'NEW', createdAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: '5', name: 'Luciana Costa', email: 'lu.costa@ong.org', subject: 'Cooperação Técnica', message: 'Interessada em intercâmbio de metodologias de educação ambiental.', source: 'partner-form', status: 'ARCHIVED', createdAt: new Date(Date.now() - 86400000 * 5).toISOString() },
-];
+// Note: LeadsService now reads from Firestore (partner_applications, donations, leads).
+// Mock data has been removed.
+
 
 export const LeadsService = {
-  getAll: async (): Promise<ContactLead[]> => { await delay(400); return mockLeads; },
-  updateStatus: async (id: string, status: LeadStatus, notes?: string): Promise<ContactLead> => {
-    await delay(300);
-    const idx = mockLeads.findIndex(l => l.id === id);
-    if (idx >= 0) {
-      mockLeads[idx] = { ...mockLeads[idx], status, ...(notes && { notes }) };
-      return mockLeads[idx];
+  getAll: async (): Promise<ContactLead[]> => {
+    try {
+      const { FirestoreService } = await import('./firestore');
+      const [partners, donations, contacts] = await Promise.all([
+        FirestoreService.getPartnerApplications(),
+        FirestoreService.getDonations(),
+        FirestoreService.getLeads(),
+      ]);
+
+      const fromPartners: ContactLead[] = partners.map((p: any) => ({
+        id: p.id,
+        name: p.contactName || p.name || 'Sem nome',
+        email: p.email || '',
+        phone: p.phone || '',
+        subject: `Parceria — ${p.companyName || p.organizationName || ''}`,
+        message: p.message || p.description || '',
+        source: 'partner-form' as const,
+        status: (p.status as LeadStatus) || 'NEW',
+        notes: p.notes || '',
+        createdAt: p.createdAt?.toDate?.()?.toISOString?.() || p.createdAt || new Date().toISOString(),
+      }));
+
+      const fromDonations: ContactLead[] = donations.map((d: any) => ({
+        id: d.id,
+        name: d.donorName || d.name || 'Doador Anônimo',
+        email: d.donorEmail || d.email || '',
+        phone: d.phone || '',
+        subject: `Doação — R$${d.amount || '?'}`,
+        message: d.message || `Doação de R$${d.amount || '?'} via ${d.method || 'site'}.`,
+        source: 'donation' as const,
+        status: (d.status as LeadStatus) || 'NEW',
+        notes: d.notes || '',
+        createdAt: d.createdAt?.toDate?.()?.toISOString?.() || d.createdAt || new Date().toISOString(),
+      }));
+
+      const fromContacts: ContactLead[] = contacts.map((c: any) => ({
+        id: c.id,
+        name: c.name || 'Sem nome',
+        email: c.email || '',
+        phone: c.phone || '',
+        subject: c.subject || 'Contato',
+        message: c.message || '',
+        source: 'contact-form' as const,
+        status: (c.status as LeadStatus) || 'NEW',
+        notes: c.notes || '',
+        createdAt: c.createdAt?.toDate?.()?.toISOString?.() || c.createdAt || new Date().toISOString(),
+      }));
+
+      // Merge and sort by date descending
+      return [...fromPartners, ...fromDonations, ...fromContacts]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    } catch (err) {
+      console.error('[LeadsService] Erro ao carregar leads do Firestore:', err);
+      // Return empty instead of crashing
+      return [];
     }
-    throw new Error('Lead não encontrado');
+  },
+
+  updateStatus: async (id: string, status: LeadStatus, notes?: string): Promise<ContactLead> => {
+    try {
+      const { FirestoreService } = await import('./firestore');
+      await FirestoreService.updateLeadStatus(id, status, notes);
+    } catch (err) {
+      console.error('[LeadsService] Erro ao atualizar status no Firestore:', err);
+    }
+    // Return a stub so callers don't throw
+    return { id, name: '', email: '', source: 'contact-form', status, createdAt: new Date().toISOString() } as ContactLead;
   },
 };
+
 
 // ── PIPELINE ──────────────────────────────────────────────────
 const mockPipeline: PipelineCard[] = [

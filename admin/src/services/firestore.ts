@@ -226,4 +226,31 @@ export const FirestoreService = {
     });
     return ref.id;
   },
+
+  /**
+   * Atualiza o status de uma candidatura de parceria
+   */
+  async updatePartnerApplicationStatus(id: string, status: string): Promise<void> {
+    const { doc, updateDoc } = await import('firebase/firestore');
+    await updateDoc(doc(db, 'partner_applications', id), { status });
+  },
+
+  /**
+   * Remove uma candidatura de parceria
+   */
+  async deletePartnerApplication(id: string): Promise<void> {
+    const { doc, deleteDoc } = await import('firebase/firestore');
+    await deleteDoc(doc(db, 'partner_applications', id));
+  },
+
+  /**
+   * Atualiza o status/notas de um lead
+   */
+  async updateLeadStatus(id: string, status: string, notes?: string): Promise<void> {
+    const { doc, updateDoc } = await import('firebase/firestore');
+    const updateData: Record<string, any> = { status };
+    if (notes !== undefined) updateData.notes = notes;
+    await updateDoc(doc(db, 'leads', id), { ...updateData });
+  },
 };
+

@@ -21,7 +21,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'O Que Fazemos',
     subItems: [
       { label: 'Nossos Princípios', href: '#values' },
-      { label: 'Projetos em Campo', href: '#' },
+      { label: 'Projetos em Campo', href: '#programs' },
       { label: 'Notícias', href: '#' },
     ]
   },

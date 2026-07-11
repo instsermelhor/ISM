@@ -4,6 +4,8 @@ import {
   CheckCircle, Eye, EyeOff, ChevronDown, ChevronUp, UserCircle2
 } from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
+import { ImageUploadInput } from '../components/ui/ImageUploadInput';
+import { InstitutionalFirestoreService } from '../services/institutional';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ValueBlock { id: string; name: string; iconIdentifier: string; description: string; }
@@ -223,27 +225,130 @@ const AboutPreview: React.FC<{ data: AboutData }> = ({ data }) => (
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export const AboutTeamPage: React.FC = () => {
-  const [data, setData] = useState<AboutData>(() => {
-    try { const s = localStorage.getItem(STORAGE_KEY); return s ? { ...DEFAULT, ...JSON.parse(s) } : DEFAULT; }
-    catch { return DEFAULT; }
-  });
-  const [savedVersion, setSavedVersion] = useState<AboutData>(data);
+  const [data, setData] = useState<AboutData>(DEFAULT);
+  const [savedVersion, setSavedVersion] = useState<AboutData>(DEFAULT);
+  const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState<'identity' | 'values' | 'timeline' | 'network' | 'governance' | 'team'>('identity');
   const isDirty = JSON.stringify(data) !== JSON.stringify(savedVersion);
 
-  useEffect(() => { const t = setTimeout(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(data)), 700); return () => clearTimeout(t); }, [data]);
+  // ── Load from Firestore on mount ────────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [page, valueBlocks, milestones, govInstances, govMembers] = await Promise.all([
+          InstitutionalFirestoreService.getPage(),
+          InstitutionalFirestoreService.getValueBlocks(),
+          InstitutionalFirestoreService.getTimelineMilestones(),
+          InstitutionalFirestoreService.getGovernanceInstances(),
+          InstitutionalFirestoreService.getGovernanceMembers(),
+        ]);
+
+        const merged: AboutData = {
+          ...DEFAULT,
+          missionStatement: page?.missionStatement || DEFAULT.missionStatement,
+          visionStatement: page?.visionStatement || DEFAULT.visionStatement,
+          governanceIntro: page?.governanceIntro || DEFAULT.governanceIntro,
+          networkIntro: page?.networkIntro || DEFAULT.networkIntro,
+          networkCards: (page as any)?.networkCards || DEFAULT.networkCards,
+          logoImage: page?.logoImage || DEFAULT.logoImage,
+          logoExplanation: page?.logoExplanation || DEFAULT.logoExplanation,
+          aboutImage: page?.heroImage || DEFAULT.aboutImage,
+          valueBlocks: valueBlocks.length > 0
+            ? (valueBlocks as ValueBlock[])
+            : DEFAULT.valueBlocks,
+          timelineMilestones: milestones.length > 0
+            ? (milestones as TimelineMilestone[])
+            : DEFAULT.timelineMilestones,
+          governanceInstances: govInstances.length > 0
+            ? (govInstances as GovernanceInstance[])
+            : DEFAULT.governanceInstances,
+          teamMembers: govMembers.length > 0
+            ? govMembers.map(m => ({ ...m, id: m.id ?? Date.now().toString(), type: (m.type === 'advisory' ? 'advisor' : m.type) as 'board' | 'executive' | 'advisor' }))
+            : DEFAULT.teamMembers,
+        };
+
+        setData(merged);
+        setSavedVersion(merged);
+      } catch (err) {
+        console.error('[AboutTeamPage] Erro ao carregar do Firestore:', err);
+        // fallback to localStorage
+        try {
+          const s = localStorage.getItem(STORAGE_KEY);
+          if (s) { const parsed = { ...DEFAULT, ...JSON.parse(s) }; setData(parsed); setSavedVersion(parsed); }
+        } catch { /* ignore */ }
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  // ── Debounced localStorage backup ───────────────────────────────────────────
+  useEffect(() => {
+    if (loading) return;
+    const t = setTimeout(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(data)), 700);
+    return () => clearTimeout(t);
+  }, [data, loading]);
 
   const set = <K extends keyof AboutData>(key: K, val: AboutData[K]) => setData(p => ({ ...p, [key]: val }));
 
+
+
   const handleSave = async () => {
     setSaveStatus('saving');
-    await new Promise(r => setTimeout(r, 900));
-    setSavedVersion(data);
-    setSaveStatus('saved');
+    try {
+      // Salva no Firestore (dados institucionais lidos pelo site)
+      await InstitutionalFirestoreService.savePage({
+        missionStatement: data.missionStatement,
+        visionStatement: data.visionStatement,
+        governanceIntro: data.governanceIntro,
+        networkIntro: data.networkIntro,
+        networkCards: data.networkCards,
+        logoImage: data.logoImage,
+        logoExplanation: data.logoExplanation,
+        heroImage: data.aboutImage,
+      } as any);
+      // Salva membros da equipe
+      for (const m of data.teamMembers) {
+        await InstitutionalFirestoreService.saveGovernanceMember({
+          id: m.id, name: m.name, role: m.role,
+          type: m.type as 'board' | 'executive' | 'advisory',
+          bio: m.bio, imageUrl: m.imageUrl,
+        });
+      }
+      // Salva instâncias de governança
+      for (const g of data.governanceInstances) {
+        await InstitutionalFirestoreService.saveGovernanceInstance({
+          id: g.id, order: g.order, title: g.title,
+          summary: g.summary, keyAttributes: g.keyAttributes,
+        });
+      }
+      // Salva marcos históricos
+      for (const t of data.timelineMilestones) {
+        await InstitutionalFirestoreService.saveTimelineMilestone({
+          id: t.id, year: t.year, title: t.title,
+          impactDescription: t.impactDescription,
+        });
+      }
+      // Salva blocos de valor
+      for (const v of data.valueBlocks) {
+        await InstitutionalFirestoreService.saveValueBlock({
+          id: v.id, name: v.name, iconIdentifier: v.iconIdentifier,
+          description: v.description,
+        });
+      }
+      setSavedVersion(data);
+      setSaveStatus('saved');
+    } catch (err) {
+      console.error('[AboutTeamPage] Erro ao salvar no Firestore:', err);
+      setSaveStatus('idle');
+      alert('Erro ao salvar. Verifique sua conexão e tente novamente.');
+    }
     setTimeout(() => setSaveStatus('idle'), 3000);
   };
+
 
   const handleReset = () => {
     if (!confirm('Restaurar todos os valores originais?')) return;
@@ -318,8 +423,16 @@ export const AboutTeamPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 320, gap: 16 }}>
+          <div style={{ width: 40, height: 40, border: '4px solid #e5e7eb', borderTopColor: '#16a34a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <p style={{ color: '#6b7280', fontSize: 15 }}>Carregando dados do Firestore…</p>
+        </div>
+      )}
+      {!loading && <>
 
       {/* Header */}
+
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', margin: 0 }}>🏛️ Editor — Sobre &amp; Equipe</h1>
@@ -384,23 +497,28 @@ export const AboutTeamPage: React.FC = () => {
 
               <Card>
                 <SectionHeader icon="🖼️" title="Imagem da Seção Sobre" description="Foto exibida ao lado dos textos de missão e visão" />
-                <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <Field label="URL da Imagem" hint="Recomendado: 800×600px">
-                    <input value={data.aboutImage} onChange={e => set('aboutImage', e.target.value)} style={inputStyle} placeholder="https://..." />
-                  </Field>
-                  {data.aboutImage && (
-                    <img src={data.aboutImage} alt="Preview" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 12, border: '1px solid #e5e7eb' }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  )}
+                <div style={{ padding: 24 }}>
+                  <ImageUploadInput
+                    value={data.aboutImage}
+                    onChange={v => set('aboutImage', v)}
+                    hint="Recomendado: 800×600px"
+                    folder="about"
+                    previewHeight={180}
+                  />
                 </div>
               </Card>
 
               <Card>
                 <SectionHeader icon="🔵" title="Identidade Visual / Logotipo" description="Imagem do logotipo e explicação do símbolo institucional" />
                 <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  <Field label="URL do Logotipo">
-                    <input value={data.logoImage} onChange={e => set('logoImage', e.target.value)} style={inputStyle} placeholder="/logo-ism.png" />
-                  </Field>
+                  <ImageUploadInput
+                    value={data.logoImage}
+                    onChange={v => set('logoImage', v)}
+                    label="Logotipo"
+                    folder="brand"
+                    previewHeight={100}
+                    placeholder="/logo-ism.png"
+                  />
                   <Field label="Explicação do Símbolo / Logotipo" hint="Texto explicativo exibido na seção de identidade visual">
                     <textarea value={data.logoExplanation} onChange={e => set('logoExplanation', e.target.value)} style={{ ...textareaStyle, minHeight: 100 }} />
                   </Field>
@@ -629,9 +747,13 @@ export const AboutTeamPage: React.FC = () => {
                         </Field>
                       </div>
                     </div>
-                    <Field label="URL da Foto">
-                      <input value={m.imageUrl} onChange={e => updateMember(m.id, 'imageUrl', e.target.value)} style={inputStyle} placeholder="https://..." />
-                    </Field>
+                    <ImageUploadInput
+                      value={m.imageUrl}
+                      onChange={v => updateMember(m.id, 'imageUrl', v)}
+                      label="Foto do Membro"
+                      folder="team"
+                      previewHeight={0}
+                    />
                     <Field label="Bio / Apresentação">
                       <textarea value={m.bio} onChange={e => updateMember(m.id, 'bio', e.target.value)} style={textareaStyle} placeholder="Breve apresentação do membro..." />
                     </Field>
@@ -675,8 +797,9 @@ export const AboutTeamPage: React.FC = () => {
         saveStatus={saveStatus}
         onSave={handleSave}
         onDiscard={handleReset}
-        message="Sobre & Equipe possui alterações não salvas"
+        message="Sobre &amp; Equipe possui alterações não salvas"
       />
+      </>}
     </div>
   );
 };

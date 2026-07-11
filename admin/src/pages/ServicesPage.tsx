@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Save, RotateCcw, Plus, Trash2, MoveUp, MoveDown,
   CheckCircle, Eye, EyeOff, ChevronDown, ChevronUp,
-  ExternalLink, Search
+  ExternalLink, Search, Link2
 } from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
+import { ImageUploadInput } from '../components/ui/ImageUploadInput';
+import { InstitutionalFirestoreService } from '../services/institutional';
+import { FirestoreService } from '../services/firestore';
+
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Program {
@@ -13,6 +17,8 @@ interface Program {
   imageUrl: string; isPublished: boolean; targetAudience: string;
   tags: string[]; ctaLabel: string; ctaUrl: string;
   impactMetric: string; impactValue: string;
+  // Link de Domínio / Subdomínio
+  linkUrl: string; linkLabel: string;
 }
 
 interface TransparencyDoc {
@@ -62,7 +68,7 @@ const DEFAULT: ServicesData = {
       iconEmoji: '📚', imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80',
       isPublished: true, targetAudience: 'Jovens de 16 a 29 anos em situação de vulnerabilidade social',
       tags: ['Educação', 'Liderança', 'Jovens'], ctaLabel: 'Saiba Mais', ctaUrl: '#',
-      impactMetric: 'Jovens Capacitados', impactValue: '50.000+',
+      impactMetric: 'Jovens Capacitados', impactValue: '50.000+', linkUrl: '', linkLabel: '',
     },
     {
       id: '2', order: 2, title: 'Proteção de Biomas', slug: 'protecao-biomas',
@@ -71,7 +77,7 @@ const DEFAULT: ServicesData = {
       iconEmoji: '🌿', imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80',
       isPublished: true, targetAudience: 'Comunidades ribeirinhas e agricultores familiares',
       tags: ['Meio Ambiente', 'Tecnologia', 'Biomas'], ctaLabel: 'Ver Relatório', ctaUrl: '#',
-      impactMetric: 'Hectares Recuperados', impactValue: '120.000',
+      impactMetric: 'Hectares Recuperados', impactValue: '120.000', linkUrl: '', linkLabel: '',
     },
     {
       id: '3', order: 3, title: 'Saúde & Bem-Estar Comunitário', slug: 'saude-comunidade',
@@ -80,7 +86,7 @@ const DEFAULT: ServicesData = {
       iconEmoji: '❤️', imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80',
       isPublished: true, targetAudience: 'Famílias em regiões de baixo IDH',
       tags: ['Saúde', 'Comunidade', 'Prevenção'], ctaLabel: 'Conhecer Programa', ctaUrl: '#',
-      impactMetric: 'Atendimentos/ano', impactValue: '200.000',
+      impactMetric: 'Atendimentos/ano', impactValue: '200.000', linkUrl: '', linkLabel: '',
     },
   ],
   transparencyIntro: 'O Princípio da Transparência Quântica garante acesso irrestrito e auditado à nossa saúde financeira. Operamos com padrões que excedem as exigências legais.',
@@ -247,11 +253,9 @@ const ServicesPreview: React.FC<{ data: ServicesData }> = ({ data }) => (
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export const ServicesPage: React.FC = () => {
-  const [data, setData] = useState<ServicesData>(() => {
-    try { const s = localStorage.getItem(STORAGE_KEY); return s ? { ...DEFAULT, ...JSON.parse(s) } : DEFAULT; }
-    catch { return DEFAULT; }
-  });
-  const [savedVersion, setSavedVersion] = useState<ServicesData>(data);
+  const [data, setData] = useState<ServicesData>(DEFAULT);
+  const [savedVersion, setSavedVersion] = useState<ServicesData>(DEFAULT);
+  const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [showPreview, setShowPreview] = useState(false);
   const [activeTab, setActiveTab] = useState<'programs' | 'transparency' | 'partners' | 'records'>('programs');
@@ -259,24 +263,108 @@ export const ServicesPage: React.FC = () => {
   const [partnerStatusFilter, setPartnerStatusFilter] = useState('');
   const isDirty = JSON.stringify(data) !== JSON.stringify(savedVersion);
 
-  useEffect(() => { const t = setTimeout(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(data)), 700); return () => clearTimeout(t); }, [data]);
+  // ── Load from Firestore on mount ─────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [pageConfig, programsList, partnersList] = await Promise.all([
+          InstitutionalFirestoreService.getServicesPage(),
+          InstitutionalFirestoreService.getPrograms(),
+          FirestoreService.getPartnerApplications(),
+        ]);
+
+        const merged: ServicesData = {
+          sectionBadge: pageConfig?.sectionBadge || DEFAULT.sectionBadge,
+          sectionTitle: pageConfig?.sectionTitle || DEFAULT.sectionTitle,
+          sectionSubtitle: pageConfig?.sectionSubtitle || DEFAULT.sectionSubtitle,
+          transparencyIntro: pageConfig?.transparencyIntro || DEFAULT.transparencyIntro,
+          transparencyDocuments: pageConfig?.transparencyDocuments?.length
+            ? pageConfig.transparencyDocuments
+            : DEFAULT.transparencyDocuments,
+          financialSlices: pageConfig?.financialSlices?.length
+            ? pageConfig.financialSlices
+            : DEFAULT.financialSlices,
+          efficiencyPct: pageConfig?.efficiencyPct !== undefined ? pageConfig.efficiencyPct : DEFAULT.efficiencyPct,
+          integrityPillars: pageConfig?.integrityPillars?.length
+            ? pageConfig.integrityPillars
+            : DEFAULT.integrityPillars,
+          partnerBadge: pageConfig?.partnerBadge || DEFAULT.partnerBadge,
+          partnerTitle: pageConfig?.partnerTitle || DEFAULT.partnerTitle,
+          partnerSubtitle: pageConfig?.partnerSubtitle || DEFAULT.partnerSubtitle,
+          partnerBenefits: pageConfig?.partnerBenefits?.length
+            ? pageConfig.partnerBenefits
+            : DEFAULT.partnerBenefits,
+          trustBadges: pageConfig?.trustBadges?.length ? pageConfig.trustBadges : DEFAULT.trustBadges,
+          programs: programsList.length > 0
+            ? (programsList as unknown as ServicesData['programs'])
+            : DEFAULT.programs,
+          partnerRecords: partnersList.length > 0
+            ? (partnersList as unknown as ServicesData['partnerRecords'])
+            : DEFAULT.partnerRecords,
+        };
+
+        setData(merged);
+        setSavedVersion(merged);
+      } catch (err) {
+        console.error('[ServicesPage] Erro ao carregar do Firestore:', err);
+        // fallback to localStorage
+        try {
+          const s = localStorage.getItem(STORAGE_KEY);
+          if (s) { const parsed = { ...DEFAULT, ...JSON.parse(s) }; setData(parsed); setSavedVersion(parsed); }
+        } catch { /* ignore */ }
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  // ── Debounced localStorage backup (draft) ────────────────────────────────
+  useEffect(() => {
+    if (loading) return;
+    const t = setTimeout(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(data)), 700);
+    return () => clearTimeout(t);
+  }, [data, loading]);
 
   const set = <K extends keyof ServicesData>(k: K, v: ServicesData[K]) => setData(p => ({ ...p, [k]: v }));
 
   const handleSave = async () => {
     setSaveStatus('saving');
-    await new Promise(r => setTimeout(r, 900));
-    setSavedVersion(data);
-    setSaveStatus('saved');
+    try {
+      await InstitutionalFirestoreService.saveServicesPage({
+        sectionBadge: data.sectionBadge,
+        sectionTitle: data.sectionTitle,
+        sectionSubtitle: data.sectionSubtitle,
+        transparencyIntro: data.transparencyIntro,
+        transparencyDocuments: data.transparencyDocuments,
+        financialSlices: data.financialSlices,
+        efficiencyPct: data.efficiencyPct,
+        integrityPillars: data.integrityPillars,
+        partnerBadge: data.partnerBadge,
+        partnerTitle: data.partnerTitle,
+        partnerSubtitle: data.partnerSubtitle,
+        partnerBenefits: data.partnerBenefits,
+        trustBadges: data.trustBadges,
+        programs: data.programs,
+      });
+      setSavedVersion(data);
+      setSaveStatus('saved');
+    } catch (err) {
+      console.error('[ServicesPage] Erro ao salvar no Firestore:', err);
+      setSaveStatus('idle');
+      alert('Erro ao salvar. Verifique sua conexão e tente novamente.');
+    }
     setTimeout(() => setSaveStatus('idle'), 3000);
   };
+
+
 
   // ── Programs
   const addProgram = () => set('programs', [...data.programs, {
     id: Date.now().toString(), order: data.programs.length + 1, title: '', slug: '',
     description: '', longDescription: '', iconEmoji: '🎯', imageUrl: '',
     isPublished: false, targetAudience: '', tags: [], ctaLabel: 'Saiba Mais', ctaUrl: '#',
-    impactMetric: '', impactValue: '',
+    impactMetric: '', impactValue: '', linkUrl: '', linkLabel: '',
   }]);
   const updateProgram = (id: string, f: string, v: any) => set('programs', data.programs.map(p => p.id === id ? { ...p, [f]: v } : p));
   const removeProgram = (id: string) => { if (!confirm('Excluir este programa?')) return; set('programs', data.programs.filter(p => p.id !== id)); };
@@ -308,8 +396,20 @@ export const ServicesPage: React.FC = () => {
   const removeBenefit = (id: string) => set('partnerBenefits', data.partnerBenefits.filter(b => b.id !== id));
 
   // ── Partner records
-  const updateRecord = (id: string, f: string, v: string) => set('partnerRecords', data.partnerRecords.map(r => r.id === id ? { ...r, [f]: v } : r));
-  const removeRecord = (id: string) => { if (!confirm('Remover este registro?')) return; set('partnerRecords', data.partnerRecords.filter(r => r.id !== id)); };
+  const updateRecord = async (id: string, f: string, v: string) => {
+    set('partnerRecords', data.partnerRecords.map(r => r.id === id ? { ...r, [f]: v } : r));
+    if (f === 'status') {
+      try { await FirestoreService.updatePartnerApplicationStatus(id, v); }
+      catch (err) { console.error('[ServicesPage] Erro ao atualizar status no Firestore:', err); }
+    }
+  };
+  const removeRecord = async (id: string) => {
+    if (!confirm('Remover este registro?')) return;
+    set('partnerRecords', data.partnerRecords.filter(r => r.id !== id));
+    try { await FirestoreService.deletePartnerApplication(id); }
+    catch (err) { console.error('[ServicesPage] Erro ao remover parceria no Firestore:', err); }
+  };
+
   const filteredRecords = data.partnerRecords.filter(r =>
     (r.companyName + r.contactName + r.email).toLowerCase().includes(partnerSearch.toLowerCase()) &&
     (!partnerStatusFilter || r.status === partnerStatusFilter)
@@ -324,6 +424,13 @@ export const ServicesPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+      {loading && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 320, gap: 16 }}>
+          <div style={{ width: 40, height: 40, border: '4px solid #e5e7eb', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <p style={{ color: '#6b7280', fontSize: 15 }}>Carregando dados do Firestore…</p>
+        </div>
+      )}
+      {!loading && <>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
         <div>
@@ -418,8 +525,34 @@ export const ServicesPage: React.FC = () => {
                         <F label="Label do Botão CTA"><input value={p.ctaLabel} onChange={e => updateProgram(p.id, 'ctaLabel', e.target.value)} style={iS} placeholder="Saiba Mais" /></F>
                         <F label="URL do CTA"><input value={p.ctaUrl} onChange={e => updateProgram(p.id, 'ctaUrl', e.target.value)} style={iS} placeholder="#" /></F>
                       </div>
-                      <F label="URL da Imagem do Programa"><input value={p.imageUrl} onChange={e => updateProgram(p.id, 'imageUrl', e.target.value)} style={iS} placeholder="https://..." /></F>
-                      {p.imageUrl && <img src={p.imageUrl} alt="preview" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 10, border: '1px solid #e5e7eb' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                      {/* Row 6: Link de Domínio / Subdomínio */}
+                      <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: 14 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#1e40af', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Link2 size={12} /> Link de Domínio / Subdomínio
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                          <F label="URL do Domínio" hint="Ex: matriculas.institutosermelhor.org">
+                            <input value={p.linkUrl || ''} onChange={e => updateProgram(p.id, 'linkUrl', e.target.value)} style={iS} placeholder="https://programa.institutosermelhor.org" />
+                          </F>
+                          <F label="Nome do Link" hint="Label exibido no botão">
+                            <input value={p.linkLabel || ''} onChange={e => updateProgram(p.id, 'linkLabel', e.target.value)} style={iS} placeholder="Acessar Portal" />
+                          </F>
+                        </div>
+                        {p.linkUrl && (
+                          <a href={p.linkUrl} target="_blank" rel="noopener noreferrer"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontSize: 11, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}>
+                            <ExternalLink size={11} /> {p.linkLabel || p.linkUrl}
+                          </a>
+                        )}
+                      </div>
+                      {/* Row 7: Imagem */}
+                      <ImageUploadInput
+                        value={p.imageUrl}
+                        onChange={v => updateProgram(p.id, 'imageUrl', v)}
+                        label="Imagem do Programa"
+                        folder="programs"
+                        previewHeight={120}
+                      />
                       {/* Publicado toggle */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: p.isPublished ? '#f0fdf4' : '#fef9c3', border: `1px solid ${p.isPublished ? '#bbf7d0' : '#fde68a'}`, borderRadius: 10 }}>
                         <button
@@ -705,8 +838,9 @@ export const ServicesPage: React.FC = () => {
         saveStatus={saveStatus}
         onSave={handleSave}
         onDiscard={() => { if (!confirm('Restaurar todos os padrões?')) return; setData(DEFAULT); setSavedVersion(DEFAULT); localStorage.removeItem(STORAGE_KEY); }}
-        message="Serviços & Programas possui alterações não salvas"
+        message="Serviços &amp; Programas possui alterações não salvas"
       />
+      </>}
     </div>
   );
 };

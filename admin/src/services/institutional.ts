@@ -36,9 +36,11 @@ export interface InstitutionalPageData {
   motto: string;
   mottoExplanation: string;
   networkIntro: string;
+  networkCards?: { id: string; icon: string; title: string; description: string }[];
   transparencyDocuments: TransparencyDoc[];
   updatedAt?: unknown;
 }
+
 
 export interface TransparencyDoc {
   id: number;
@@ -247,6 +249,78 @@ export const InstitutionalFirestoreService = {
 
   async deleteGovernanceMember(id: string): Promise<void> {
     await deleteDoc(doc(db, 'governance_members', id));
+  },
+
+  // ── Services / Programs ────────────────────────────────────────────────
+  /**
+   * Salva a coleção de programas e serviços (lida pelo site principal).
+   * Coleção: services_page (doc "main" com metadados) + programs (subcoleção).
+   */
+  async saveServicesPage(data: {
+    sectionBadge: string;
+    sectionTitle: string;
+    sectionSubtitle: string;
+    transparencyIntro?: string;
+    transparencyDocuments?: any[];
+    financialSlices?: any[];
+    efficiencyPct?: number;
+    integrityPillars?: any[];
+    partnerBadge?: string;
+    partnerTitle?: string;
+    partnerSubtitle?: string;
+    partnerBenefits?: any[];
+    trustBadges?: string[];
+    programs: Array<{
+      id: string; order: number; title: string; slug: string;
+      description: string; longDescription: string; iconEmoji: string;
+      imageUrl: string; isPublished: boolean; targetAudience: string;
+      tags: string[]; ctaLabel: string; ctaUrl: string;
+      impactMetric: string; impactValue: string;
+      linkUrl?: string; linkLabel?: string;
+    }>;
+  }): Promise<void> {
+    // Salva metadados da seção no documento principal
+    await setDoc(
+      doc(db, 'services_page', 'main'),
+      {
+        sectionBadge: data.sectionBadge,
+        sectionTitle: data.sectionTitle,
+        sectionSubtitle: data.sectionSubtitle,
+        transparencyIntro: data.transparencyIntro || '',
+        transparencyDocuments: data.transparencyDocuments || [],
+        financialSlices: data.financialSlices || [],
+        efficiencyPct: data.efficiencyPct !== undefined ? data.efficiencyPct : 90,
+        integrityPillars: data.integrityPillars || [],
+        partnerBadge: data.partnerBadge || '',
+        partnerTitle: data.partnerTitle || '',
+        partnerSubtitle: data.partnerSubtitle || '',
+        partnerBenefits: data.partnerBenefits || [],
+        trustBadges: data.trustBadges || [],
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+    // Upsert de cada programa individualmente (preserva os que não foram alterados)
+    for (const p of data.programs) {
+      const { id, ...rest } = p;
+      await setDoc(doc(db, 'programs', id), { ...rest, updatedAt: serverTimestamp() }, { merge: true });
+    }
+  },
+
+  async getServicesPage(): Promise<Record<string, any> | null> {
+    const snap = await getDoc(doc(db, 'services_page', 'main'));
+    return snap.exists() ? snap.data() : null;
+  },
+
+
+  async getPrograms(): Promise<Array<Record<string, unknown> & { id: string }>> {
+    const q = query(collection(db, 'programs'), orderBy('order'));
+    const snap = await getDocs(q);
+    return mapDocs<Record<string, unknown>>(snap);
+  },
+
+  async deleteProgram(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'programs', id));
   },
 
   // ── Seed / Bootstrap ───────────────────────────────────────────────────
