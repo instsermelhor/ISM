@@ -5,6 +5,7 @@ import {
   Lock, Unlock, AlertTriangle, Copy,
   UserCheck, Users, Key, Bell, Activity
 } from 'lucide-react';
+import { ImageUploadInput } from '../components/ui/ImageUploadInput';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
@@ -36,6 +37,11 @@ interface AdminUser {
   customPermissions: string[]; // extra permission keys granted beyond role
   restrictedPermissions: string[]; // permission keys revoked within role
   notes?: string;
+  instagramLink?: string;
+  linkedinLink?: string;
+  facebookLink?: string;
+  password?: string;
+  forcePasswordChange?: boolean;
 }
 
 interface Invite {
@@ -102,12 +108,31 @@ const MODULES = [...new Set(PERMISSIONS.map(p => p.module))];
 // ─── Default data ─────────────────────────────────────────────────────────────
 const SEED_USERS: AdminUser[] = [
   {
+    id: '0_admism', name: 'Instituto Ser Melhor', email: 'admism@institutosermelhor.org',
+    role: 'ADMIN', status: 'ACTIVE', department: 'Diretoria',
+    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&size=80',
+    lastLoginAt: new Date().toISOString(),
+    loginCount: 99, createdAt: '2024-01-01', invitedBy: 'Sistema',
+    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Super Administrador Principal.',
+  },
+  {
+    id: '0_gmail', name: 'Administrador ISM Gmail', email: 'instsermelhor.adm@gmail.com',
+    role: 'ADMIN', status: 'ACTIVE', department: 'Diretoria',
+    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Gmail&background=16a34a&color=fff&size=80',
+    lastLoginAt: new Date().toISOString(),
+    loginCount: 50, createdAt: '2024-01-01', invitedBy: 'Sistema',
+    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Super Administrador Gmail.',
+  },
+  {
     id: '1', name: 'Rikardo Ribeiro', email: 'admin@institutosermelhor.org',
     role: 'ADMIN', status: 'ACTIVE', department: 'Diretoria',
     avatarUrl: 'https://ui-avatars.com/api/?name=Rikardo+Ribeiro&background=16a34a&color=fff&size=80',
     lastLoginAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     loginCount: 342, createdAt: '2024-01-01', invitedBy: 'Sistema',
     twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Fundador e Administrador Principal.',
+    instagramLink: 'https://instagram.com/institutosermelhor',
+    linkedinLink: 'https://linkedin.com/company/institutosermelhor',
+    facebookLink: 'https://facebook.com/institutosermelhor',
   },
   {
     id: '2', name: 'Ana Lima', email: 'ana.lima@institutosermelhor.org',
@@ -117,6 +142,8 @@ const SEED_USERS: AdminUser[] = [
     loginCount: 87, createdAt: '2024-02-15', invitedBy: 'Rikardo Ribeiro',
     twoFactorEnabled: false, customPermissions: ['financial.view'], restrictedPermissions: [],
     notes: 'Responsável pelo blog e mídias sociais.',
+    linkedinLink: 'https://linkedin.com/company/institutosermelhor',
+    instagramLink: 'https://instagram.com/institutosermelhor',
   },
   {
     id: '3', name: 'Carlos Mendes', email: 'carlos.mendes@institutosermelhor.org',
@@ -223,6 +250,20 @@ const UserModal: React.FC<{
   const set = (k: keyof AdminUser, v: any) => setForm(p => ({ ...p, [k]: v }));
   const role = (form.role ?? 'VIEWER') as Role;
 
+  const generatePassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*';
+    let pass = '';
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
+  };
+
+  const [passwordMode, setPasswordMode] = useState<'auto' | 'manual'>('auto');
+  const [generatedPassword, setGeneratedPassword] = useState(() => generatePassword());
+  const [manualPassword, setManualPassword] = useState('');
+  const [changeOnFirstAccess, setChangeOnFirstAccess] = useState(true);
+
   const effectivePerms = useMemo(() => {
     return PERMISSIONS.map(p => {
       const base = role === 'ADMIN' ? p.admin : role === 'EDITOR' ? p.editor : p.viewer;
@@ -247,7 +288,21 @@ const UserModal: React.FC<{
 
   const handleSave = () => {
     if (!form.name?.trim() || !form.email?.trim()) { alert('Nome e e-mail são obrigatórios.'); return; }
-    onSave({ ...form as AdminUser, id: form.id ?? Date.now().toString() });
+    
+    const finalPassword = passwordMode === 'auto' ? generatedPassword : manualPassword;
+    if (isNew && !finalPassword.trim()) {
+      alert('Por favor, defina uma senha para o usuário.');
+      return;
+    }
+
+    onSave({
+      ...form as AdminUser,
+      id: form.id ?? Date.now().toString(),
+      ...(isNew && {
+        password: finalPassword,
+        forcePasswordChange: changeOnFirstAccess,
+      }),
+    });
   };
 
   const grouped = MODULES.map(mod => ({ mod, perms: effectivePerms.filter(p => p.module === mod) }));
@@ -299,10 +354,68 @@ const UserModal: React.FC<{
                 </F>
                 <F label="Departamento"><input value={form.department ?? ''} onChange={e => set('department', e.target.value)} style={iS} placeholder="Ex: Comunicação" /></F>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'end' }}>
                 <F label="Telefone" hint="opcional"><input value={form.phone ?? ''} onChange={e => set('phone', e.target.value)} style={iS} placeholder="+55 11 9..." /></F>
-                <F label="URL do Avatar" hint="opcional"><input value={form.avatarUrl ?? ''} onChange={e => set('avatarUrl', e.target.value)} style={iS} placeholder="https://..." /></F>
+                <div>
+                  <ImageUploadInput
+                    value={form.avatarUrl ?? ''}
+                    onChange={url => set('avatarUrl', url)}
+                    label="Foto de Perfil"
+                    hint="Upload ou URL"
+                    folder="avatars"
+                    previewHeight={56}
+                  />
+                </div>
               </div>
+
+              {/* Redes Sociais */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                <F label="Instagram" hint="Link perfil"><input value={form.instagramLink ?? ''} onChange={e => set('instagramLink', e.target.value)} style={iS} placeholder="https://instagram.com/..." /></F>
+                <F label="LinkedIn" hint="Link perfil"><input value={form.linkedinLink ?? ''} onChange={e => set('linkedinLink', e.target.value)} style={iS} placeholder="https://linkedin.com/in/..." /></F>
+                <F label="Facebook" hint="Link perfil"><input value={form.facebookLink ?? ''} onChange={e => set('facebookLink', e.target.value)} style={iS} placeholder="https://facebook.com/..." /></F>
+              </div>
+
+              {/* Senha e segurança para novos usuários */}
+              {isNew && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 20px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 16 }}>
+                  <div style={{ fontWeight: 800, fontSize: 13, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Key size={14} color="#16a34a" /> Definição de Senha
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" onClick={() => setPasswordMode('auto')}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: 10, border: '1px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', borderColor: passwordMode === 'auto' ? '#16a34a' : '#e5e7eb', background: passwordMode === 'auto' ? '#f0fdf4' : 'white', color: passwordMode === 'auto' ? '#166534' : '#4b5563' }}>
+                      🪄 Senha Automática
+                    </button>
+                    <button type="button" onClick={() => setPasswordMode('manual')}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: 10, border: '1px solid', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', borderColor: passwordMode === 'manual' ? '#16a34a' : '#e5e7eb', background: passwordMode === 'manual' ? '#f0fdf4' : 'white', color: passwordMode === 'manual' ? '#166534' : '#4b5563' }}>
+                      ⌨️ Digitar Senha
+                    </button>
+                  </div>
+
+                  {passwordMode === 'auto' ? (
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input type="text" readOnly value={generatedPassword} style={{ ...iS, background: '#f3f4f6', cursor: 'default', fontWeight: 'bold', letterSpacing: '0.05em' }} />
+                      <button type="button" onClick={() => setGeneratedPassword(generatePassword())} style={{ ...bSec, padding: '9px 12px', flexShrink: 0 }} title="Gerar outra senha">
+                        <RefreshCw size={14} />
+                      </button>
+                      <button type="button" onClick={() => { navigator.clipboard.writeText(generatedPassword); alert('Senha copiada para a área de transferência!'); }} style={{ ...bSec, padding: '9px 12px', flexShrink: 0 }} title="Copiar senha">
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <F label="Digitar Senha" required>
+                      <input type="text" value={manualPassword} onChange={e => setManualPassword(e.target.value)} style={iS} placeholder="Mínimo 8 caracteres com letras e números" />
+                    </F>
+                  )}
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginTop: 4 }}>
+                    <input type="checkbox" checked={changeOnFirstAccess} onChange={e => setChangeOnFirstAccess(e.target.checked)} style={{ width: 15, height: 15, accentColor: '#16a34a' }} />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Exigir alteração de senha no primeiro acesso</span>
+                  </label>
+                </div>
+              )}
+
               <F label="Notas Internas" hint="Visível apenas para admins"><textarea value={form.notes ?? ''} onChange={e => set('notes', e.target.value)} style={tS} placeholder="Observações sobre este usuário..." /></F>
 
               {/* Role description */}
@@ -571,7 +684,23 @@ export const UsersPage: React.FC = () => {
                             : <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>👤</div>
                           }
                           <div>
-                            <div style={{ fontWeight: 700, color: '#111827' }}>{u.name}</div>
+                            <div style={{ fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              {u.name}
+                              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                {u.linkedinLink && (
+                                  <a href={u.linkedinLink} target="_blank" rel="noopener noreferrer" title="LinkedIn"
+                                    style={{ fontSize: 12, textDecoration: 'none', lineHeight: 1 }}>in</a>
+                                )}
+                                {u.instagramLink && (
+                                  <a href={u.instagramLink} target="_blank" rel="noopener noreferrer" title="Instagram"
+                                    style={{ fontSize: 12, textDecoration: 'none', lineHeight: 1 }}>📸</a>
+                                )}
+                                {u.facebookLink && (
+                                  <a href={u.facebookLink} target="_blank" rel="noopener noreferrer" title="Facebook"
+                                    style={{ fontSize: 12, textDecoration: 'none', lineHeight: 1 }}>f</a>
+                                )}
+                              </div>
+                            </div>
                             <div style={{ fontSize: 11, color: '#6b7280' }}>{u.email}</div>
                           </div>
                         </div>

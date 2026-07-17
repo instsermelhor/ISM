@@ -5,7 +5,8 @@ import {
   LayoutDashboard, Layers, Newspaper,
   Mail, Kanban, BarChart2, Activity, HeartPulse,
   Users, Globe, ChevronDown, LogOut, Menu, X, Zap,
-  DollarSign, CreditCard, Landmark, Target, UserCheck
+  DollarSign, CreditCard, Landmark, Target, UserCheck,
+  Heart, Monitor
 } from 'lucide-react';
 
 interface NavGroup {
@@ -29,13 +30,23 @@ const NAV: NavGroup[] = [
     ]
   },
   {
-    label: 'Conteúdo',
+    label: 'Editor do Site',
     items: [
-      { to: '/conteudo/hero', label: 'Hero / Home', Icon: Zap, roles: ['ADMIN', 'EDITOR'] },
-      { to: '/conteudo/sobre', label: 'Sobre / Equipe', Icon: Users, roles: ['ADMIN', 'EDITOR'] },
-      { to: '/conteudo/servicos', label: 'Serviços', Icon: Layers, roles: ['ADMIN', 'EDITOR'] },
-      { to: '/conteudo/blog', label: 'Blog / Notícias', Icon: Newspaper, roles: ['ADMIN', 'EDITOR'] },
-      { to: '/conteudo/leads', label: 'Leads', Icon: Mail, badge: 'NEW' },
+      { to: '/site', label: 'Visão Geral', Icon: Monitor, roles: ['ADMIN', 'EDITOR'] },
+      { to: '/site/hero', label: 'Hero / Home', Icon: Zap, roles: ['ADMIN', 'EDITOR'] },
+      { to: '/site/institucional', label: 'Sobre / Equipe', Icon: Users, roles: ['ADMIN', 'EDITOR'] },
+      { to: '/site/projetos', label: 'Projetos & Programas', Icon: Layers, roles: ['ADMIN', 'EDITOR'] },
+      { to: '/site/doacoes', label: 'Seção de Doação', Icon: Heart, roles: ['ADMIN', 'EDITOR'] },
+      { to: '/site/seo', label: 'Site & SEO', Icon: Globe, roles: ['ADMIN'] },
+    ]
+  },
+  {
+    label: 'Gestão da Instituição',
+    items: [
+      { to: '/blog', label: 'Blog / Notícias', Icon: Newspaper, roles: ['ADMIN', 'EDITOR'] },
+      { to: '/leads', label: 'Leads', Icon: Mail, badge: 'NEW' },
+      { to: '/pipeline', label: 'Pipeline Kanban', Icon: Kanban },
+      { to: '/analytics', label: 'Analytics', Icon: BarChart2 },
     ]
   },
   {
@@ -49,19 +60,11 @@ const NAV: NavGroup[] = [
     ]
   },
   {
-    label: 'Gestão',
+    label: 'Sistema',
     items: [
-      { to: '/pipeline', label: 'Pipeline Kanban', Icon: Kanban },
-      { to: '/analytics', label: 'Analytics', Icon: BarChart2 },
+      { to: '/usuarios', label: 'Usuários', Icon: Users, roles: ['ADMIN'] },
       { to: '/auditoria', label: 'Auditoria', Icon: Activity, roles: ['ADMIN'] },
       { to: '/health', label: 'Health Check', Icon: HeartPulse },
-    ]
-  },
-  {
-    label: 'Configurações',
-    items: [
-      { to: '/configuracoes', label: 'Site & SEO', Icon: Globe, roles: ['ADMIN'] },
-      { to: '/usuarios', label: 'Usuários', Icon: Users, roles: ['ADMIN'] },
     ]
   },
 ];

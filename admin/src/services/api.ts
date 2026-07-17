@@ -13,6 +13,7 @@ import type {
 // Em produção NUNCA armazene senhas em texto plano — use bcrypt + backend.
 const MOCK_CREDENTIALS: Record<string, string> = {
   'admism@institutosermelhor.org': '@@Rk08266570#',  // Super Admin
+  'instsermelhor.adm@gmail.com':   '@@Rk08266570#',  // Super Admin Gmail
   'admin@ism.org':   'admin123',                      // Admin legado (altere antes de ir a produção)
   'editor@ism.org':  'editor123',
   'viewer@ism.org':  'viewer123',
@@ -26,6 +27,10 @@ const RECOVERY_EMAILS: Record<string, { primary: string; secondary?: string; mas
     secondary: 'rikardo@institutosermelhor.org',
     maskedPrimary: 'a****m@institutosermelhor.org',
     maskedSecondary: 'r*****o@institutosermelhor.org',
+  },
+  'instsermelhor.adm@gmail.com': {
+    primary: 'instsermelhor.adm@gmail.com',
+    maskedPrimary: 'i*************m@gmail.com',
   },
   'admin@ism.org': {
     primary: 'admin@ism.org',
@@ -48,6 +53,16 @@ const MOCK_USERS: User[] = [
     email: 'admism@institutosermelhor.org',
     role: 'ADMIN',
     avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&bold=true&size=80',
+    isActive: true,
+    createdAt: '2024-01-01',
+    lastLoginAt: new Date().toISOString(),
+  },
+  {
+    id: '0_gmail',
+    name: 'Administrador ISM Gmail',
+    email: 'instsermelhor.adm@gmail.com',
+    role: 'ADMIN',
+    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Gmail&background=16a34a&color=fff&bold=true&size=80',
     isActive: true,
     createdAt: '2024-01-01',
     lastLoginAt: new Date().toISOString(),

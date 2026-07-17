@@ -284,6 +284,30 @@ export const InstitutionalService = {
     }
   },
 
+  /** Retorna a configuração da seção de doação */
+  getDonationSection: async (): Promise<Record<string, any> | null> => {
+    if (!FIREBASE_ENABLED) return null;
+    try {
+      const snap = await getDoc(doc(db, 'donation_section', 'main'));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar donation_section:', err);
+      return null;
+    }
+  },
+
+  /** Retorna as configurações de SEO */
+  getSeoSettings: async (): Promise<Record<string, any> | null> => {
+    if (!FIREBASE_ENABLED) return null;
+    try {
+      const snap = await getDoc(doc(db, 'seo_settings', 'main'));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar seo_settings:', err);
+      return null;
+    }
+  },
+
 
 
 

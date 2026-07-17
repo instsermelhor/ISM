@@ -941,6 +941,8 @@ const BankingTab: React.FC = () => {
                       <option value="104">🏦 Caixa Econômica (104)</option>
                       <option value="260">💜 Nubank (260)</option>
                       <option value="290">🔵 PagBank (290)</option>
+                      <option value="336">🟡 C6 Bank (336)</option>
+                      <option value="403">🟠 Cora (403)</option>
                     </select>
                   </div>
                   <div>
@@ -1125,90 +1127,211 @@ const BankingTab: React.FC = () => {
 // ══════════════════════════════════════════════════════════════════════════════
 // GOALS TAB
 // ══════════════════════════════════════════════════════════════════════════════
+
+// ── Goal Form Modal ──────────────────────────────────────────────────────────
+const GoalModal: React.FC<{
+  mode: 'create' | 'edit';
+  initial: Partial<FinancialGoal>;
+  onClose: () => void;
+  onSave: (g: Partial<FinancialGoal>) => void;
+}> = ({ mode, initial, onClose, onSave }) => {
+  const [f, setF] = useState<Partial<FinancialGoal>>(initial);
+  const fld = (k: keyof FinancialGoal, v: any) => setF(p => ({ ...p, [k]: v }));
+  const iS: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: 'white', borderRadius: 20, padding: 32, maxWidth: 500, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+        <div style={{ fontWeight: 800, fontSize: 18, color: '#111827', marginBottom: 6 }}>
+          {mode === 'create' ? '🎯 Nova Meta de Captação' : '✏️ Editar Meta'}
+        </div>
+        <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>
+          {mode === 'create' ? 'Defina os parâmetros da nova meta financeira' : 'Atualize os dados da meta selecionada'}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 5 }}>Título da Meta *</label>
+            <input value={f.title ?? ''} onChange={e => fld('title', e.target.value)} style={iS} placeholder="Ex: Campanha de Verão 2025" />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 5 }}>Descrição</label>
+            <textarea value={f.description ?? ''} onChange={e => fld('description', e.target.value)} style={{ ...iS, resize: 'vertical', minHeight: 64, lineHeight: 1.5 }} placeholder="Descreva o objetivo desta meta..." />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 5 }}>Valor da Meta (R$) *</label>
+              <input type="number" value={f.targetAmount ?? ''} onChange={e => fld('targetAmount', Number(e.target.value))} style={iS} placeholder="0,00" min={0} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 5 }}>Captado Atual (R$)</label>
+              <input type="number" value={f.currentAmount ?? 0} onChange={e => fld('currentAmount', Number(e.target.value))} style={iS} placeholder="0,00" min={0} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 5 }}>Prazo</label>
+              <input type="date" value={f.deadline ?? ''} onChange={e => fld('deadline', e.target.value)} style={iS} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer', padding: '11px 0' }}>
+                <input type="checkbox" checked={f.isActive ?? true} onChange={e => fld('isActive', e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: '#16a34a' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Meta ativa</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '9px 20px', borderRadius: 10, border: '1px solid #e5e7eb', background: 'white', fontWeight: 700, fontSize: 13, cursor: 'pointer', color: '#374151' }}>Cancelar</button>
+          <button onClick={() => { if (!f.title?.trim() || !f.targetAmount) { alert('Título e valor da meta são obrigatórios.'); return; } onSave(f); }}
+            style={{ padding: '9px 20px', borderRadius: 10, border: 'none', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: 13, cursor: 'pointer', boxShadow: '0 2px 8px rgba(22,163,74,0.3)' }}>
+            {mode === 'create' ? '✅ Criar Meta' : '💾 Salvar Alterações'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Goals Tab ─────────────────────────────────────────────────────────────────
 const GoalsTab: React.FC = () => {
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<{ mode: 'create' | 'edit'; initial: Partial<FinancialGoal> } | null>(null);
 
   useEffect(() => {
     FinancialService.getGoals().then(data => { setGoals(data); setLoading(false); });
   }, []);
 
+  const handleSave = async (f: Partial<FinancialGoal>) => {
+    if (modal?.mode === 'create') {
+      const newGoal = { ...f, id: Date.now().toString(), currentAmount: f.currentAmount ?? 0, isActive: f.isActive ?? true } as FinancialGoal;
+      setGoals(prev => [...prev, newGoal]);
+    } else {
+      setGoals(prev => prev.map(g => g.id === (modal!.initial as FinancialGoal).id ? { ...g, ...f } as FinancialGoal : g));
+    }
+    setModal(null);
+  };
+
+  const handleDelete = (id: string) => {
+    if (!confirm('Excluir esta meta permanentemente?')) return;
+    setGoals(prev => prev.filter(g => g.id !== id));
+  };
+
   if (loading) return <Spinner />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <Card>
-        <SectionTitle icon="🎯" title="Metas de Captação" subtitle="Acompanhamento de objetivos financeiros" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 20 }}>
-          {goals.map((g, i) => {
-            const pct = Math.min((g.currentAmount / g.targetAmount) * 100, 100);
-            const remaining = g.targetAmount - g.currentAmount;
-            const colors = [['#16a34a', '#4ade80'], ['#3b82f6', '#93c5fd'], ['#a855f7', '#d8b4fe']];
-            const [c1, c2] = colors[i % colors.length];
-            return (
-              <Card key={g.id} style={{ borderTop: `4px solid ${c1}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 16, color: '#111827' }}>{g.title}</div>
-                    {g.description && <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{g.description}</div>}
-                  </div>
-                  <span style={{ background: g.isActive ? '#f0fdf4' : '#f3f4f6', color: g.isActive ? '#16a34a' : '#9ca3af', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
-                    {g.isActive ? '✅ Ativa' : '⏸ Inativa'}
-                  </span>
-                </div>
+      {/* Modal */}
+      {modal && <GoalModal mode={modal.mode} initial={modal.initial} onClose={() => setModal(null)} onSave={handleSave} />}
 
-                {/* Progress Ring */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
-                  <div style={{ position: 'relative', width: 80, height: 80, flexShrink: 0 }}>
-                    <svg width="80" height="80" viewBox="0 0 80 80">
-                      <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" strokeWidth="8" />
-                      <circle cx="40" cy="40" r="34" fill="none" stroke={c1} strokeWidth="8"
-                        strokeDasharray={`${2 * Math.PI * 34}`}
-                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - pct / 100)}`}
-                        strokeLinecap="round" transform="rotate(-90 40 40)"
-                        style={{ transition: 'stroke-dashoffset 1s ease' }}
-                      />
-                    </svg>
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: 14, fontWeight: 900, color: c1 }}>{pct.toFixed(0)}%</span>
+      <Card>
+        <SectionTitle icon="🎯" title="Metas de Captação" subtitle={`${goals.length} meta(s) cadastrada(s)`}
+          action={
+            <button onClick={() => setModal({ mode: 'create', initial: { isActive: true, currentAmount: 0 } })}
+              style={{ background: '#16a34a', color: 'white', border: 'none', borderRadius: 10, padding: '8px 16px', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              + Nova Meta
+            </button>
+          }
+        />
+
+        {goals.length === 0 ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af', fontSize: 14 }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
+            Nenhuma meta cadastrada. Clique em <strong>+ Nova Meta</strong> para começar.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 20 }}>
+            {goals.map((g, i) => {
+              const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
+              const remaining = g.targetAmount - g.currentAmount;
+              const colors = [['#16a34a', '#4ade80'], ['#3b82f6', '#93c5fd'], ['#a855f7', '#d8b4fe'], ['#f59e0b', '#fcd34d'], ['#ef4444', '#fca5a5']];
+              const [c1, c2] = colors[i % colors.length];
+              return (
+                <Card key={g.id} style={{ borderTop: `4px solid ${c1}` }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+                    <div style={{ flex: 1, paddingRight: 10 }}>
+                      <div style={{ fontWeight: 800, fontSize: 16, color: '#111827' }}>{g.title}</div>
+                      {g.description && <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{g.description}</div>}
+                    </div>
+                    <span style={{ background: g.isActive ? '#f0fdf4' : '#f3f4f6', color: g.isActive ? '#16a34a' : '#9ca3af', padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                      {g.isActive ? '✅ Ativa' : '⏸ Inativa'}
+                    </span>
+                  </div>
+
+                  {/* Progress Ring */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 16 }}>
+                    <div style={{ position: 'relative', width: 80, height: 80, flexShrink: 0 }}>
+                      <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="34" fill="none" stroke="#f3f4f6" strokeWidth="8" />
+                        <circle cx="40" cy="40" r="34" fill="none" stroke={c1} strokeWidth="8"
+                          strokeDasharray={`${2 * Math.PI * 34}`}
+                          strokeDashoffset={`${2 * Math.PI * 34 * (1 - pct / 100)}`}
+                          strokeLinecap="round" transform="rotate(-90 40 40)"
+                          style={{ transition: 'stroke-dashoffset 1s ease' }}
+                        />
+                      </svg>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 14, fontWeight: 900, color: c1 }}>{pct.toFixed(0)}%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>CAPTADO</div>
+                      <div style={{ fontWeight: 800, fontSize: 18, color: c1 }}>{fmt(g.currentAmount)}</div>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Meta: {fmt(g.targetAmount)}</div>
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>CAPTADO</div>
-                    <div style={{ fontWeight: 800, fontSize: 18, color: c1 }}>{fmt(g.currentAmount)}</div>
-                    <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Meta: {fmt(g.targetAmount)}</div>
+
+                  {/* Progress Bar */}
+                  <div style={{ height: 8, background: '#f3f4f6', borderRadius: 99, overflow: 'hidden', marginBottom: 12 }}>
+                    <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg,${c1},${c2})`, width: `${pct}%`, transition: 'width 1s ease' }} />
                   </div>
-                </div>
 
-                <div style={{ height: 8, background: '#f3f4f6', borderRadius: 99, overflow: 'hidden', marginBottom: 12 }}>
-                  <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg,${c1},${c2})`, width: `${pct}%`, transition: 'width 1s ease' }} />
-                </div>
+                  {/* Footer Info */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 16 }}>
+                    <span style={{ color: '#6b7280' }}>Faltam: <strong style={{ color: '#111827' }}>{fmt(Math.max(remaining, 0))}</strong></span>
+                    {g.deadline && <span style={{ color: '#6b7280' }}>Prazo: <strong style={{ color: '#111827' }}>{fmtDate(g.deadline)}</strong></span>}
+                  </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                  <span style={{ color: '#6b7280' }}>Faltam: <strong style={{ color: '#111827' }}>{fmt(remaining)}</strong></span>
-                  {g.deadline && <span style={{ color: '#6b7280' }}>Prazo: <strong style={{ color: '#111827' }}>{fmtDate(g.deadline)}</strong></span>}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', gap: 8, borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
+                    <button onClick={() => setModal({ mode: 'edit', initial: g })}
+                      style={{ flex: 1, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 8, padding: '8px 12px', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      ✏️ Editar
+                    </button>
+                    <button onClick={() => handleDelete(g.id)}
+                      style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      🗑️
+                    </button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </Card>
 
       {/* Summary Chart */}
-      <Card>
-        <div style={{ fontWeight: 800, fontSize: 16, color: '#111827', marginBottom: 20 }}>📊 Comparativo de Metas</div>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={goals.map(g => ({ name: g.title, Meta: g.targetAmount, Captado: g.currentAmount }))}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v: any) => fmtFull(v)} />
-            <Legend />
-            <Bar dataKey="Meta" fill="#e5e7eb" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="Captado" fill="#16a34a" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+      {goals.length > 0 && (
+        <Card>
+          <div style={{ fontWeight: 800, fontSize: 16, color: '#111827', marginBottom: 20 }}>📊 Comparativo de Metas</div>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={goals.map(g => ({ name: g.title, Meta: g.targetAmount, Captado: g.currentAmount }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+              <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(v: any) => fmtFull(v)} />
+              <Legend />
+              <Bar dataKey="Meta" fill="#e5e7eb" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="Captado" fill="#16a34a" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
     </div>
   );
 };

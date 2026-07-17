@@ -66,6 +66,7 @@ const ErrorScreen = ({ onRetry }: { onRetry: () => void }) => (
 function App() {
   const [data, setData] = useState<AppData | null>(null);
   const [servicesPage, setServicesPage] = useState<Record<string, any> | null>(null);
+  const [donationSection, setDonationSection] = useState<Record<string, any> | null>(null);
   const [error, setError] = useState(false);
 
   // Modal State
@@ -82,7 +83,9 @@ function App() {
         timelineRes, 
         membersRes,
         programsRes,
-        servicesPageRes
+        servicesPageRes,
+        donationSectionRes,
+        seoSettingsRes
       ] = await Promise.all([
         InstitutionalService.getPage(),
         InstitutionalService.getValueBlocks(),
@@ -91,9 +94,33 @@ function App() {
         InstitutionalService.getGovernanceMembers(),
         InstitutionalService.getPrograms(),
         InstitutionalService.getServicesPage(),
+        InstitutionalService.getDonationSection(),
+        InstitutionalService.getSeoSettings()
       ]);
 
       setServicesPage(servicesPageRes);
+      setDonationSection(donationSectionRes);
+
+      // Atualiza SEO no Document Head
+      if (seoSettingsRes) {
+        document.title = seoSettingsRes.siteTitle || 'Instituto Ser Melhor';
+        
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+          metaDesc = document.createElement('meta');
+          metaDesc.setAttribute('name', 'description');
+          document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute('content', seoSettingsRes.siteDescription || '');
+
+        let metaKeywords = document.querySelector('meta[name="keywords"]');
+        if (!metaKeywords) {
+          metaKeywords = document.createElement('meta');
+          metaKeywords.setAttribute('name', 'keywords');
+          document.head.appendChild(metaKeywords);
+        }
+        metaKeywords.setAttribute('content', seoSettingsRes.keywords || '');
+      }
 
       setData({
         page: pageRes.data,
@@ -153,7 +180,7 @@ function App() {
           integrityPillars={servicesPage?.integrityPillars}
         />
         <PartnerSection servicesPage={servicesPage} />
-        <DonationSection />
+        <DonationSection donationData={donationSection} />
       </InstitutionalWrapper>
 
       {/* Global Legal Modals */}

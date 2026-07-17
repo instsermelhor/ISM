@@ -15,6 +15,8 @@ import { HeroHomePage } from './pages/HeroHomePage';
 import { AboutTeamPage } from './pages/AboutTeamPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { UsersPage } from './pages/UsersPage';
+import { SiteEditorPage } from './pages/SiteEditorPage';
+import { DonationEditorPage } from './pages/DonationEditorPage';
 
 // Placeholder pages for sections under development
 // const PlaceholderPage = ({ title, description }: { title: string; description: string }) => (
@@ -43,12 +45,17 @@ function App() {
           <Route element={<DashboardLayout />}>
             <Route index element={<DashboardPage />} />
 
-            {/* Conteúdo */}
-            <Route path="conteudo/hero" element={<HeroHomePage />} />
-            <Route path="conteudo/sobre" element={<AboutTeamPage />} />
-            <Route path="conteudo/servicos" element={<ServicesPage />} />
-            <Route path="conteudo/blog" element={<BlogPage />} />
-            <Route path="conteudo/leads" element={<LeadsPage />} />
+            {/* Editor do Site (Módulo Separado) */}
+            <Route path="site" element={<SiteEditorPage />} />
+            <Route path="site/hero" element={<HeroHomePage />} />
+            <Route path="site/institucional" element={<AboutTeamPage />} />
+            <Route path="site/projetos" element={<ServicesPage />} />
+            <Route path="site/doacoes" element={<DonationEditorPage />} />
+            <Route path="site/seo" element={<SettingsPage />} />
+
+            {/* Gestão da Instituição */}
+            <Route path="blog" element={<BlogPage />} />
+            <Route path="leads" element={<LeadsPage />} />
 
             {/* Financeiro — cada sub-rota abre uma aba específica */}
             <Route path="financeiro"          element={<FinancialPage initialTab="overview" />} />
@@ -64,7 +71,6 @@ function App() {
             <Route path="health" element={<HealthPage />} />
 
             {/* Configurações */}
-            <Route path="configuracoes" element={<SettingsPage />} />
             <Route path="usuarios" element={<UsersPage />} />
 
             {/* Fallback */}

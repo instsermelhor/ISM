@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { SettingsService } from '../services/api';
 import { FirestoreService, type DbStatus } from '../services/firestore';
+import { InstitutionalFirestoreService } from '../services/institutional';
 import type { SiteSetting } from '../types';
 import {
   Save, Globe, Search, Palette, Share2,
@@ -342,10 +343,50 @@ export const SettingsPage: React.FC = () => {
   const saveStatus: 'idle' | 'saving' | 'saved' = saving ? 'saving' : saved ? 'saved' : 'idle';
 
   useEffect(() => {
-    SettingsService.getAll().then(s => {
-      setSettings(s);
+    Promise.all([
+      SettingsService.getAll(),
+      InstitutionalFirestoreService.getSeoSettings()
+    ]).then(([s, seo]) => {
+      const baseSettings = [...s];
+      // Garantir chaves adicionais de SEO
+      if (!baseSettings.some(x => x.key === 'seo.keywords')) {
+        baseSettings.push({
+          key: 'seo.keywords',
+          value: '',
+          group: 'seo',
+          label: 'Palavras-chave (keywords)',
+          type: 'text'
+        });
+      }
+      if (!baseSettings.some(x => x.key === 'seo.og_image')) {
+        baseSettings.push({
+          key: 'seo.og_image',
+          value: '',
+          group: 'seo',
+          label: 'Imagem Open Graph (OG)',
+          type: 'url'
+        });
+      }
+
       const vals: Record<string, string> = {};
-      s.forEach(setting => { vals[setting.key] = setting.value; });
+      baseSettings.forEach(setting => { vals[setting.key] = setting.value; });
+
+      if (seo) {
+        vals['seo.ga_id'] = seo.googleAnalyticsId || '';
+        vals['seo.meta_title'] = seo.siteTitle || '';
+        vals['seo.meta_desc'] = seo.siteDescription || '';
+        vals['seo.keywords'] = seo.keywords || '';
+        vals['seo.og_image'] = seo.ogImage || '';
+      }
+
+      // Sincroniza valor de volta nos objetos das abas
+      baseSettings.forEach(setting => {
+        if (vals[setting.key] !== undefined) {
+          setting.value = vals[setting.key];
+        }
+      });
+
+      setSettings(baseSettings);
       setValues(vals);
       setSavedValues(vals);
     }).finally(() => setLoading(false));
@@ -353,11 +394,28 @@ export const SettingsPage: React.FC = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    await Promise.all(settings.map(s => SettingsService.update(s.key, values[s.key] || '')));
-    setSavedValues({ ...values });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-    setSaving(false);
+    try {
+      // Grava no Firestore primeiro
+      await InstitutionalFirestoreService.saveSeoSettings({
+        siteTitle: values['seo.meta_title'] || '',
+        siteDescription: values['seo.meta_desc'] || '',
+        googleAnalyticsId: values['seo.ga_id'] || '',
+        keywords: values['seo.keywords'] || '',
+        ogImage: values['seo.og_image'] || ''
+      });
+
+      // Grava no Mock local para consistência local
+      await Promise.all(settings.map(s => SettingsService.update(s.key, values[s.key] || '')));
+      
+      setSavedValues({ ...values });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao salvar as configurações no Firestore.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDiscard = () => {

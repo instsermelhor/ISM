@@ -3,9 +3,53 @@ import { Heart } from 'lucide-react';
 import { DonationForm } from '../payment/DonationForm';
 import { motion, useInView } from 'framer-motion';
 
-export const DonationSection: React.FC = () => {
+interface DonationSectionProps {
+  donationData?: {
+    badge?: string;
+    title?: string;
+    subtitle?: string;
+    pixKey?: string;
+    bankName?: string;
+    benefits?: string[];
+  } | null;
+}
+
+export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
+
+  const badge = donationData?.badge || 'Apoie Agora';
+  const subtitle = donationData?.subtitle || 'Sua doação não é apenas um ato de caridade; é um investimento direto na transformação sistêmica.';
+  const benefits = donationData?.benefits?.length ? donationData.benefits : [
+    'Financiamento de bolsas para jovens líderes climáticos.',
+    'Proteção de biomas através de tecnologia de monitoramento via satélite.',
+    'Independência total de verbas governamentais.'
+  ];
+
+  const renderTitle = () => {
+    if (donationData?.title) {
+      const words = donationData.title.split(' ');
+      if (words.length > 1) {
+        const lastWord = words.pop();
+        return (
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
+            {words.join(' ')} <span className="text-gradient-brand">{lastWord}</span>
+          </h2>
+        );
+      }
+      return (
+        <h2 className="text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
+          {donationData.title}
+        </h2>
+      );
+    }
+    return (
+      <h2 className="text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
+        Fundo de Sustentabilidade<br className="hidden sm:block" />
+        <span className="text-gradient-brand"> Perpétua</span>
+      </h2>
+    );
+  };
 
   return (
     <section id="donate" className="py-24 relative overflow-hidden">
@@ -28,14 +72,11 @@ export const DonationSection: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500/15 border border-brand-500/30 rounded-full text-brand-300 font-bold text-xs uppercase tracking-widest mb-5">
             <Heart size={13} fill="currentColor" />
-            Apoie Agora
+            {badge}
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
-            Fundo de Sustentabilidade<br className="hidden sm:block" />
-            <span className="text-gradient-brand"> Perpétua</span>
-          </h2>
+          {renderTitle()}
           <p className="text-secondary-300 max-w-2xl text-lg leading-relaxed">
-            Sua doação não é apenas um ato de caridade; é um investimento direto na transformação sistêmica.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -54,11 +95,7 @@ export const DonationSection: React.FC = () => {
             <div className="relative z-10">
               <h3 className="font-bold text-xl mb-6 text-white">Seu impacto direto</h3>
               <ul className="space-y-5">
-                {[
-                  'Financiamento de bolsas para jovens líderes climáticos.',
-                  'Proteção de biomas através de tecnologia de monitoramento via satélite.',
-                  'Independência total de verbas governamentais.',
-                ].map((item, i) => (
+                {benefits.map((item, i) => (
                   <li key={i} className="flex gap-3 items-start">
                     <div className="w-7 h-7 rounded-xl bg-brand-600/20 border border-brand-500/30 text-brand-400 flex items-center justify-center shrink-0 font-black text-xs">
                       {i + 1}
@@ -69,16 +106,24 @@ export const DonationSection: React.FC = () => {
               </ul>
             </div>
 
-            <div className="relative z-10 mt-8">
-              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                <p className="text-xs text-secondary-400 uppercase font-bold tracking-widest mb-1">Total Arrecadado (2025)</p>
-                <p className="text-3xl font-black text-brand-400 mb-3">R$ 12,4M</p>
-                <div className="w-full bg-secondary-800 h-2 rounded-full overflow-hidden">
-                  <div className="bg-gradient-to-r from-brand-500 to-brand-400 h-full rounded-full" style={{ width: '75%' }} />
-                </div>
-                <p className="text-xs text-secondary-500 mt-2">75% da meta 2025</p>
+            {donationData?.pixKey ? (
+              <div className="relative z-10 mt-6 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm text-white">
+                <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Pix Direto</p>
+                <p className="text-xs font-bold font-mono select-all break-all">{donationData.pixKey}</p>
+                {donationData.bankName && <p className="text-[10px] text-secondary-500 mt-1">{donationData.bankName}</p>}
               </div>
-            </div>
+            ) : (
+              <div className="relative z-10 mt-8">
+                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
+                  <p className="text-xs text-secondary-400 uppercase font-bold tracking-widest mb-1">Total Arrecadado (2025)</p>
+                  <p className="text-3xl font-black text-brand-400 mb-3">R$ 12,4M</p>
+                  <div className="w-full bg-secondary-800 h-2 rounded-full overflow-hidden">
+                    <div className="bg-gradient-to-r from-brand-500 to-brand-400 h-full rounded-full" style={{ width: '75%' }} />
+                  </div>
+                  <p className="text-xs text-secondary-500 mt-2">75% da meta 2025</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Panel: Form */}

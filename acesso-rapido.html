@@ -259,22 +259,22 @@
 
     <!-- Buttons -->
     <div class="btn-group">
-      <a href="http://localhost:3000" target="_blank" class="btn btn-secondary">
+      <a href="http://localhost:5173" target="_blank" class="btn btn-secondary">
         <div class="btn-icon">🌐</div>
         <span class="btn-label">
           <span class="title">Site Institucional</span>
-          <span class="desc">localhost:3000 — Página pública do Instituto</span>
+          <span class="desc">localhost:5173 — Página pública do Instituto</span>
         </span>
         <span class="btn-arrow">›</span>
       </a>
 
       <div class="divider"><span>ou</span></div>
 
-      <a href="http://localhost:3001/admin" target="_blank" class="btn btn-primary">
+      <a href="http://localhost:5174" target="_blank" class="btn btn-primary">
         <div class="btn-icon">🔐</div>
         <span class="btn-label">
           <span class="title">Painel Administrativo</span>
-          <span class="desc">localhost:3001/admin — CMS & Gestão</span>
+          <span class="desc">localhost:5174 — CMS & Gestão</span>
         </span>
         <span class="btn-arrow">›</span>
       </a>
@@ -284,8 +284,16 @@
     <div class="creds-box">
       <div class="creds-title">🔑 Credenciais do Super Admin</div>
       <div class="cred-row">
-        <span class="cred-label">Login (e-mail)</span>
+        <span class="cred-label">Login 1 (e-mail)</span>
         <span class="cred-value">admism@institutosermelhor.org</span>
+      </div>
+      <div class="cred-row">
+        <span class="cred-label">Login 2 (e-mail)</span>
+        <span class="cred-value">instsermelhor.adm@gmail.com</span>
+      </div>
+      <div class="cred-row">
+        <span class="cred-label">Senha comum</span>
+        <span class="cred-value" style="font-family: monospace; color: #10b981; font-weight: bold;">@@Rk08266570#</span>
       </div>
       <div class="cred-row">
         <span class="cred-label">Papel</span>
@@ -316,11 +324,11 @@
       let siteOk = false, adminOk = false;
 
       try {
-        const r = await fetch('http://localhost:3000', { mode: 'no-cors', cache: 'no-cache' });
+        const r = await fetch('http://localhost:5173', { mode: 'no-cors', cache: 'no-cache' });
         siteOk = true;
       } catch {}
       try {
-        const r = await fetch('http://localhost:3001', { mode: 'no-cors', cache: 'no-cache' });
+        const r = await fetch('http://localhost:5174', { mode: 'no-cors', cache: 'no-cache' });
         adminOk = true;
       } catch {}
 

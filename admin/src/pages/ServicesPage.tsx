@@ -58,7 +58,7 @@ interface ServicesData {
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 const DEFAULT: ServicesData = {
   sectionBadge: 'Nossos Programas',
-  sectionTitle: 'Serviços & Programas',
+  sectionTitle: 'Projetos & Programas',
   sectionSubtitle: 'Iniciativas integradas que promovem transformações duradouras em comunidades e ecossistemas.',
   programs: [
     {
@@ -434,7 +434,7 @@ export const ServicesPage: React.FC = () => {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', margin: 0 }}>📋 Editor — Serviços & Programas</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', margin: 0 }}>📋 Editor — Projetos & Programas</h1>
           <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
             Gerencie programas, documentos de transparência, parcerias e solicitações de parceiros
             {isDirty && <span style={{ marginLeft: 8, background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>● Não salvo</span>}
@@ -474,7 +474,7 @@ export const ServicesPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Section meta */}
               <Card>
-                <SH icon="📋" title="Cabeçalho da Seção" desc="Textos exibidos no topo da seção de serviços" />
+                <SH icon="📋" title="Cabeçalho da Seção" desc="Textos exibidos no topo da seção de projetos" />
                 <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
                     <F label="Badge"><input value={data.sectionBadge} onChange={e => set('sectionBadge', e.target.value)} style={iS} /></F>
@@ -486,7 +486,7 @@ export const ServicesPage: React.FC = () => {
 
               {/* Programs list */}
               <Card>
-                <SH icon="🎯" title="Programas & Serviços" desc={`${data.programs.length} programas cadastrados · ${data.programs.filter(p => p.isPublished).length} publicados`}
+                <SH icon="🎯" title="Programas & Projetos" desc={`${data.programs.length} programas cadastrados · ${data.programs.filter(p => p.isPublished).length} publicados`}
                   action={<button onClick={addProgram} style={bPri}><Plus size={13} /> Novo Programa</button>}
                 />
                 <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -838,7 +838,7 @@ export const ServicesPage: React.FC = () => {
         saveStatus={saveStatus}
         onSave={handleSave}
         onDiscard={() => { if (!confirm('Restaurar todos os padrões?')) return; setData(DEFAULT); setSavedVersion(DEFAULT); localStorage.removeItem(STORAGE_KEY); }}
-        message="Serviços &amp; Programas possui alterações não salvas"
+        message="Projetos & Programas possui alterações não salvas"
       />
       </>}
     </div>

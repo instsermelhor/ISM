@@ -83,6 +83,24 @@ export interface GovernanceMemberData {
   imageUrl: string;
 }
 
+export interface DonationSectionData {
+  badge: string;
+  title: string;
+  subtitle: string;
+  pixKey: string;
+  bankName: string;
+  benefits: string[];
+  videoUrl?: string;
+}
+
+export interface SeoSettingsData {
+  siteTitle: string;
+  siteDescription: string;
+  ogImage: string;
+  googleAnalyticsId: string;
+  keywords: string;
+}
+
 // ── Dados Iniciais (seed) ─────────────────────────────────────────────────
 
 const SEED_PAGE: InstitutionalPageData = {
@@ -321,6 +339,34 @@ export const InstitutionalFirestoreService = {
 
   async deleteProgram(id: string): Promise<void> {
     await deleteDoc(doc(db, 'programs', id));
+  },
+
+  // ── Donation Section ──────────────────────────────────────────────────
+  async getDonationSection(): Promise<DonationSectionData | null> {
+    const snap = await getDoc(doc(db, 'donation_section', 'main'));
+    return snap.exists() ? (snap.data() as DonationSectionData) : null;
+  },
+
+  async saveDonationSection(data: Partial<DonationSectionData>): Promise<void> {
+    await setDoc(
+      doc(db, 'donation_section', 'main'),
+      { ...data, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
+  },
+
+  // ── SEO & Settings ────────────────────────────────────────────────────
+  async getSeoSettings(): Promise<SeoSettingsData | null> {
+    const snap = await getDoc(doc(db, 'seo_settings', 'main'));
+    return snap.exists() ? (snap.data() as SeoSettingsData) : null;
+  },
+
+  async saveSeoSettings(data: Partial<SeoSettingsData>): Promise<void> {
+    await setDoc(
+      doc(db, 'seo_settings', 'main'),
+      { ...data, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
   },
 
   // ── Seed / Bootstrap ───────────────────────────────────────────────────
