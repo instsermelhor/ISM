@@ -1,230 +1,265 @@
-import React, { useEffect, useState } from 'react';
-import { LeadsService } from '../services/api';
-import type { ContactLead, LeadStatus } from '../types';
-import { Mail, Phone, MessageSquare, Archive, CheckCircle, Eye, Search } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Users, Search, Filter, Flame, Zap, Sparkles,
+  Bot, ShieldCheck, Mail, Phone, ArrowRight,
+  Plus, CheckCircle2, AlertTriangle, Calendar, MessageSquare
+} from 'lucide-react';
+import { SaveBar } from '../components/ui/SaveBar';
+import {
+  CrmLeadsEnterpriseService,
+  type EnterpriseLead,
+  type LeadStage,
+  type LeadTemperature
+} from '../services/crmLeadsEnterprise';
+import { CMSVersionService } from '../services/cmsVersions';
+import { useCMSAutosave } from '../hooks/useCMSAutosave';
+import { CMSAutosaveBanner } from '../components/cms/CMSAutosaveBanner';
+import { CMSVersionHistory } from '../components/cms/CMSVersionHistory';
 
-const STATUS_CONFIG: Record<LeadStatus, { label: string; badge: string; next?: LeadStatus }> = {
-  NEW: { label: 'Novo', badge: 'badge badge-red', next: 'READ' },
-  READ: { label: 'Lido', badge: 'badge badge-yellow', next: 'REPLIED' },
-  REPLIED: { label: 'Respondido', badge: 'badge badge-green' },
-  ARCHIVED: { label: 'Arquivado', badge: 'badge badge-gray' },
+type Tab = 'funil' | 'leads' | 'ai_qualifier' | 'automacoes' | 'lgpd';
+
+const STAGE_LABELS: Record<LeadStage, string> = {
+  NOVO: 'Novo Lead',
+  QUALIFICADO: 'Qualificado (Hot)',
+  EM_NUTRICAO: 'Em Nutrição',
+  APRESENTACAO: 'Apresentação Agendada',
+  PROPOSTA: 'Proposta Enviada',
+  CONVERTIDO: 'Convertido / Doador',
+  ARQUIVADO: 'Arquivado',
 };
 
-const SOURCE_MAP: Record<string, string> = {
-  'contact-form': 'Formulário',
-  'partner-form': 'Parceria',
-  'donation': 'Doação',
+const STAGE_COLORS: Record<LeadStage, string> = {
+  NOVO: '#3b82f6',
+  QUALIFICADO: '#dc2626',
+  EM_NUTRICAO: '#d97706',
+  APRESENTACAO: '#8b5cf6',
+  PROPOSTA: '#ec4899',
+  CONVERTIDO: '#16a34a',
+  ARQUIVADO: '#9ca3af',
+};
+
+const TEMP_BADGES: Record<LeadTemperature, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+  HOT: { label: 'HOT (Score >= 80)', icon: Flame, color: '#dc2626', bg: '#fef2f2' },
+  WARM: { label: 'WARM (50-79)', icon: Zap, color: '#d97706', bg: '#fffbeb' },
+  COLD: { label: 'COLD (< 50)', icon: Sparkles, color: '#6b7280', bg: '#f9fafb' },
 };
 
 export const LeadsPage: React.FC = () => {
-  const [leads, setLeads] = useState<ContactLead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [leads, setLeads] = useState<EnterpriseLead[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('funil');
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<LeadStatus | 'ALL'>('ALL');
-  const [selected, setSelected] = useState<ContactLead | null>(null);
-  const [notes, setNotes] = useState('');
+  const [selectedLead, setSelectedLead] = useState<EnterpriseLead | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    LeadsService.getAll().then(setLeads).finally(() => setLoading(false));
-  }, []);
+  // Autosave
+  const autosave = useCMSAutosave('leads', leads);
 
-  const filtered = leads.filter(l => {
-    const matchSearch = l.name.toLowerCase().includes(search.toLowerCase()) ||
-      l.email.toLowerCase().includes(search.toLowerCase()) ||
-      (l.subject || '').toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === 'ALL' || l.status === filterStatus;
-    return matchSearch && matchStatus;
-  });
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      let list = await CrmLeadsEnterpriseService.getLeads();
+      if (!list.length) {
+        await CrmLeadsEnterpriseService.seedDefaults();
+        list = await CrmLeadsEnterpriseService.getLeads();
+      }
+      setLeads(list);
+      if (list.length && !selectedLead) setSelectedLead(list[0]);
+    } catch (e) {
+      console.error('[LeadsPage] Load error:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedLead]);
 
-  const handleStatusChange = async (id: string, status: LeadStatus) => {
-    await LeadsService.updateStatus(id, status);
-    setLeads(leads.map(l => l.id === id ? { ...l, status } : l));
-    if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : prev);
-  };
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const handleSaveNotes = async () => {
-    if (!selected) return;
+  const handleSave = async () => {
     setSaving(true);
-    await LeadsService.updateStatus(selected.id, selected.status, notes);
-    setLeads(leads.map(l => l.id === selected.id ? { ...l, notes } : l));
-    setSaving(false);
+    try {
+      for (const lead of leads) {
+        await CrmLeadsEnterpriseService.saveLead(lead);
+      }
+      await CMSVersionService.saveDraft('leads', { leads } as unknown as Record<string, unknown>, 'admin', 'Atualização CRM de Leads');
+      autosave.clearSaved();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      console.error('[LeadsPage] Save error:', e);
+      alert('Erro ao salvar leads.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const relTime = (iso: string) => {
-    const diff = Date.now() - new Date(iso).getTime();
-    if (diff < 3600000) return `há ${Math.floor(diff / 60000)}min`;
-    if (diff < 86400000) return `há ${Math.floor(diff / 3600000)}h`;
-    return `há ${Math.floor(diff / 86400000)}d`;
-  };
+  const filteredLeads = leads.filter(l =>
+    l.name.toLowerCase().includes(search.toLowerCase()) ||
+    l.email.toLowerCase().includes(search.toLowerCase()) ||
+    (l.companyName && l.companyName.toLowerCase().includes(search.toLowerCase()))
+  );
 
-  const newCount = leads.filter(l => l.status === 'NEW').length;
+  const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
+    { id: 'funil', label: 'Funil de Conversão (CRM)', icon: Users },
+    { id: 'leads', label: 'Diretório de Leads & Score', icon: Flame },
+    { id: 'ai_qualifier', label: 'Qualificação por IA & Next Best Action', icon: Bot },
+    { id: 'automacoes', label: 'Réguas de Nutrição', icon: Zap },
+    { id: 'lgpd', label: 'Governança LGPD', icon: ShieldCheck },
+  ];
+
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>Carregando CRM de Leads & Inteligência Comercial...</div>;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', gap: 20, height: 'calc(100vh - 100px)' }}>
-      {/* Left panel */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--gray-900)' }}>Leads & Contatos</h1>
-            <p style={{ color: 'var(--gray-500)', fontSize: 13, marginTop: 2 }}>
-              {newCount > 0 && <><span style={{ color: '#ef4444', fontWeight: 700 }}>{newCount} novos</span> · </>}
-              {leads.length} total
-            </p>
-          </div>
-        </div>
+    <div style={{ maxWidth: 1150, margin: '0 auto', padding: '12px 0' }}>
+      <SaveBar saving={saving} saved={saved} onSave={handleSave} title="CRM de Leads Enterprise" />
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-          {(['ALL', 'NEW', 'READ', 'REPLIED', 'ARCHIVED'] as const).map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)} style={{
-              padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              border: '1px solid', transition: 'all 0.15s',
-              background: filterStatus === s ? 'var(--gray-900)' : 'transparent',
-              color: filterStatus === s ? 'white' : 'var(--gray-500)',
-              borderColor: filterStatus === s ? 'var(--gray-900)' : 'var(--gray-200)'
-            }}>
-              {s === 'ALL' ? `Todos (${leads.length})` : `${STATUS_CONFIG[s as LeadStatus].label} (${leads.filter(l => l.status === s).length})`}
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        <div className="card" style={{ padding: '10px 14px', marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Search size={14} style={{ color: 'var(--gray-400)', flexShrink: 0 }} />
-          <input placeholder="Buscar por nome, e-mail ou assunto..." value={search} onChange={e => setSearch(e.target.value)}
-            style={{ border: 'none', outline: 'none', fontSize: 13, flex: 1, fontFamily: 'var(--font-sans)', background: 'transparent' }}
-          />
-        </div>
-
-        {/* Lead List */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {loading ? <div style={{ padding: 40, textAlign: 'center' }}><div className="animate-spin" style={{ width: 28, height: 28, border: '3px solid var(--gray-200)', borderTopColor: 'var(--brand-600)', borderRadius: '50%', margin: '0 auto' }} /></div>
-            : filtered.map(lead => (
-              <div
-                key={lead.id}
-                onClick={() => { setSelected(lead); setNotes(lead.notes || ''); }}
-                className="card"
-                style={{
-                  padding: '14px 16px', cursor: 'pointer',
-                  border: selected?.id === lead.id ? '1px solid var(--brand-500)' : undefined,
-                  boxShadow: selected?.id === lead.id ? '0 0 0 3px rgba(34,197,94,0.1)' : undefined,
-                  transition: 'all 0.15s',
-                  display: 'flex', gap: 12, alignItems: 'flex-start'
-                }}
-              >
-                <div style={{
-                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                  background: lead.status === 'NEW' ? '#fef2f2' : 'var(--gray-100)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: lead.status === 'NEW' ? '#ef4444' : 'var(--gray-500)', fontWeight: 800, fontSize: 14
-                }}>
-                  {lead.name.charAt(0).toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <div>
-                      <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--gray-900)' }}>{lead.name}</p>
-                      <p style={{ fontSize: 11, color: 'var(--gray-400)', marginTop: 1 }}>{lead.email}</p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <span className={STATUS_CONFIG[lead.status].badge}>{STATUS_CONFIG[lead.status].label}</span>
-                      <span style={{ fontSize: 10, color: 'var(--gray-400)' }}>{relTime(lead.createdAt)}</span>
-                    </div>
-                  </div>
-                  {lead.subject && <p style={{ fontSize: 12, color: 'var(--gray-600)', marginTop: 4, fontStyle: 'italic' }}>"{lead.subject}"</p>}
-                  <div style={{ marginTop: 6, display: 'flex', gap: 6 }}>
-                    <span className="badge badge-blue" style={{ fontSize: 9 }}>{SOURCE_MAP[lead.source] || lead.source}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Users size={26} color="#dc2626" /> CRM de Leads, Captação & Inteligência Comercial
+          </h1>
+          <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
+            Aquisição, Lead Scoring, qualificação por IA e automação de nutrição para doadores e patrocinadores
+          </p>
         </div>
       </div>
 
-      {/* Right panel: Detail */}
-      <div style={{ width: 380, flexShrink: 0 }}>
-        {selected ? (
-          <div className="card animate-scale-in" style={{ padding: 24, height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Contact Info */}
-            <div>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 16 }}>
-                <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--brand-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand-700)', fontWeight: 900, fontSize: 18, border: '1px solid var(--brand-100)' }}>
-                  {selected.name.charAt(0)}
+      {autosave.restoreAvailable && (
+        <CMSAutosaveBanner
+          savedAt={autosave.savedAt()}
+          onRestore={() => { const d = autosave.restore(); if (d && (d as any).leads) setLeads((d as any).leads); }}
+          onDiscard={autosave.clearSaved}
+        />
+      )}
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #e5e7eb', marginBottom: 24, overflowX: 'auto' }}>
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: 'none',
+              borderRadius: '8px 8px 0 0', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+              background: activeTab === t.id ? '#dc2626' : 'transparent',
+              color: activeTab === t.id ? 'white' : '#6b7280', whiteSpace: 'nowrap'
+            }}
+          >
+            <t.icon size={15} /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab: Funil de Conversão (CRM) */}
+      {activeTab === 'funil' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+          {(['NOVO', 'QUALIFICADO', 'EM_NUTRICAO', 'APRESENTACAO', 'PROPOSTA', 'CONVERTIDO'] as LeadStage[]).map(stage => {
+            const stageLeads = leads.filter(l => l.stage === stage);
+            return (
+              <div key={stage} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: STAGE_COLORS[stage] }}>{STAGE_LABELS[stage]}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, background: 'white', padding: '2px 8px', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                    {stageLeads.length}
+                  </span>
                 </div>
+
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {stageLeads.map(l => {
+                    const temp = TEMP_BADGES[l.temperature];
+                    return (
+                      <div key={l.id} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <strong style={{ fontSize: 13, color: '#111827' }}>{l.name}</strong>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: temp.color, background: temp.bg, padding: '1px 6px', borderRadius: 4 }}>
+                            {l.leadScore} pts
+                          </span>
+                        </div>
+                        {l.companyName && <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{l.companyName}</div>}
+                        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{l.category}</span>
+                          <span>{l.sourceChannel}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {stageLeads.length === 0 && <div style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', padding: 12 }}>Nenhum lead nesta etapa</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tab: Qualificação por IA */}
+      {activeTab === 'ai_qualifier' && selectedLead && (
+        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <Bot size={24} color="#8b5cf6" />
+            <div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Assistente IA — Qualificação & Next Best Action</h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: 12, color: '#6b7280' }}>Sumarização automática de perfil e recomendação inteligente para o time de Captação</p>
+            </div>
+          </div>
+
+          <div style={{ background: '#faf5ff', border: '1px solid #e9d5ff', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#6b21a8', marginBottom: 4 }}>
+              Lead Selecionado: {selectedLead.name} ({selectedLead.email})
+            </div>
+            <p style={{ fontSize: 13, color: '#4c1d95', margin: 0 }}>
+              {selectedLead.aiSummary || 'Sumarização em processamento...'}
+            </p>
+          </div>
+
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 800, color: '#15803d', marginBottom: 4 }}>
+              <ArrowRight size={16} /> Próxima Melhor Ação Recomendada (Next Best Action)
+            </div>
+            <div style={{ fontSize: 14, color: '#166534', fontWeight: 700 }}>
+              {selectedLead.nextBestAction || 'Realizar contato telefônico para agendamento de apresentação.'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Governança LGPD */}
+      {activeTab === 'lgpd' && (
+        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <ShieldCheck size={22} color="#16a34a" />
+            <div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Registro Auditável de Consentimentos LGPD</h3>
+              <p style={{ margin: '2px 0 0 0', fontSize: 12, color: '#6b7280' }}>Rastreabilidade de Opt-In, timestamps e finalidades autorizadas</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: 12 }}>
+            {leads.map(l => (
+              <div key={l.id} style={{ border: '1px solid #f3f4f6', borderRadius: 8, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <h3 style={{ fontWeight: 800, fontSize: 16, color: 'var(--gray-900)' }}>{selected.name}</h3>
-                  <span className={STATUS_CONFIG[selected.status].badge}>{STATUS_CONFIG[selected.status].label}</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <Mail size={13} style={{ color: 'var(--gray-400)', flexShrink: 0 }} />
-                  <a href={`mailto:${selected.email}`} style={{ fontSize: 13, color: 'var(--brand-600)', textDecoration: 'none' }}>{selected.email}</a>
-                </div>
-                {selected.phone && (
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Phone size={13} style={{ color: 'var(--gray-400)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: 'var(--gray-700)' }}>{selected.phone}</span>
+                  <strong style={{ fontSize: 13, color: '#111827' }}>{l.name} ({l.email})</strong>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                    Consentimento registrado em: {l.lgpdConsentDate ? new Date(l.lgpdConsentDate).toLocaleString('pt-BR') : 'Sem data'}
                   </div>
-                )}
-                {selected.subject && (
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <MessageSquare size={13} style={{ color: 'var(--gray-400)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: 'var(--gray-700)', fontStyle: 'italic' }}>{selected.subject}</span>
-                  </div>
-                )}
+                </div>
+                <span style={{
+                  background: l.lgpdConsent ? '#f0fdf4' : '#fef2f2',
+                  color: l.lgpdConsent ? '#16a34a' : '#dc2626',
+                  border: `1px solid ${l.lgpdConsent ? '#bbf7d0' : '#fecaca'}`,
+                  borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 700
+                }}>
+                  {l.lgpdConsent ? '✅ Consentimento Ativo' : '❌ Opt-Out / Revogado'}
+                </span>
               </div>
-            </div>
-
-            {/* Message */}
-            <div style={{ background: 'var(--gray-50)', borderRadius: 12, padding: 16, border: '1px solid var(--gray-100)' }}>
-              <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-400)', marginBottom: 8 }}>Mensagem</p>
-              <p style={{ fontSize: 13, color: 'var(--gray-700)', lineHeight: 1.7 }}>{selected.message}</p>
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              {STATUS_CONFIG[selected.status].next && (
-                <button className="btn btn-primary btn-sm" style={{ flex: 1, justifyContent: 'center' }}
-                  onClick={() => handleStatusChange(selected.id, STATUS_CONFIG[selected.status].next!)}>
-                  <CheckCircle size={14} />
-                  Marcar como {STATUS_CONFIG[STATUS_CONFIG[selected.status].next!].label}
-                </button>
-              )}
-              <button className="btn btn-ghost btn-sm" onClick={() => handleStatusChange(selected.id, 'ARCHIVED')}>
-                <Archive size={14} /> Arquivar
-              </button>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="input-label" style={{ marginBottom: 8 }}>Notas Internas</label>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                placeholder="Adicione notas de acompanhamento..."
-                rows={4}
-                className="input"
-                style={{ resize: 'vertical' }}
-              />
-              <button className="btn btn-ghost btn-sm" style={{ marginTop: 8 }} onClick={handleSaveNotes} disabled={saving}>
-                {saving ? 'Salvando...' : 'Salvar Notas'}
-              </button>
-            </div>
-
-            <div style={{ fontSize: 10, color: 'var(--gray-300)', borderTop: '1px solid var(--gray-100)', paddingTop: 12 }}>
-              Recebido: {new Date(selected.createdAt).toLocaleString('pt-BR')} · Fonte: {SOURCE_MAP[selected.source] || selected.source}
-            </div>
+            ))}
           </div>
-        ) : (
-          <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--gray-300)' }}>
-            <Eye size={40} style={{ opacity: 0.3 }} />
-            <p style={{ fontWeight: 600, fontSize: 14 }}>Selecione um lead</p>
-            <p style={{ fontSize: 12, textAlign: 'center', maxWidth: 200 }}>Clique em um lead à esquerda para ver os detalhes</p>
-          </div>
-        )}
+        </div>
+      )}
+
+      {/* Version History Sidebar/Footer */}
+      <div style={{ marginTop: 32 }}>
+        <CMSVersionHistory moduleId="leads" onRestore={() => loadData()} />
       </div>
     </div>
   );
