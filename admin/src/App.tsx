@@ -1,7 +1,8 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
+
 
 // Importações dinâmicas (Code Splitting / Lazy Loading)
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
