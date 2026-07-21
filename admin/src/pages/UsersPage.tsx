@@ -560,7 +560,7 @@ export const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<AdminUser[]>(SEED_USERS);
   const [invites, setInvites] = useState<Invite[]>(SEED_INVITES);
   const [logs] = useState<ActivityLog[]>(SEED_LOGS);
-  const [activeTab, setActiveTab] = useState<'users' | 'invites' | 'matrix' | 'activity'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'invites' | 'matrix' | 'activity' | 'credentials' | 'volunteers'>('users');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<Role | ''>('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | ''>('');
@@ -592,7 +592,9 @@ export const UsersPage: React.FC = () => {
   ];
 
   const TABS = [
-    { id: 'users' as const, label: '👥 Usuários', count: users.length },
+    { id: 'users' as const, label: '👥 Usuários & RH', count: users.length },
+    { id: 'credentials' as const, label: '🛡️ Credenciamento (CRM/CRP)', count: null },
+    { id: 'volunteers' as const, label: '🙌 Banco de Horas Voluntárias', count: null },
     { id: 'invites' as const, label: '✉️ Convites', count: invites.filter(i => i.status === 'PENDING').length },
     { id: 'matrix' as const, label: '🔑 Matriz RBAC', count: null },
     { id: 'activity' as const, label: '📊 Atividade', count: logs.length },
