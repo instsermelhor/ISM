@@ -1,222 +1,208 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, Plus, Trash2, Save, RotateCcw, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Heart, Plus, Trash2, Save, RotateCcw, CheckCircle,
+  Megaphone, Repeat, CreditCard, Award, BarChart2, DollarSign
+} from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
 import { InstitutionalFirestoreService } from '../services/institutional';
-import type { DonationSectionData } from '../services/institutional';
+import {
+  FundraisingEnterpriseService,
+  type FundraisingCampaign,
+  type RecurringSubscription
+} from '../services/fundraisingEnterprise';
+import { CMSVersionService } from '../services/cmsVersions';
+import { useCMSAutosave } from '../hooks/useCMSAutosave';
+import { CMSAutosaveBanner } from '../components/cms/CMSAutosaveBanner';
+import { CMSVersionHistory } from '../components/cms/CMSVersionHistory';
 
-const Card: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
-  <div style={{
-    background: 'white',
-    borderRadius: 16,
-    border: '1px solid #e5e7eb',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-    padding: 24,
-    marginBottom: 20,
-    ...style
-  }}>
-    {children}
-  </div>
-);
-
-const DEFAULT_DATA: DonationSectionData = {
-  badge: 'Contribua com o Instituto',
-  title: 'Como Apoiar Nossa Causa',
-  subtitle: 'Sua contribuição impulsiona projetos socioambientais transformadores em todo o país.',
-  pixKey: 'apoio@institutosermelhor.org.br',
-  bankName: 'Cora Sociedade de Crédito',
-  benefits: [
-    'Acesso a relatórios de impacto semestrais',
-    'Sua marca no mural de apoiadores do Instituto',
-    'Dedução fiscal para pessoas jurídicas'
-  ],
-  videoUrl: ''
-};
+type Tab = 'campanhas' | 'recorrencia' | 'meios_pagamento' | 'certificados';
 
 export const DonationEditorPage: React.FC = () => {
-  const [data, setData] = useState<DonationSectionData>(DEFAULT_DATA);
+  const [campaigns, setCampaigns] = useState<FundraisingCampaign[]>([]);
+  const [subscriptions, setSubscriptions] = useState<RecurringSubscription[]>([]);
+  
+  const [activeTab, setActiveTab] = useState<Tab>('campanhas');
   const [loading, setLoading] = useState(true);
-  const [isDirty, setIsDirty] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const [newBenefit, setNewBenefit] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    InstitutionalFirestoreService.getDonationSection().then(res => {
-      if (res) {
-        setData(res);
+  // Autosave
+  const autosave = useCMSAutosave('donations', campaigns);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      let campList = await FundraisingEnterpriseService.getCampaigns();
+      if (!campList.length) {
+        await FundraisingEnterpriseService.seedDefaults();
+        campList = await FundraisingEnterpriseService.getCampaigns();
       }
+      setCampaigns(campList);
+
+      const subList = await FundraisingEnterpriseService.getSubscriptions();
+      setSubscriptions(subList);
+    } catch (e) {
+      console.error('[DonationEditorPage] Load error:', e);
+    } finally {
       setLoading(false);
-    }).catch(e => {
-      console.error(e);
-      setLoading(false);
-    });
+    }
   }, []);
 
-  const handleChange = (field: keyof DonationSectionData, value: any) => {
-    setData(prev => ({ ...prev, [field]: value }));
-    setIsDirty(true);
-  };
-
-  const handleAddBenefit = () => {
-    if (!newBenefit.trim()) return;
-    handleChange('benefits', [...data.benefits, newBenefit.trim()]);
-    setNewBenefit('');
-  };
-
-  const handleRemoveBenefit = (index: number) => {
-    handleChange('benefits', data.benefits.filter((_, i) => i !== index));
-  };
+  useEffect(() => { loadData(); }, [loadData]);
 
   const handleSave = async () => {
-    setSaveStatus('saving');
+    setSaving(true);
     try {
-      await InstitutionalFirestoreService.saveDonationSection(data);
-      setIsDirty(false);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      for (const camp of campaigns) {
+        await FundraisingEnterpriseService.saveCampaign(camp);
+      }
+      await CMSVersionService.saveDraft('donations', { campaigns } as unknown as Record<string, unknown>, 'admin', 'Atualização Módulo de Captação & Doações');
+      autosave.clearSaved();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (e) {
-      console.error(e);
-      setSaveStatus('idle');
-      alert('Erro ao salvar no Firestore. Verifique sua conexão.');
+      console.error('[DonationEditorPage] Save error:', e);
+      alert('Erro ao salvar campanhas de doação.');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleReset = () => {
-    if (!confirm('Deseja descartar as alterações não salvas?')) return;
-    setLoading(true);
-    InstitutionalFirestoreService.getDonationSection().then(res => {
-      setData(res || DEFAULT_DATA);
-      setIsDirty(false);
-      setLoading(false);
-    });
-  };
+  const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
+    { id: 'campanhas', label: 'Campanhas de Captação', icon: Megaphone },
+    { id: 'recorrencia', label: 'Doações Recorrentes & Churn', icon: Repeat },
+    { id: 'meios_pagamento', label: 'Meios de Pagamento & PIX', icon: CreditCard },
+    { id: 'certificados', label: 'Certificados de Impacto', icon: Award },
+  ];
 
-  const iS: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: 10,
-    border: '1px solid #e5e7eb',
-    fontSize: 13,
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit'
-  };
-
-  const lblS: React.CSSProperties = {
-    fontSize: 12,
-    fontWeight: 700,
-    color: '#374151',
-    display: 'block',
-    marginBottom: 6
-  };
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
-        <div style={{ width: 36, height: 36, border: '3px solid #e5e7eb', borderTopColor: '#16a34a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </div>
-    );
-  }
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>Carregando plataforma de captação & doações...</div>;
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', paddingBottom: 80 }}>
+    <div style={{ maxWidth: 1150, margin: '0 auto', padding: '12px 0' }}>
+      <SaveBar saving={saving} saved={saved} onSave={handleSave} title="Fundraising & Captação Enterprise" />
+
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Heart size={26} color="#dc2626" fill="#dc2626" /> Editor — Seção de Doação
+            <Heart size={26} color="#dc2626" /> Gestão de Doações, Campanhas & Fundraising
           </h1>
           <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
-            Customize a chamada para ação de doação, chave Pix, dados bancários e vantagens dos doadores
-            {isDirty && <span style={{ marginLeft: 8, background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>● Não salvo</span>}
+            Captação de recursos, gestão de doadores recorrentes, matching donations e emissão de certificados
           </p>
         </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleReset} disabled={!isDirty}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: '1px solid #e5e7eb', background: 'white', fontWeight: 700, fontSize: 13, cursor: !isDirty ? 'not-allowed' : 'pointer', color: '#374151', opacity: !isDirty ? 0.5 : 1 }}>
-            <RotateCcw size={14} /> Descartar
-          </button>
-          <button onClick={handleSave} disabled={!isDirty || saveStatus === 'saving'}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 10, border: 'none', background: '#16a34a', color: 'white', fontWeight: 700, fontSize: 13, cursor: !isDirty ? 'not-allowed' : 'pointer', opacity: !isDirty ? 0.5 : 1, boxShadow: '0 2px 8px rgba(22,163,74,0.3)' }}>
-            {saveStatus === 'saving' ? 'Salvando...' : saveStatus === 'saved' ? <><CheckCircle size={14} /> Publicado!</> : <><Save size={14} /> Publicar</>}
-          </button>
-        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 20, alignItems: 'start' }}>
-        {/* Left Column: Form */}
-        <div>
-          <Card>
-            <div style={{ fontWeight: 800, fontSize: 15, color: '#111827', marginBottom: 18 }}>✍️ Textos e Informações de Doação</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={lblS}>Badge (Etiqueta superior)</label>
-                <input value={data.badge} onChange={e => handleChange('badge', e.target.value)} style={iS} placeholder="Ex: Contribua com o Instituto" />
-              </div>
-              <div>
-                <label style={lblS}>Título Principal</label>
-                <input value={data.title} onChange={e => handleChange('title', e.target.value)} style={{ ...iS, fontWeight: 700 }} placeholder="Ex: Como Apoiar Nossa Causa" />
-              </div>
-              <div>
-                <label style={lblS}>Subtítulo / Descrição</label>
-                <textarea value={data.subtitle} onChange={e => handleChange('subtitle', e.target.value)} style={{ ...iS, resize: 'vertical', minHeight: 80, lineHeight: 1.5 }} placeholder="Digite um texto explicativo motivacional para a doação..." />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      {autosave.restoreAvailable && (
+        <CMSAutosaveBanner
+          savedAt={autosave.savedAt()}
+          onRestore={() => { const d = autosave.restore(); if (d && (d as any).campaigns) setCampaigns((d as any).campaigns); }}
+          onDiscard={autosave.clearSaved}
+        />
+      )}
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #e5e7eb', marginBottom: 24, overflowX: 'auto' }}>
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', border: 'none',
+              borderRadius: '8px 8px 0 0', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+              background: activeTab === t.id ? '#dc2626' : 'transparent',
+              color: activeTab === t.id ? 'white' : '#6b7280', whiteSpace: 'nowrap'
+            }}
+          >
+            <t.icon size={15} /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab: Campanhas de Captação */}
+      {activeTab === 'campanhas' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+          {campaigns.map(camp => {
+            const pct = Math.min(Math.round((camp.raisedAmount / camp.targetAmount) * 100), 100);
+            return (
+              <div
+                key={camp.id}
+                style={{
+                  background: 'white', border: '1px solid #e5e7eb', borderRadius: 14, padding: 20,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
+                }}
+              >
                 <div>
-                  <label style={lblS}>Chave Pix</label>
-                  <input value={data.pixKey} onChange={e => handleChange('pixKey', e.target.value)} style={iS} placeholder="Ex: pix@instituto.org" />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, background: '#fef2f2', color: '#dc2626', padding: '2px 8px', borderRadius: 4 }}>
+                      {camp.status}
+                    </span>
+                    {camp.matchingDonationEnabled && (
+                      <span style={{ fontSize: 10, fontWeight: 800, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', padding: '2px 6px', borderRadius: 4 }}>
+                        ⚡ Matching: {camp.matchingPartnerName}
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#111827', margin: '0 0 6px 0' }}>{camp.title}</h3>
+                  <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5, margin: '0 0 16px 0' }}>{camp.subtitle}</p>
+
+                  {/* Progresso Meta */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 800, marginBottom: 4 }}>
+                      <span style={{ color: '#16a34a' }}>R$ {(camp.raisedAmount / 1000).toFixed(0)}k arrecadados</span>
+                      <span style={{ color: '#6b7280' }}>Meta: R$ {(camp.targetAmount / 1000).toFixed(0)}k ({pct}%)</span>
+                    </div>
+                    <div style={{ width: '100%', height: 8, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #16a34a 0%, #22c55e 100%)' }} />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label style={lblS}>Banco Vinculado</label>
-                  <input value={data.bankName} onChange={e => handleChange('bankName', e.target.value)} style={iS} placeholder="Ex: Cora Bank" />
-                </div>
-              </div>
-              <div>
-                <label style={lblS}>Link do Vídeo de Fundo (Opcional)</label>
-                <input value={data.videoUrl || ''} onChange={e => handleChange('videoUrl', e.target.value)} style={iS} placeholder="Ex: https://www.youtube.com/watch?v=..." />
-              </div>
-            </div>
-          </Card>
-        </div>
 
-        {/* Right Column: Benefits Checklist */}
-        <div>
-          <Card>
-            <div style={{ fontWeight: 800, fontSize: 15, color: '#111827', marginBottom: 16 }}>🌟 Vantagens e Transparência (Checklist)</div>
-            <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 16px 0', lineHeight: 1.4 }}>Liste os benefícios ou garantias de transparência que os doadores terão ao apoiar.</p>
-
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              <input value={newBenefit} onChange={e => setNewBenefit(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddBenefit()} placeholder="Nova vantagem..." style={{ ...iS, flex: 1 }} />
-              <button onClick={handleAddBenefit} style={{ background: '#16a34a', color: 'white', border: 'none', borderRadius: 10, padding: '0 14px', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
-                <Plus size={16} />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {data.benefits.map((b, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10 }}>
-                  <span style={{ fontSize: 13, color: '#374151', paddingRight: 8 }}>{b}</span>
-                  <button onClick={() => handleRemoveBenefit(idx)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 2 }}>
-                    <Trash2 size={14} />
+                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 11, color: '#9ca3af' }}>
+                    Doadores: <strong style={{ color: '#111827' }}>{camp.donorCount}</strong>
+                  </div>
+                  <button
+                    style={{
+                      background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca',
+                      borderRadius: 6, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer'
+                    }}
+                  >
+                    Editar Campanha
                   </button>
                 </div>
-              ))}
-              {data.benefits.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '24px 0', color: '#9ca3af', fontSize: 13 }}>Nenhuma vantagem listada.</div>
-              )}
-            </div>
-          </Card>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
 
-      <SaveBar
-        isDirty={isDirty}
-        saveStatus={saveStatus === 'saved' ? 'saved' : saveStatus === 'saving' ? 'saving' : 'idle'}
-        onSave={handleSave}
-        onDiscard={handleReset}
-        message="Seção de Doação possui alterações não salvas"
-      />
+      {/* Tab: Meios de Pagamento */}
+      {activeTab === 'meios_pagamento' && (
+        <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24 }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 800 }}>Gateway Multimeios de Doações</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+            {[
+              { name: 'PIX Institucional', status: 'Ativo (Chave E-mail)', badge: '⚡ Instantâneo' },
+              { name: 'Cartão de Crédito / Débito', status: 'Ativo (Stripe / Pagar.me)', badge: '💳 Recorrente' },
+              { name: 'Boleto Bancário', status: 'Ativo (Cora)', badge: '📄 Sem taxa' },
+              { name: 'Open Finance (Pix Agendado)', status: 'Ativo (Banco Central)', badge: '🏦 Automático' },
+            ].map(m => (
+              <div key={m.name} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: 16 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, background: '#eff6ff', color: '#2563eb', padding: '2px 6px', borderRadius: 4 }}>{m.badge}</span>
+                <strong style={{ fontSize: 14, color: '#111827', display: 'block', marginTop: 8 }}>{m.name}</strong>
+                <div style={{ fontSize: 12, color: '#16a34a', marginTop: 4, fontWeight: 700 }}>{m.status}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Version History Sidebar/Footer */}
+      <div style={{ marginTop: 32 }}>
+        <CMSVersionHistory moduleId="donations" onRestore={() => loadData()} />
+      </div>
     </div>
   );
 };
