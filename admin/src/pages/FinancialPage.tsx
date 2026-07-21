@@ -74,13 +74,15 @@ const SectionTitle: React.FC<{ icon: string; title: string; subtitle?: string; a
 );
 
 // ── TAB NAVIGATION ────────────────────────────────────────────────────────────
-type Tab = 'overview' | 'donations' | 'donors' | 'banking' | 'goals';
+type Tab = 'overview' | 'donations' | 'donors' | 'banking' | 'goals' | 'itg2002' | 'accountability';
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'overview', label: 'Visão Geral', icon: '📊' },
   { id: 'donations', label: 'Doações', icon: '💰' },
   { id: 'donors', label: 'Doadores', icon: '👥' },
   { id: 'banking', label: 'APIs Bancárias', icon: '🏦' },
   { id: 'goals', label: 'Metas', icon: '🎯' },
+  { id: 'itg2002', label: 'Plano de Contas (ITG 2002)', icon: '📖' },
+  { id: 'accountability', label: 'Prestação de Contas', icon: '📜' },
 ];
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1386,6 +1388,51 @@ export const FinancialPage: React.FC<{ initialTab?: Tab }> = ({ initialTab = 'ov
       {activeTab === 'donors' && <DonorsTab />}
       {activeTab === 'banking' && <BankingTab />}
       {activeTab === 'goals' && <GoalsTab />}
+      {activeTab === 'itg2002' && (
+        <Card>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#111827', marginBottom: 16 }}>📖 Plano de Contas ITG 2002 (Entidades sem Fins Lucrativos)</h3>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {[
+              { code: '1.1.1.01', name: 'Bancos Conta Movimento', type: 'ANALÍTICA', nature: 'DEVEDORA', category: 'ATIVO CIRCULANTE' },
+              { code: '2.1.1.01', name: 'Fornecedores e Contratos a Pagar', type: 'ANALÍTICA', nature: 'CREDORA', category: 'PASSIVO CIRCULANTE' },
+              { code: '3.1.1.01', name: 'Doações Sem Restrição (PF/PJ)', type: 'ANALÍTICA', nature: 'CREDORA', category: 'RECEITA INSTITUCIONAL' },
+              { code: '4.1.1.01', name: 'Custos Diretos com Programas Sociais', type: 'ANALÍTICA', nature: 'DEVEDORA', category: 'DESPESAS COM PROGRAMAS' },
+            ].map(acc => (
+              <div key={acc.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid #f3f4f6', borderRadius: 8 }}>
+                <div>
+                  <strong style={{ fontSize: 14, color: '#111827' }}>{acc.code} — {acc.name}</strong>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{acc.category} | Natureza: {acc.nature}</div>
+                </div>
+                <span style={{ fontSize: 11, background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
+                  {acc.type}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+      {activeTab === 'accountability' && (
+        <Card>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: '#111827', marginBottom: 16 }}>📜 Dossiês de Prestação de Contas Auditados</h3>
+          <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>Relatórios consolidados para conselho fiscal, ministério público e financiadores</p>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {[
+              { title: 'Prestação de Contas — Termo de Fomento 04/2024', status: 'APROVADO', period: '2024-Q1', docs: 18 },
+              { title: 'Relatório Trimestral Fundo Perpétuo', status: 'EM_AUDITORIA', period: '2024-Q2', docs: 24 },
+            ].map(d => (
+              <div key={d.title} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 14, border: '1px solid #f3f4f6', borderRadius: 8 }}>
+                <div>
+                  <strong style={{ fontSize: 14, color: '#111827' }}>{d.title}</strong>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Período: {d.period} | {d.docs} documentos fiscais comprovados</div>
+                </div>
+                <span style={{ fontSize: 11, background: d.status === 'APROVADO' ? '#f0fdf4' : '#fffbeb', color: d.status === 'APROVADO' ? '#16a34a' : '#d97706', border: `1px solid ${d.status === 'APROVADO' ? '#bbf7d0' : '#fde68a'}`, padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>
+                  {d.status === 'APROVADO' ? '✅ Parecer Sem Ressalvas' : '⏳ Em Auditoria'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 };
