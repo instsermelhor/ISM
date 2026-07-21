@@ -8,168 +8,103 @@ import type {
 
 
 
+import { auth } from '../lib/firebase';
+import {
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
+  type User as FirebaseUser
+} from 'firebase/auth';
+
 // ── AUTH ──────────────────────────────────────────────────────
-// Tabela de credenciais: cada usuário tem sua própria senha.
-// Em produção NUNCA armazene senhas em texto plano — use bcrypt + backend.
-const MOCK_CREDENTIALS: Record<string, string> = {
-  'admism@institutosermelhor.org': '@@Rk08266570#',  // Super Admin
-  'instsermelhor.adm@gmail.com':   '@@Rk08266570#',  // Super Admin Gmail
-  'admin@ism.org':   'admin123',                      // Admin legado (altere antes de ir a produção)
-  'editor@ism.org':  'editor123',
-  'viewer@ism.org':  'viewer123',
-};
 
-// E-mails de recuperação de senha (primário e secundário por usuário)
-// Em produção, armazene isso de forma segura no backend.
-const RECOVERY_EMAILS: Record<string, { primary: string; secondary?: string; maskedPrimary: string; maskedSecondary?: string }> = {
-  'admism@institutosermelhor.org': {
-    primary: 'admism@institutosermelhor.org',
-    secondary: 'rikardo@institutosermelhor.org',
-    maskedPrimary: 'a****m@institutosermelhor.org',
-    maskedSecondary: 'r*****o@institutosermelhor.org',
-  },
-  'instsermelhor.adm@gmail.com': {
-    primary: 'instsermelhor.adm@gmail.com',
-    maskedPrimary: 'i*************m@gmail.com',
-  },
-  'admin@ism.org': {
-    primary: 'admin@ism.org',
-    maskedPrimary: 'a***n@ism.org',
-  },
-  'editor@ism.org': {
-    primary: 'editor@ism.org',
-    maskedPrimary: 'e****r@ism.org',
-  },
-  'viewer@ism.org': {
-    primary: 'viewer@ism.org',
-    maskedPrimary: 'v****r@ism.org',
-  },
-};
-
-const MOCK_USERS: User[] = [
-  {
-    id: '0',
-    name: 'Instituto Ser Melhor',
-    email: 'admism@institutosermelhor.org',
-    role: 'ADMIN',
-    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&bold=true&size=80',
-    isActive: true,
-    createdAt: '2024-01-01',
-    lastLoginAt: new Date().toISOString(),
-  },
-  {
-    id: '0_gmail',
-    name: 'Administrador ISM Gmail',
-    email: 'instsermelhor.adm@gmail.com',
-    role: 'ADMIN',
-    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Gmail&background=16a34a&color=fff&bold=true&size=80',
-    isActive: true,
-    createdAt: '2024-01-01',
-    lastLoginAt: new Date().toISOString(),
-  },
-  { id: '1', name: 'Rikardo Ribeiro', email: 'admin@ism.org', role: 'ADMIN', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=RR&backgroundColor=16a34a&textColor=ffffff', isActive: true, createdAt: '2024-01-01' },
-  { id: '2', name: 'Maria Santos', email: 'editor@ism.org', role: 'EDITOR', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=MS&backgroundColor=3b82f6&textColor=ffffff', isActive: true, createdAt: '2024-03-15' },
-  { id: '3', name: 'João Oliveira', email: 'viewer@ism.org', role: 'VIEWER', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=JO&backgroundColor=a855f7&textColor=ffffff', isActive: true, createdAt: '2024-06-01' },
+const SUPER_ADMIN_EMAILS = [
+  'admism@institutosermelhor.org',
+  'instsermelhor.adm@gmail.com',
+  'admin@ism.org'
 ];
+
+/** Mapeia objeto FirebaseUser para a interface interna User da aplicação */
+export function mapFirebaseUserToUser(fbUser: FirebaseUser, roleOverride?: 'ADMIN' | 'EDITOR' | 'VIEWER'): User {
+  const email = fbUser.email || '';
+  const isAdmin = SUPER_ADMIN_EMAILS.includes(email.toLowerCase()) || roleOverride === 'ADMIN';
+  const role = isAdmin ? 'ADMIN' : (roleOverride || 'EDITOR');
+
+  return {
+    id: fbUser.uid,
+    name: fbUser.displayName || email.split('@')[0] || 'Usuário ISM',
+    email,
+    role,
+    avatarUrl: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(email)}&background=16a34a&color=fff&bold=true&size=80`,
+    isActive: true,
+    createdAt: fbUser.metadata.creationTime || new Date().toISOString(),
+    lastLoginAt: fbUser.metadata.lastSignInTime || new Date().toISOString(),
+  };
+}
 
 export const AuthService = {
   login: async (email: string, password: string): Promise<User> => {
-    await delay(800);
     const normalizedEmail = email.trim().toLowerCase();
-    const user = MOCK_USERS.find(u => u.email.toLowerCase() === normalizedEmail);
-    const validPassword = MOCK_CREDENTIALS[normalizedEmail] || MOCK_CREDENTIALS[email.trim()];
-
-    if (!user || !validPassword || password !== validPassword) {
-      throw new Error('Credenciais inválidas. Verifique seu e-mail e senha.');
-    }
-    if (!user.isActive) {
-      throw new Error('Conta suspensa. Contate o administrador.');
-    }
-
-    // Atualiza lastLoginAt
-    user.lastLoginAt = new Date().toISOString();
-    localStorage.setItem('ism_admin_user', JSON.stringify(user));
-    localStorage.setItem('ism_admin_token', `mock_jwt_${user.id}_${Date.now()}`);
-    return user;
-  },
-  logout: () => {
-    localStorage.removeItem('ism_admin_user');
-    localStorage.removeItem('ism_admin_token');
-  },
-  getCurrentUser: (): User | null => {
     try {
-      const raw = localStorage.getItem('ism_admin_user');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      // Storage corrompido — limpar e forçar novo login
-      localStorage.removeItem('ism_admin_user');
-      localStorage.removeItem('ism_admin_token');
-      return null;
+      const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      return mapFirebaseUserToUser(userCredential.user);
+    } catch (err: any) {
+      console.error('[AuthService] Erro no login via Firebase Auth:', err.code, err.message);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        throw new Error('Credenciais inválidas. Verifique seu e-mail e senha.');
+      } else if (err.code === 'auth/too-many-requests') {
+        throw new Error('Muitas tentativas malsucedidas. Tente novamente mais tarde.');
+      } else if (err.code === 'auth/user-disabled') {
+        throw new Error('Esta conta foi desativada. Contate o administrador.');
+      }
+      throw new Error(err.message || 'Falha na autenticação. Verifique suas credenciais.');
     }
   },
-  isAuthenticated: (): boolean => !!localStorage.getItem('ism_admin_token'),
+
+  logout: async (): Promise<void> => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (err) {
+      console.error('[AuthService] Erro no logout:', err);
+    }
+  },
+
+  getCurrentUser: (): User | null => {
+    const fbUser = auth.currentUser;
+    return fbUser ? mapFirebaseUserToUser(fbUser) : null;
+  },
+
+  isAuthenticated: (): boolean => !!auth.currentUser,
 };
 
 // ── PASSWORD RESET ─────────────────────────────────────────────
 export const PasswordResetService = {
-  /**
-   * Retorna as opções de e-mail de recuperação mascaradas para o usuário,
-   * sem revelar o endereço completo.
-   */
   getRecoveryOptions: async (email: string): Promise<{
     hasPrimary: boolean;
     hasSecondary: boolean;
     maskedPrimary?: string;
     maskedSecondary?: string;
   }> => {
-    await delay(600);
     const normalizedEmail = email.trim().toLowerCase();
-    // Verifica se o e-mail existe no sistema
-    const userExists = MOCK_USERS.some(u => u.email.toLowerCase() === normalizedEmail);
-    if (!userExists) {
-      // Por segurança, não revelamos se o e-mail existe ou não
-      // Simulamos que encontrou para não vazar informação de cadastro
-      return { hasPrimary: true, hasSecondary: false, maskedPrimary: maskEmail(normalizedEmail) };
-    }
-    const recovery = RECOVERY_EMAILS[normalizedEmail];
-    if (!recovery) {
-      return { hasPrimary: true, hasSecondary: false, maskedPrimary: maskEmail(normalizedEmail) };
-    }
     return {
       hasPrimary: true,
-      hasSecondary: !!recovery.secondary,
-      maskedPrimary: recovery.maskedPrimary,
-      maskedSecondary: recovery.maskedSecondary,
+      hasSecondary: false,
+      maskedPrimary: maskEmail(normalizedEmail),
     };
   },
 
-  /**
-   * Envia o link de recuperação de senha para o e-mail escolhido.
-   * Em produção, isso deve ser tratado pelo backend com token seguro e expiração.
-   */
   sendResetLink: async (
     accountEmail: string,
-    targetType: 'primary' | 'secondary'
+    _targetType: 'primary' | 'secondary'
   ): Promise<{ success: boolean; maskedEmail: string }> => {
-    await delay(1200);
     const normalizedEmail = accountEmail.trim().toLowerCase();
-    const recovery = RECOVERY_EMAILS[normalizedEmail];
-
-    let maskedEmail: string;
-    if (targetType === 'secondary' && recovery?.maskedSecondary) {
-      maskedEmail = recovery.maskedSecondary;
-    } else if (recovery?.maskedPrimary) {
-      maskedEmail = recovery.maskedPrimary;
-    } else {
-      maskedEmail = maskEmail(normalizedEmail);
+    try {
+      await firebaseSendPasswordResetEmail(auth, normalizedEmail);
+      return { success: true, maskedEmail: maskEmail(normalizedEmail) };
+    } catch (err: any) {
+      console.error('[PasswordResetService] Erro ao enviar e-mail de redefinição:', err);
+      throw new Error('Falha ao enviar e-mail de redefinição. Verifique o endereço informado.');
     }
-
-    // Simulação — em produção, dispara e-mail real via backend
-    console.info(
-      `[PasswordReset] Link enviado para ${maskedEmail} (conta: ${normalizedEmail}, tipo: ${targetType})`
-    );
-
-    return { success: true, maskedEmail };
   },
 };
 
@@ -182,6 +117,7 @@ function maskEmail(email: string): string {
     : local[0] + '*';
   return `${masked}@${domain}`;
 }
+
 
 // ── ANALYTICS ─────────────────────────────────────────────────
 export const AnalyticsService = {
@@ -221,8 +157,32 @@ const DESCS: Record<string, string[]> = {
   ARCHIVE: ['arquivou lead', 'arquivou post antigo'],
 };
 
+export const SEED_USERS: User[] = [
+  {
+    id: '0',
+    name: 'Instituto Ser Melhor',
+    email: 'admism@institutosermelhor.org',
+    role: 'ADMIN',
+    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&bold=true&size=80',
+    isActive: true,
+    createdAt: '2024-01-01',
+    lastLoginAt: new Date().toISOString(),
+  },
+  {
+    id: '0_gmail',
+    name: 'Administrador ISM Gmail',
+    email: 'instsermelhor.adm@gmail.com',
+    role: 'ADMIN',
+    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Gmail&background=16a34a&color=fff&bold=true&size=80',
+    isActive: true,
+    createdAt: '2024-01-01',
+    lastLoginAt: new Date().toISOString(),
+  },
+  { id: '1', name: 'Rikardo Ribeiro', email: 'admin@ism.org', role: 'ADMIN', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=RR&backgroundColor=16a34a&textColor=ffffff', isActive: true, createdAt: '2024-01-01' },
+];
+
 const mockAuditLogs: AuditLog[] = Array.from({ length: 40 }, (_, i) => {
-  const user = MOCK_USERS[i % 3];
+  const user = SEED_USERS[i % SEED_USERS.length];
   const action = AUDIT_ACTIONS[i % AUDIT_ACTIONS.length];
   const descs = DESCS[action] || ['realizou ação'];
   return {
@@ -237,6 +197,7 @@ const mockAuditLogs: AuditLog[] = Array.from({ length: 40 }, (_, i) => {
     createdAt: new Date(Date.now() - i * 3600000 * 2).toISOString(),
   };
 });
+
 
 export const AuditService = {
   getLogs: async (page = 1, limit = 20): Promise<{ data: AuditLog[]; total: number }> => {
@@ -440,14 +401,15 @@ export const SettingsService = {
 
 // ── USERS ─────────────────────────────────────────────────────
 export const UsersService = {
-  getAll: async (): Promise<User[]> => { await delay(300); return MOCK_USERS; },
+  getAll: async (): Promise<User[]> => { await delay(300); return SEED_USERS; },
   update: async (id: string, data: Partial<User>): Promise<User> => {
     await delay(300);
-    const idx = MOCK_USERS.findIndex(u => u.id === id);
-    if (idx >= 0) { Object.assign(MOCK_USERS[idx], data); return MOCK_USERS[idx]; }
+    const idx = SEED_USERS.findIndex(u => u.id === id);
+    if (idx >= 0) { Object.assign(SEED_USERS[idx], data); return SEED_USERS[idx]; }
     throw new Error('Usuário não encontrado');
   },
 };
+
 
 // ── HELPERS ───────────────────────────────────────────────────
 function delay(ms: number) { return new Promise(resolve => setTimeout(resolve, ms)); }

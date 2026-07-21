@@ -2,69 +2,145 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Formulários públicos ────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // FUNÇÕES DE AUTENTICAÇÃO E AUTORIZAÇÃO (RBAC & Custom Claims)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Verifica se a requisição provém de um usuário autenticado via Firebase Auth */
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    /** E-mails de Super Administradores com acesso de emergência/bootstrap */
+    function isSuperAdminEmail() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'admism@institutosermelhor.org' ||
+        request.auth.token.email == 'instsermelhor.adm@gmail.com' ||
+        request.auth.token.email == 'admin@ism.org'
+      );
+    }
+
+    /** Verifica se o usuário possui a Custom Claim de ADMIN ou e-mail de super admin */
+    function isAdmin() {
+      return isSuperAdminEmail() || (
+        isAuthenticated() &&
+        (request.auth.token.role == 'ADMIN' || request.auth.token.admin == true)
+      );
+    }
+
+    /** Verifica se o usuário possui permissão de EDITOR ou superior */
+    function isEditor() {
+      return isAdmin() || (
+        isAuthenticated() &&
+        (request.auth.token.role == 'EDITOR' || request.auth.token.editor == true)
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // REGRAS DE ACESSO POR COLEÇÃO
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ── 1. Formulários de Entrada (Leitura restrita a Admin/Editor, Criação pública validada) ──
+
     match /partner_applications/{docId} {
       allow create: if isValidPartnerApplication(request.resource.data);
-      allow read, update, delete: if false;
+      allow read: if isEditor();
+      allow update, delete: if isAdmin();
     }
 
     match /donations/{docId} {
       allow create: if isValidDonation(request.resource.data);
-      allow read, update, delete: if false;
+      allow read: if isEditor();
+      allow update, delete: if isAdmin();
     }
 
     match /leads/{docId} {
       allow create: if isValidLead(request.resource.data);
-      allow read, update, delete: if false;
+      allow read: if isEditor();
+      allow update, delete: if isAdmin();
     }
 
-    // ── Configurações do site (somente leitura pública) ────────────
+    // ── 2. Configurações Globais & SEO (Leitura pública, Escrita restrita a Admin) ──
+
     match /settings/{key} {
       allow read: if true;
-      allow write: if false;
+      allow create, update, delete: if isAdmin();
     }
 
-    // ── CMS institucional (leitura pública, escrita só admin auth) ──
+    match /seo_settings/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidSeoSettings(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /donation_section/{docId} {
+      allow read: if true;
+      allow create, update: if isEditor() && isValidDonationSection(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /services_page/{docId} {
+      allow read: if true;
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    // ── 3. CMS & Conteúdo Institucional (Leitura pública, Escrita restrita a Editor/Admin) ──
+
+    match /programs/{docId} {
+      allow read: if true;
+      allow create, update: if isEditor() && isValidProgram(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
     match /institutional_page/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if isEditor() && isValidInstitutionalPage(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     match /value_blocks/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if isEditor() && isValidValueBlock(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     match /governance_instances/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if isEditor() && isValidGovernanceInstance(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     match /timeline_milestones/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if isEditor() && isValidTimelineMilestone(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     match /governance_members/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create, update: if isEditor() && isValidGovernanceMember(request.resource.data);
+      allow delete: if isAdmin();
     }
 
-    // ── Bloqueia tudo o mais ───────────────────────────────────────
+    // ── 4. Bloqueio Global Default (Deny All por Padrão) ────────────────────
+
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
 
-// ── Funções de validação ───────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FUNÇÕES DE VALIDAÇÃO DE SCHEMA E TIPAGEM DE DADOS
+// ─────────────────────────────────────────────────────────────────────────────
 
 function isValidPartnerApplication(data) {
   return data.keys().hasAll(['companyName', 'contactName', 'email', 'type'])
     && data.companyName is string && data.companyName.size() > 0 && data.companyName.size() <= 200
     && data.contactName is string && data.contactName.size() > 0 && data.contactName.size() <= 200
     && data.email is string && data.email.size() > 3 && data.email.size() <= 320
-    && data.type is string;
+    && data.type is string && data.type.size() <= 100;
 }
 
 function isValidDonation(data) {
@@ -78,4 +154,57 @@ function isValidLead(data) {
     && data.name is string && data.name.size() > 0 && data.name.size() <= 200
     && data.email is string && data.email.size() > 3 && data.email.size() <= 320
     && data.message is string && data.message.size() <= 5000;
+}
+
+function isValidSeoSettings(data) {
+  return data.keys().hasAll(['siteTitle', 'siteDescription'])
+    && data.siteTitle is string && data.siteTitle.size() <= 200
+    && data.siteDescription is string && data.siteDescription.size() <= 1000;
+}
+
+function isValidDonationSection(data) {
+  return data.keys().hasAll(['title', 'pixKey', 'bankName'])
+    && data.title is string && data.title.size() <= 300
+    && data.pixKey is string && data.pixKey.size() <= 200
+    && data.bankName is string && data.bankName.size() <= 200;
+}
+
+function isValidProgram(data) {
+  return data.keys().hasAll(['title', 'slug', 'description'])
+    && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+    && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 200
+    && data.description is string && data.description.size() <= 2000;
+}
+
+function isValidInstitutionalPage(data) {
+  return data.keys().hasAll(['title', 'introduction', 'missionStatement'])
+    && data.title is string && data.title.size() <= 200
+    && data.introduction is string && data.introduction.size() <= 3000
+    && data.missionStatement is string && data.missionStatement.size() <= 2000;
+}
+
+function isValidValueBlock(data) {
+  return data.keys().hasAll(['name', 'description'])
+    && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+    && data.description is string && data.description.size() <= 2000;
+}
+
+function isValidGovernanceInstance(data) {
+  return data.keys().hasAll(['title', 'summary'])
+    && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+    && data.summary is string && data.summary.size() <= 2000;
+}
+
+function isValidTimelineMilestone(data) {
+  return data.keys().hasAll(['year', 'title', 'impactDescription'])
+    && data.year is number && data.year >= 1900 && data.year <= 2100
+    && data.title is string && data.title.size() <= 200
+    && data.impactDescription is string && data.impactDescription.size() <= 2000;
+}
+
+function isValidGovernanceMember(data) {
+  return data.keys().hasAll(['name', 'role', 'type'])
+    && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+    && data.role is string && data.role.size() > 0 && data.role.size() <= 200
+    && data.type is string && (data.type == 'board' || data.type == 'executive' || data.type == 'advisory');
 }
