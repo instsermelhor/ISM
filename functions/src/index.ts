@@ -100,10 +100,38 @@ const LeadSchema = z.object({
   message: z.string().min(5).max(5000),
 });
 
-/** GET /api/v2/health */
+/** GET /api/v2/health — Liveness Probe */
 router.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'OK', apiVersion: 'v2.0', timestamp: new Date().toISOString() });
+  res.status(200).json({ status: 'OK', apiVersion: 'v2.0', mode: 'Liveness', timestamp: new Date().toISOString() });
 });
+
+/** GET /api/v2/health/deep — Readiness Probe (Testa conexão com o Firestore) */
+router.get('/health/deep', async (_req: Request, res: Response) => {
+  const startTime = Date.now();
+  try {
+    // Teste atômico de leitura no Firestore para confirmar integridade do banco
+    await db.collection('settings').limit(1).get();
+    const latency = Date.now() - startTime;
+    res.status(200).json({
+      status: 'HEALTHY',
+      apiVersion: 'v2.0',
+      mode: 'Readiness',
+      database: 'CONNECTED',
+      dbLatencyMs: latency,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err: any) {
+    res.status(503).json({
+      status: 'UNHEALTHY',
+      apiVersion: 'v2.0',
+      mode: 'Readiness',
+      database: 'DISCONNECTED',
+      error: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 
 /** POST /api/v2/donations */
 router.post('/donations', async (req: Request, res: Response): Promise<void> => {
