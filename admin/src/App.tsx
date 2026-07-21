@@ -1,85 +1,82 @@
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
-import { LoginPage } from './pages/LoginPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { BlogPage } from './pages/BlogPage';
-import { LeadsPage } from './pages/LeadsPage';
-import { PipelinePage } from './pages/PipelinePage';
-import { AuditPage } from './pages/AuditPage';
-import { HealthPage } from './pages/HealthPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { FinancialPage } from './pages/FinancialPage';
-import { HeroHomePage } from './pages/HeroHomePage';
-import { AboutTeamPage } from './pages/AboutTeamPage';
-import { ServicesPage } from './pages/ServicesPage';
-import { UsersPage } from './pages/UsersPage';
-import { SiteEditorPage } from './pages/SiteEditorPage';
-import { DonationEditorPage } from './pages/DonationEditorPage';
 
-// Placeholder pages for sections under development
-// const PlaceholderPage = ({ title, description }: { title: string; description: string }) => (
-//   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16, color: 'var(--gray-400)' }}>
-//     <div style={{ width: 80, height: 80, borderRadius: 20, background: 'var(--brand-50)', border: '2px dashed var(--brand-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>
-//       🚧
-//     </div>
-//     <div style={{ textAlign: 'center' }}>
-//       <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--gray-700)', marginBottom: 6 }}>{title}</h2>
-//       <p style={{ fontSize: 14, color: 'var(--gray-400)', maxWidth: 300 }}>{description}</p>
-//     </div>
-//     <span className="badge badge-yellow" style={{ marginTop: 8 }}>Em Desenvolvimento</span>
-//   </div>
-// );
+// Importações dinâmicas (Code Splitting / Lazy Loading)
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const BlogPage = lazy(() => import('./pages/BlogPage').then(m => ({ default: m.BlogPage })));
+const LeadsPage = lazy(() => import('./pages/LeadsPage').then(m => ({ default: m.LeadsPage })));
+const PipelinePage = lazy(() => import('./pages/PipelinePage').then(m => ({ default: m.PipelinePage })));
+const AuditPage = lazy(() => import('./pages/AuditPage').then(m => ({ default: m.AuditPage })));
+const HealthPage = lazy(() => import('./pages/HealthPage').then(m => ({ default: m.HealthPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+const FinancialPage = lazy(() => import('./pages/FinancialPage').then(m => ({ default: m.FinancialPage })));
+const HeroHomePage = lazy(() => import('./pages/HeroHomePage').then(m => ({ default: m.HeroHomePage })));
+const AboutTeamPage = lazy(() => import('./pages/AboutTeamPage').then(m => ({ default: m.AboutTeamPage })));
+const ServicesPage = lazy(() => import('./pages/ServicesPage').then(m => ({ default: m.ServicesPage })));
+const UsersPage = lazy(() => import('./pages/UsersPage').then(m => ({ default: m.UsersPage })));
+const SiteEditorPage = lazy(() => import('./pages/SiteEditorPage').then(m => ({ default: m.SiteEditorPage })));
+const DonationEditorPage = lazy(() => import('./pages/DonationEditorPage').then(m => ({ default: m.DonationEditorPage })));
 
+const LoadingSpinner = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
+    <div className="animate-spin" style={{ width: 32, height: 32, border: '3px solid var(--gray-200)', borderTopColor: 'var(--brand-600)', borderRadius: '50%' }} />
+  </div>
+);
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          {/* Public */}
-          <Route path="/login" element={<LoginPage />} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* Protected - Dashboard Layout */}
-          <Route element={<DashboardLayout />}>
-            <Route index element={<DashboardPage />} />
+            {/* Protected - Dashboard Layout */}
+            <Route element={<DashboardLayout />}>
+              <Route index element={<DashboardPage />} />
 
-            {/* Editor do Site (Módulo Separado) */}
-            <Route path="site" element={<SiteEditorPage />} />
-            <Route path="site/hero" element={<HeroHomePage />} />
-            <Route path="site/institucional" element={<AboutTeamPage />} />
-            <Route path="site/projetos" element={<ServicesPage />} />
-            <Route path="site/doacoes" element={<DonationEditorPage />} />
-            <Route path="site/seo" element={<SettingsPage />} />
+              {/* Editor do Site (Módulo Separado) */}
+              <Route path="site" element={<SiteEditorPage />} />
+              <Route path="site/hero" element={<HeroHomePage />} />
+              <Route path="site/institucional" element={<AboutTeamPage />} />
+              <Route path="site/projetos" element={<ServicesPage />} />
+              <Route path="site/doacoes" element={<DonationEditorPage />} />
+              <Route path="site/seo" element={<SettingsPage />} />
 
-            {/* Gestão da Instituição */}
-            <Route path="blog" element={<BlogPage />} />
-            <Route path="leads" element={<LeadsPage />} />
+              {/* Gestão da Instituição */}
+              <Route path="blog" element={<BlogPage />} />
+              <Route path="leads" element={<LeadsPage />} />
 
-            {/* Financeiro — cada sub-rota abre uma aba específica */}
-            <Route path="financeiro"          element={<FinancialPage initialTab="overview" />} />
-            <Route path="financeiro/doacoes"  element={<FinancialPage initialTab="donations" />} />
-            <Route path="financeiro/doadores" element={<FinancialPage initialTab="donors" />} />
-            <Route path="financeiro/bancario" element={<FinancialPage initialTab="banking" />} />
-            <Route path="financeiro/metas"    element={<FinancialPage initialTab="goals" />} />
+              {/* Financeiro — cada sub-rota abre uma aba específica */}
+              <Route path="financeiro"          element={<FinancialPage initialTab="overview" />} />
+              <Route path="financeiro/doacoes"  element={<FinancialPage initialTab="donations" />} />
+              <Route path="financeiro/doadores" element={<FinancialPage initialTab="donors" />} />
+              <Route path="financeiro/bancario" element={<FinancialPage initialTab="banking" />} />
+              <Route path="financeiro/metas"    element={<FinancialPage initialTab="goals" />} />
 
-            {/* Gestão */}
-            <Route path="pipeline" element={<PipelinePage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="auditoria" element={<AuditPage />} />
-            <Route path="health" element={<HealthPage />} />
+              {/* Gestão */}
+              <Route path="pipeline" element={<PipelinePage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="auditoria" element={<AuditPage />} />
+              <Route path="health" element={<HealthPage />} />
 
-            {/* Configurações */}
-            <Route path="usuarios" element={<UsersPage />} />
+              {/* Configurações */}
+              <Route path="usuarios" element={<UsersPage />} />
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
 }
 
 export default App;
+
