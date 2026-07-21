@@ -21,6 +21,7 @@ const ServicesPage = lazy(() => import('./pages/ServicesPage').then(m => ({ defa
 const UsersPage = lazy(() => import('./pages/UsersPage').then(m => ({ default: m.UsersPage })));
 const SiteEditorPage = lazy(() => import('./pages/SiteEditorPage').then(m => ({ default: m.SiteEditorPage })));
 const DonationEditorPage = lazy(() => import('./pages/DonationEditorPage').then(m => ({ default: m.DonationEditorPage })));
+const CMSSeoManagerPage = lazy(() => import('./pages/CMSSeoManagerPage').then(m => ({ default: m.CMSSeoManagerPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -47,7 +48,7 @@ function App() {
               <Route path="site/institucional" element={<AboutTeamPage />} />
               <Route path="site/projetos" element={<ServicesPage />} />
               <Route path="site/doacoes" element={<DonationEditorPage />} />
-              <Route path="site/seo" element={<SettingsPage />} />
+              <Route path="site/seo" element={<CMSSeoManagerPage />} />
 
               {/* Gestão da Instituição */}
               <Route path="blog" element={<BlogPage />} />
