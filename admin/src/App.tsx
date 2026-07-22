@@ -30,6 +30,7 @@ const BIPage = lazy(() => import('./pages/BIPage'));
 const GovernanceSecurityPage = lazy(() => import('./pages/GovernanceSecurityPage'));
 const IntegrationHubPage = lazy(() => import('./pages/IntegrationHubPage'));
 const DevSecOpsSREPage = lazy(() => import('./pages/DevSecOpsSREPage'));
+const AICoreEnterprisePage = lazy(() => import('./pages/AICoreEnterprisePage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -66,6 +67,7 @@ function App() {
               <Route path="governanca" element={<GovernanceSecurityPage />} />
               <Route path="integracoes" element={<IntegrationHubPage />} />
               <Route path="devsecops" element={<DevSecOpsSREPage />} />
+              <Route path="ia" element={<AICoreEnterprisePage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
