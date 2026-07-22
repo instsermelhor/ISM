@@ -41,6 +41,7 @@ const DataGovernancePage = lazy(() => import('./pages/DataGovernancePage'));
 const ECMPage = lazy(() => import('./pages/ECMPage'));
 const OmnichannelPage = lazy(() => import('./pages/OmnichannelPage'));
 const StrategyPmoPage = lazy(() => import('./pages/StrategyPmoPage'));
+const DigitalTwinPage = lazy(() => import('./pages/DigitalTwinPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -88,6 +89,7 @@ function App() {
               <Route path="ecm" element={<ECMPage />} />
               <Route path="omnichannel" element={<OmnichannelPage />} />
               <Route path="estrategia-pmo" element={<StrategyPmoPage />} />
+              <Route path="digital-twin" element={<DigitalTwinPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
