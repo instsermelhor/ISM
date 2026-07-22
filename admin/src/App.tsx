@@ -26,6 +26,7 @@ const PartnersPage = lazy(() => import('./pages/PartnersPage').then(m => ({ defa
 const CommunicationPage = lazy(() => import('./pages/CommunicationPage'));
 const SchedulePage = lazy(() => import('./pages/SchedulePage'));
 const EHRPage = lazy(() => import('./pages/EHRPage'));
+const BIPage = lazy(() => import('./pages/BIPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -58,6 +59,7 @@ function App() {
               <Route path="blog" element={<BlogPage />} />
               <Route path="agenda" element={<SchedulePage />} />
               <Route path="pep" element={<EHRPage />} />
+              <Route path="bi" element={<BIPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
