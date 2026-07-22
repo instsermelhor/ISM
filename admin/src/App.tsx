@@ -51,6 +51,7 @@ const EnterpriseArchitectureQualityPage = lazy(() => import('./pages/EnterpriseA
 const EnterpriseIntegrationValidationPage = lazy(() => import('./pages/EnterpriseIntegrationValidationPage'));
 const ContinuousEvolutionPage = lazy(() => import('./pages/ContinuousEvolutionPage'));
 const EnterpriseReadinessCertificationPage = lazy(() => import('./pages/EnterpriseReadinessCertificationPage'));
+const OperationalExcellenceLifecyclePage = lazy(() => import('./pages/OperationalExcellenceLifecyclePage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -108,6 +109,7 @@ function App() {
               <Route path="integration-validation" element={<EnterpriseIntegrationValidationPage />} />
               <Route path="continuous-evolution" element={<ContinuousEvolutionPage />} />
               <Route path="readiness-certification" element={<EnterpriseReadinessCertificationPage />} />
+              <Route path="operational-lifecycle" element={<OperationalExcellenceLifecyclePage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
