@@ -44,6 +44,7 @@ const StrategyPmoPage = lazy(() => import('./pages/StrategyPmoPage'));
 const DigitalTwinPage = lazy(() => import('./pages/DigitalTwinPage'));
 const AiAgentsPage = lazy(() => import('./pages/AiAgentsPage'));
 const EnterpriseIntelligencePage = lazy(() => import('./pages/EnterpriseIntelligencePage'));
+const BusinessContinuityPage = lazy(() => import('./pages/BusinessContinuityPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -94,6 +95,7 @@ function App() {
               <Route path="digital-twin" element={<DigitalTwinPage />} />
               <Route path="ai-agents" element={<AiAgentsPage />} />
               <Route path="enterprise-intelligence" element={<EnterpriseIntelligencePage />} />
+              <Route path="business-continuity" element={<BusinessContinuityPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
