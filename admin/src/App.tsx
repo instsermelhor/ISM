@@ -25,6 +25,7 @@ const CMSSeoManagerPage = lazy(() => import('./pages/CMSSeoManagerPage').then(m 
 const PartnersPage = lazy(() => import('./pages/PartnersPage').then(m => ({ default: m.PartnersPage })));
 const CommunicationPage = lazy(() => import('./pages/CommunicationPage'));
 const BeneficiaryPage = lazy(() => import('./pages/BeneficiaryPage'));
+const ProfessionalPage = lazy(() => import('./pages/ProfessionalPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -59,6 +60,7 @@ function App() {
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
               <Route path="beneficiarios" element={<BeneficiaryPage />} />
+              <Route path="profissional" element={<ProfessionalPage />} />
 
               {/* Financeiro — cada sub-rota abre uma aba específica */}
               <Route path="financeiro"          element={<FinancialPage initialTab="overview" />} />
