@@ -49,6 +49,7 @@ const DigitalGovernancePage = lazy(() => import('./pages/DigitalGovernancePage')
 const EnterpriseCommandCenterPage = lazy(() => import('./pages/EnterpriseCommandCenterPage'));
 const EnterpriseArchitectureQualityPage = lazy(() => import('./pages/EnterpriseArchitectureQualityPage'));
 const EnterpriseIntegrationValidationPage = lazy(() => import('./pages/EnterpriseIntegrationValidationPage'));
+const ContinuousEvolutionPage = lazy(() => import('./pages/ContinuousEvolutionPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -104,6 +105,7 @@ function App() {
               <Route path="command-center" element={<EnterpriseCommandCenterPage />} />
               <Route path="architecture-quality" element={<EnterpriseArchitectureQualityPage />} />
               <Route path="integration-validation" element={<EnterpriseIntegrationValidationPage />} />
+              <Route path="continuous-evolution" element={<ContinuousEvolutionPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
