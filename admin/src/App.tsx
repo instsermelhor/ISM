@@ -81,6 +81,17 @@ const ENIODEPPage = lazy(() => import('./pages/ENIODEPPage'));
 const EAOSPESPage = lazy(() => import('./pages/EAOSPESPage'));
 const ETAGDTPPage = lazy(() => import('./pages/ETAGDTPPage'));
 const EDINSPage = lazy(() => import('./pages/EDINSPage'));
+const EIOSECCPage = lazy(() => import('./pages/EIOSECCPage'));
+const EAEIALPPage = lazy(() => import('./pages/EAEIALPPage'));
+const EAICODOPPage = lazy(() => import('./pages/EAICODOPPage'));
+const EMIPVSIOSPage = lazy(() => import('./pages/EMIPVSIOSPage'));
+const EFICKINPPage = lazy(() => import('./pages/EFICKINPPage'));
+const ECIPSIPPage = lazy(() => import('./pages/ECIPSIPPage'));
+const EEBIMPPage = lazy(() => import('./pages/EEBIMPPage'));
+const ECGDIILPPage = lazy(() => import('./pages/ECGDIILPPage'));
+const EAGSCIRPPage = lazy(() => import('./pages/EAGSCIRPPage'));
+const EAMCIOSPage = lazy(() => import('./pages/EAMCIOSPage'));
+const EPFCSRFPage = lazy(() => import('./pages/EPFCSRFPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -168,6 +179,17 @@ function App() {
               <Route path="autonomous-operations-eaospes" element={<EAOSPESPage />} />
               <Route path="digital-trust-etagdtp" element={<ETAGDTPPage />} />
               <Route path="digital-nervous-system-edins" element={<EDINSPage />} />
+              <Route path="institutional-operating-system-eios-ecc" element={<EIOSECCPage />} />
+              <Route path="autonomous-evolution-eaeialp" element={<EAEIALPPage />} />
+              <Route path="adaptive-intelligence-eaicodop" element={<EAICODOPPage />} />
+              <Route path="mission-intelligence-emipvsios" element={<EMIPVSIOSPage />} />
+              <Route path="federated-intelligence-efickinp" element={<EFICKINPPage />} />
+              <Route path="collective-intelligence-ecipsip" element={<ECIPSIPPage />} />
+              <Route path="excellence-benchmarking-eebimp" element={<EEBIMPPage />} />
+              <Route path="cognitive-governance-ecgdiilp" element={<ECGDIILPPage />} />
+              <Route path="autonomous-governance-eagscirp" element={<EAGSCIRPPage />} />
+              <Route path="mission-critical-eamcios" element={<EAMCIOSPage />} />
+              <Route path="final-certification-epfcsrf" element={<EPFCSRFPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
