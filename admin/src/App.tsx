@@ -55,6 +55,32 @@ const OperationalExcellenceLifecyclePage = lazy(() => import('./pages/Operationa
 const AutonomousOperationsPage = lazy(() => import('./pages/AutonomousOperationsPage'));
 const InstitutionalKnowledgePage = lazy(() => import('./pages/InstitutionalKnowledgePage'));
 const StrategicIntelligencePage = lazy(() => import('./pages/StrategicIntelligencePage'));
+const SocialImpactPage = lazy(() => import('./pages/SocialImpactPage'));
+const GovernanceEIGCAPPage = lazy(() => import('./pages/GovernanceEIGCAPPage'));
+const ECDTISPPage = lazy(() => import('./pages/ECDTISPPage'));
+const EALOIPPage = lazy(() => import('./pages/EALOIPPage'));
+const EMAIVGPPage = lazy(() => import('./pages/EMAIVGPPage'));
+const EIRCTPPage = lazy(() => import('./pages/EIRCTPPage'));
+const EISRFRPPage = lazy(() => import('./pages/EISRFRPPage'));
+const EIPCORFPage = lazy(() => import('./pages/EIPCORFPage'));
+const EPRVFOSFPage = lazy(() => import('./pages/EPRVFOSFPage'));
+const EHACOPPage = lazy(() => import('./pages/EHACOPPage'));
+const EAGSCEPPage = lazy(() => import('./pages/EAGSCEPPage'));
+const EDCGCIOSPage = lazy(() => import('./pages/EDCGCIOSPage'));
+const EIEIIPPage = lazy(() => import('./pages/EIEIIPPage'));
+const EFIIDSPPage = lazy(() => import('./pages/EFIIDSPPage'));
+const ESIIEOMPPage = lazy(() => import('./pages/ESIIEOMPPage'));
+const ECOIDNSPage = lazy(() => import('./pages/ECOIDNSPage'));
+const EAIOSPage = lazy(() => import('./pages/EAIOSPage'));
+const EIEBCFPage = lazy(() => import('./pages/EIEBCFPage'));
+const EMTFIPPage = lazy(() => import('./pages/EMTFIPPage'));
+const EFCEDCPPage = lazy(() => import('./pages/EFCEDCPPage'));
+const EMCOPPage = lazy(() => import('./pages/EMCOPPage'));
+const ESIPFPPage = lazy(() => import('./pages/ESIPFPPage'));
+const ENIODEPPage = lazy(() => import('./pages/ENIODEPPage'));
+const EAOSPESPage = lazy(() => import('./pages/EAOSPESPage'));
+const ETAGDTPPage = lazy(() => import('./pages/ETAGDTPPage'));
+const EDINSPage = lazy(() => import('./pages/EDINSPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -116,6 +142,32 @@ function App() {
               <Route path="autonomous-operations" element={<AutonomousOperationsPage />} />
               <Route path="institutional-knowledge" element={<InstitutionalKnowledgePage />} />
               <Route path="strategic-intelligence" element={<StrategicIntelligencePage />} />
+              <Route path="social-impact" element={<SocialImpactPage />} />
+              <Route path="governance-eigcap" element={<GovernanceEIGCAPPage />} />
+              <Route path="digital-twin-ecdtisp" element={<ECDTISPPage />} />
+              <Route path="adaptive-learning-ealoip" element={<EALOIPPage />} />
+              <Route path="mission-alignment-emaivgp" element={<EMAIVGPPage />} />
+              <Route path="innovation-eirctp" element={<EIRCTPPage />} />
+              <Route path="sustainability-resilience-eisrfrp" element={<EISRFRPPage />} />
+              <Route path="integrated-certification-eipcorf" element={<EIPCORFPage />} />
+              <Route path="production-readiness-eprv-fosf" element={<EPRVFOSFPage />} />
+              <Route path="hypercare-ehacop" element={<EHACOPPage />} />
+              <Route path="autonomous-governance-eagscep" element={<EAGSCEPPage />} />
+              <Route path="digital-constitution-edcgc-ios" element={<EDCGCIOSPage />} />
+              <Route path="ecosystem-integration-eieiip" element={<EIEIIPPage />} />
+              <Route path="federated-intelligence-efiidsp" element={<EFIIDSPPage />} />
+              <Route path="social-impact-esiieomp" element={<ESIIEOMPPage />} />
+              <Route path="cognitive-organization-eco-idns" element={<ECOIDNSPage />} />
+              <Route path="adaptive-os-eaios" element={<EAIOSPage />} />
+              <Route path="excellence-framework-eiebcf" element={<EIEBCFPage />} />
+              <Route path="multi-tenant-emtfip" element={<EMTFIPPage />} />
+              <Route path="collaborative-ecosystem-efcedcp" element={<EFCEDCPPage />} />
+              <Route path="mission-orchestration-emcop" element={<EMCOPPage />} />
+              <Route path="social-foresight-esipfp" element={<ESIPFPPage />} />
+              <Route path="national-interoperability-eniodep" element={<ENIODEPPage />} />
+              <Route path="autonomous-operations-eaospes" element={<EAOSPESPage />} />
+              <Route path="digital-trust-etagdtp" element={<ETAGDTPPage />} />
+              <Route path="digital-nervous-system-edins" element={<EDINSPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />
