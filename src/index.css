@@ -1,23 +1,51 @@
 /* ══════════════════════════════════════════════════════════════════════
-   Instituto Ser Melhor — Global Styles
-   Tailwind CSS v4 · @theme tokens + keyframes + utilities
+   Instituto Ser Melhor (ISM) — Global Design Tokens & Styles
+   Tailwind CSS v4 · @theme tokens + Golden Ratio (Phi) Spacing + Keyframes
    ══════════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
+:root {
+  --font-plus-jakarta: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
 @theme {
   /* ── Typography ── */
-  --font-family-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-family-heading: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif;
+  --font-family-heading: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
+  --font-family-body:    var(--font-inter), 'Inter', sans-serif;
+  --font-family-sans:    var(--font-inter), 'Inter', sans-serif;
   --font-family-serif:   ui-serif, Georgia, serif;
   --font-family-mono:    ui-monospace, 'Cascadia Code', monospace;
 
-  /* ── Brand background & dark ── */
+  /* ── Cores Institucionais e Neutras ── */
+  --color-ism-papyrus: #FAFAFA;     /* Fundo Neutro Suave */
+  --color-ism-dark:    #18181B;     /* Grafite Governança */
+  --color-ism-card:    #FFFFFF;     /* Superfície de Cards */
+  --color-ism-border:  #E4E4E7;     /* Bordas Sutis */
+
+  /* ── Paleta dos 4 Pilares Estratégicos ── */
+  --color-ism-education:         #1E3A8A;   /* Pilar 1: Educação (Azul Sabedoria) */
+  --color-ism-education-light:   #DBEAFE;
+  --color-ism-education-hover:   #172554;
+
+  --color-ism-social:            #D97706;   /* Pilar 2: Social (Amarelo Humanidade) */
+  --color-ism-social-light:      #FEF3C7;
+  --color-ism-social-hover:      #B45309;
+
+  --color-ism-environment:       #15803D;   /* Pilar 3: Meio Ambiente (Verde Bioma) */
+  --color-ism-environment-light: #DCFCE7;
+  --color-ism-environment-hover: #14532D;
+
+  --color-ism-culture:           #C2410C;   /* Pilar 4: Cultura (Terracota Raízes) */
+  --color-ism-culture-light:     #FFEDD5;
+  --color-ism-culture-hover:     #7C2D12;
+
+  /* ── Backward Compatibility Brand & Pillar Variables ── */
   --color-papyrus: #FAFAFA;
   --color-dark:    #18181B;
 
-  /* ── Brand (green — legacy, also pillar-environment base) ── */
   --color-brand-50:  #f0fdf4;
   --color-brand-100: #dcfce7;
   --color-brand-200: #bbf7d0;
@@ -30,19 +58,16 @@
   --color-brand-900: #14532d;
   --color-brand-950: #052e16;
 
-  /* ── 4 Institutional Pillars ── */
-  --color-pillar-education:   #1E3A8A;   /* Educação    — deep navy  */
-  --color-pillar-social:      #D97706;   /* Social       — amber     */
-  --color-pillar-environment: #15803D;   /* Meio Ambiente — forest   */
-  --color-pillar-culture:     #C2410C;   /* Cultura      — rust      */
+  --color-pillar-education:   #1E3A8A;
+  --color-pillar-social:      #D97706;
+  --color-pillar-environment: #15803D;
+  --color-pillar-culture:     #C2410C;
 
-  /* Pillar light tints */
-  --color-pillar-education-light:   #dbeafe;
-  --color-pillar-social-light:      #fef3c7;
-  --color-pillar-environment-light: #dcfce7;
-  --color-pillar-culture-light:     #ffedd5;
+  --color-pillar-education-light:   #DBEAFE;
+  --color-pillar-social-light:      #FEF3C7;
+  --color-pillar-environment-light: #DCFCE7;
+  --color-pillar-culture-light:     #FFEDD5;
 
-  /* ── Secondary (blue-grey slate) ── */
   --color-secondary-50:  #f8fafc;
   --color-secondary-100: #f1f5f9;
   --color-secondary-200: #e2e8f0;
@@ -54,6 +79,13 @@
   --color-secondary-800: #1e293b;
   --color-secondary-900: #0f172a;
   --color-secondary-950: #020617;
+
+  /* ── Spacing Proporção Áurea (Phi Scale) ── */
+  --spacing-phi-sm:  0.8rem;   /* 13px */
+  --spacing-phi-md:  1.3rem;   /* 21px */
+  --spacing-phi-lg:  2.1rem;   /* 34px */
+  --spacing-phi-xl:  3.4rem;   /* 55px */
+  --spacing-phi-2xl: 5.5rem;  /* 89px */
 
   /* ── Animations ── */
   --animate-fade-in:       fade-in 0.7s ease-out both;
@@ -109,14 +141,14 @@ html {
   scroll-behavior: smooth;
 }
 body {
-  font-family: var(--font-family-sans);
+  font-family: var(--font-inter), 'Inter', sans-serif;
   background-color: var(--color-secondary-950);
   color: var(--color-secondary-50);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-family-heading);
+  font-family: var(--font-plus-jakarta), 'Plus Jakarta Sans', sans-serif;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────── */
@@ -131,11 +163,11 @@ h1, h2, h3, h4, h5, h6 {
   color: #0f172a;
 }
 
-/* ── Focus Ring (WCAG 2.1 AA+) ─────────────────────────────────────── */
+/* ── Focus Ring (WCAG 2.1 AAA Compliance) ─────────────────────────── */
 :focus-visible {
-  outline: 2px solid #22c55e;
+  outline: 3px solid #22c55e;
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 /* ── Utilities ─────────────────────────────────────────────────────── */

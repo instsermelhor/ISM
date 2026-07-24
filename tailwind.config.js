@@ -4,18 +4,44 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
-      fontFamily: {
-        sans:    ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        heading: ['"Plus Jakarta Sans"', 'Inter', 'ui-sans-serif', 'sans-serif'],
-      },
       colors: {
-        // ── Brand background
+        ism: {
+          // Cores Institucionais e Neutras
+          papyrus: '#FAFAFA',      // Fundo Neutro Suave
+          dark:    '#18181B',      // Grafite Governança (Texto Principal / Dark Surface)
+          card:    '#FFFFFF',      // Superfície de Cards
+          border:  '#E4E4E7',      // Bordas Sutis
+
+          // Paleta dos 4 Pilares Estratégicos
+          education: {
+            DEFAULT: '#1E3A8A',    // Pilar 1: Educação (Azul Sabedoria)
+            light:   '#DBEAFE',
+            hover:   '#172554',
+          },
+          social: {
+            DEFAULT: '#D97706',    // Pilar 2: Social (Amarelo Humanidade)
+            light:   '#FEF3C7',
+            hover:   '#B45309',
+          },
+          environment: {
+            DEFAULT: '#15803D',    // Pilar 3: Meio Ambiente (Verde Bioma)
+            light:   '#DCFCE7',
+            hover:   '#14532D',
+          },
+          culture: {
+            DEFAULT: '#C2410C',    // Pilar 4: Cultura (Terracota Raízes)
+            light:   '#FFEDD5',
+            hover:   '#7C2D12',
+          },
+        },
+
+        // Backward compatibility aliases
         papyrus: '#FAFAFA',
         dark:    '#18181B',
 
-        // ── Legacy brand (green — keep for admin compatibility)
         brand: {
           50:  '#f0fdf4',
           100: '#dcfce7',
@@ -30,49 +56,13 @@ export default {
           950: '#052e16',
         },
 
-        // ── 4 Institutional Pillars
         pillar: {
-          education:   '#1E3A8A',  // deep navy blue
-          social:      '#D97706',  // amber
-          environment: '#15803D',  // forest green
-          culture:     '#C2410C',  // rust orange-red
+          education:   '#1E3A8A',
+          social:      '#D97706',
+          environment: '#15803D',
+          culture:     '#C2410C',
         },
 
-        // ── Pillar shades (for hover, bg tints)
-        'pillar-edu': {
-          50:  '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#1E3A8A',
-          700: '#1e40af',
-          900: '#1e3a8a',
-        },
-        'pillar-soc': {
-          50:  '#fffbeb',
-          100: '#fef3c7',
-          500: '#f59e0b',
-          600: '#D97706',
-          700: '#b45309',
-          900: '#78350f',
-        },
-        'pillar-env': {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          500: '#22c55e',
-          600: '#15803D',
-          700: '#15803d',
-          900: '#14532d',
-        },
-        'pillar-cul': {
-          50:  '#fff7ed',
-          100: '#ffedd5',
-          500: '#f97316',
-          600: '#C2410C',
-          700: '#c2410c',
-          900: '#7c2d12',
-        },
-
-        // ── Secondary (grey scale)
         secondary: {
           50:  '#f8fafc',
           100: '#f1f5f9',
@@ -86,6 +76,19 @@ export default {
           900: '#0f172a',
           950: '#020617',
         },
+      },
+      fontFamily: {
+        heading: ['"Plus Jakarta Sans"', 'var(--font-plus-jakarta)', 'sans-serif'], // Títulos (H1, H2, H3, Logotipo)
+        body:    ['Inter', 'var(--font-inter)', 'sans-serif'],                      // Textos, Botões, Tabelas
+        sans:    ['Inter', 'var(--font-inter)', 'sans-serif'],
+      },
+      spacing: {
+        // Proporção Áurea / Fibonacci Scale para paddings e margins
+        'phi-sm':  '0.8rem',   // 13px
+        'phi-md':  '1.3rem',   // 21px
+        'phi-lg':  '2.1rem',   // 34px
+        'phi-xl':  '3.4rem',   // 55px
+        'phi-2xl': '5.5rem',  // 89px
       },
       animation: {
         'slow-zoom':     'slow-zoom 30s ease-in-out infinite alternate',
