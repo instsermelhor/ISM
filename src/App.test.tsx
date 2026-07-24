@@ -62,6 +62,6 @@ describe('App Smoke Test', () => {
       { timeout: 12000 }
     );
 
-    expect(screen.getByRole('main')).toBeInTheDocument();
+    expect(document.getElementById('main-content')).toBeInTheDocument();
   }, 15000); // extend test timeout to 15s to account for multiple concurrent mocked resolves
 });
