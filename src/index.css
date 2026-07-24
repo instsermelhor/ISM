@@ -1,12 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700;1,800&display=swap');
+/* ══════════════════════════════════════════════════════════════════════
+   Instituto Ser Melhor — Global Styles
+   Tailwind CSS v4 · @theme tokens + keyframes + utilities
+   ══════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* ── Fontes ── */
-  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-family-serif: 'Playfair Display', ui-serif, Georgia, serif;
+  /* ── Typography ── */
+  --font-family-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-family-heading: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, sans-serif;
+  --font-family-serif:   ui-serif, Georgia, serif;
+  --font-family-mono:    ui-monospace, 'Cascadia Code', monospace;
 
-  /* ── Paleta Brand (Verde) ── */
+  /* ── Brand background & dark ── */
+  --color-papyrus: #FAFAFA;
+  --color-dark:    #18181B;
+
+  /* ── Brand (green — legacy, also pillar-environment base) ── */
   --color-brand-50:  #f0fdf4;
   --color-brand-100: #dcfce7;
   --color-brand-200: #bbf7d0;
@@ -19,7 +30,19 @@
   --color-brand-900: #14532d;
   --color-brand-950: #052e16;
 
-  /* ── Paleta Secondary (Azul-Cinza Escuro) ── */
+  /* ── 4 Institutional Pillars ── */
+  --color-pillar-education:   #1E3A8A;   /* Educação    — deep navy  */
+  --color-pillar-social:      #D97706;   /* Social       — amber     */
+  --color-pillar-environment: #15803D;   /* Meio Ambiente — forest   */
+  --color-pillar-culture:     #C2410C;   /* Cultura      — rust      */
+
+  /* Pillar light tints */
+  --color-pillar-education-light:   #dbeafe;
+  --color-pillar-social-light:      #fef3c7;
+  --color-pillar-environment-light: #dcfce7;
+  --color-pillar-culture-light:     #ffedd5;
+
+  /* ── Secondary (blue-grey slate) ── */
   --color-secondary-50:  #f8fafc;
   --color-secondary-100: #f1f5f9;
   --color-secondary-200: #e2e8f0;
@@ -32,81 +55,116 @@
   --color-secondary-900: #0f172a;
   --color-secondary-950: #020617;
 
-  /* ── Animações ── */
-  --animate-fade-in:     fade-in 0.7s ease-out both;
-  --animate-slide-up:    slide-up 0.7s ease-out both;
-  --animate-slow-zoom:   slow-zoom 30s ease-in-out infinite alternate;
-  --animate-float:       float 6s ease-in-out infinite;
-  --animate-pulse-slow:  pulse-slow 3s ease-in-out infinite;
-  --animate-glow:        glow 2s ease-in-out infinite alternate;
+  /* ── Animations ── */
+  --animate-fade-in:       fade-in 0.7s ease-out both;
+  --animate-slide-up:      slide-up 0.7s ease-out both;
+  --animate-slow-zoom:     slow-zoom 30s ease-in-out infinite alternate;
+  --animate-float:         float 6s ease-in-out infinite;
+  --animate-pulse-slow:    pulse-slow 3s ease-in-out infinite;
+  --animate-glow:          glow 2s ease-in-out infinite alternate;
+  --animate-count-up:      count-up 1.2s ease-out both;
+  --animate-pillar-reveal: pillar-reveal 0.5s ease-out both;
 }
 
-/* ── Keyframes ── */
+/* ── Keyframes ─────────────────────────────────────────────────────── */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(32px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slow-zoom {
   0%   { transform: scale(1); }
   100% { transform: scale(1.12); }
 }
-
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-12px); }
 }
-
 @keyframes pulse-slow {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.6; }
 }
-
 @keyframes glow {
   from { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
   to   { box-shadow: 0 0 40px rgba(34, 197, 94, 0.6); }
 }
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pillar-reveal {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes arc-draw {
+  from { stroke-dashoffset: 400; }
+  to   { stroke-dashoffset: 0; }
+}
 
-/* ── Estilos Base ── */
+/* ── Base Styles ───────────────────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
 }
-
 body {
   font-family: var(--font-family-sans);
+  background-color: var(--color-secondary-950);
+  color: var(--color-secondary-50);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-/* ── Scrollbar customizada ── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-::-webkit-scrollbar-thumb {
-  background: #16a34a;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #22c55e;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
 }
 
-/* ── Selection ── */
+/* ── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: #0f172a; }
+::-webkit-scrollbar-thumb  { background: #16a34a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #22c55e; }
+
+/* ── Selection ─────────────────────────────────────────────────────── */
 ::selection {
   background: rgba(34, 197, 94, 0.25);
   color: #0f172a;
 }
 
-/* ── Utilitários extras ── */
+/* ── Focus Ring (WCAG 2.1 AA+) ─────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────── */
 .text-gradient-brand {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #4ade80 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-edu {
+  background: linear-gradient(135deg, #1E3A8A 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-soc {
+  background: linear-gradient(135deg, #D97706 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-env {
+  background: linear-gradient(135deg, #15803D 0%, #22c55e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-cul {
+  background: linear-gradient(135deg, #C2410C 0%, #f97316 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -118,16 +176,45 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
-
 .glass-dark {
   background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
+.glass-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
 
 .section-pattern {
-  background-image: 
+  background-image:
     radial-gradient(circle at 25% 25%, rgba(34, 197, 94, 0.04) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(22, 163, 74, 0.03) 0%, transparent 50%);
+}
+
+/* Pillar section bg patterns */
+.pillar-bg-edu { background: radial-gradient(ellipse at 80% 50%, rgba(30, 58, 138, 0.12) 0%, transparent 70%); }
+.pillar-bg-soc { background: radial-gradient(ellipse at 80% 50%, rgba(217, 119, 6,  0.12) 0%, transparent 70%); }
+.pillar-bg-env { background: radial-gradient(ellipse at 80% 50%, rgba(21, 128, 61,  0.12) 0%, transparent 70%); }
+.pillar-bg-cul { background: radial-gradient(ellipse at 80% 50%, rgba(194, 65, 12,  0.12) 0%, transparent 70%); }
+
+/* ── Skip link (a11y) ───────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #16a34a;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  font-weight: 700;
+  z-index: 9999;
+  border-radius: 0 0 8px 0;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
 }

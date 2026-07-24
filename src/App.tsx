@@ -5,6 +5,7 @@ import { InstitutionalWrapper } from './components/layout/InstitutionalWrapper';
 
 // Sections
 import { HeroInstitutional } from './components/sections/HeroInstitutional';
+import { ImpactMetrics } from './components/sections/ImpactMetrics';
 import { MissionVisionValues } from './components/sections/MissionVisionValues';
 import { TimelineSection } from './components/sections/TimelineSection';
 import { IdentityAndNetwork } from './components/sections/IdentityAndNetwork';
@@ -14,6 +15,7 @@ import { TransparencyReport } from './components/sections/TransparencyReport';
 import { PartnerSection } from './components/sections/PartnerSection';
 import { DonationSection } from './components/sections/DonationSection';
 import { ProgramsSection } from './components/sections/ProgramsSection';
+import { PillarsSection } from './components/sections/PillarsSection';
 
 // UI & Legal
 import { Modal } from './components/ui/Modal';
@@ -157,30 +159,37 @@ function App() {
 
   return (
     <>
-      <InstitutionalWrapper 
+      {/* Skip to main content — keyboard a11y */}
+      <a href="#main-content" className="skip-link">Ir para o conteúdo principal</a>
+
+      <InstitutionalWrapper
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onOpenTerms={() => setIsTermsOpen(true)}
       >
-        <HeroInstitutional data={data.page.attributes} />
-        <MissionVisionValues data={data.page.attributes} />
-        <ValuesSection values={data.valueBlocks} />
-        <ProgramsSection programs={data.programs} servicesPage={servicesPage} />
-        <TimelineSection milestones={data.timelineMilestones} />
-        <IdentityAndNetwork pageData={data.page.attributes} networkCards={servicesPage?.networkCards} />
-        <GovernanceStructure 
-          intro={data.page.attributes.governanceIntro}
-          instances={data.governanceInstances}
-          members={data.governanceMembers} 
-        />
-        <TransparencyReport 
-          intro={servicesPage?.transparencyIntro || data.page.attributes.transparencyIntro}
-          documents={servicesPage?.transparencyDocuments?.length ? servicesPage.transparencyDocuments : data.page.attributes.transparencyDocuments} 
-          financials={data.financials}
-          efficiencyPct={servicesPage?.efficiencyPct}
-          integrityPillars={servicesPage?.integrityPillars}
-        />
-        <PartnerSection servicesPage={servicesPage} />
-        <DonationSection donationData={donationSection} />
+        <main id="main-content">
+          <HeroInstitutional data={data.page.attributes} />
+          <ImpactMetrics />
+          <MissionVisionValues data={data.page.attributes} />
+          <ValuesSection values={data.valueBlocks} />
+          <ProgramsSection programs={data.programs} servicesPage={servicesPage} />
+          <PillarsSection />
+          <TimelineSection milestones={data.timelineMilestones} />
+          <IdentityAndNetwork pageData={data.page.attributes} networkCards={servicesPage?.networkCards} />
+          <GovernanceStructure
+            intro={data.page.attributes.governanceIntro}
+            instances={data.governanceInstances}
+            members={data.governanceMembers}
+          />
+          <TransparencyReport
+            intro={servicesPage?.transparencyIntro || data.page.attributes.transparencyIntro}
+            documents={servicesPage?.transparencyDocuments?.length ? servicesPage.transparencyDocuments : data.page.attributes.transparencyDocuments}
+            financials={data.financials}
+            efficiencyPct={servicesPage?.efficiencyPct}
+            integrityPillars={servicesPage?.integrityPillars}
+          />
+          <PartnerSection servicesPage={servicesPage} />
+          <DonationSection donationData={donationSection} />
+        </main>
       </InstitutionalWrapper>
 
       {/* Global Legal Modals */}

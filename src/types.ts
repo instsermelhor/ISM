@@ -117,6 +117,14 @@ export interface PartnerApplicationPayload {
 export type DonationType = 'Única' | 'Mensal' | 'Anual';
 export type PaymentStatus = 'Aprovado' | 'Pendente' | 'Falha' | 'Estorno';
 
+// Institutional Pillar destination for donations
+export type DonationPillar =
+  | 'Geral'
+  | 'Educação'
+  | 'Social'
+  | 'Meio Ambiente'
+  | 'Cultura';
+
 export interface DonationPayload {
   amount: number;
   currency: 'BRL';
@@ -125,6 +133,8 @@ export interface DonationPayload {
   donorEmail: string;
   taxId?: string;
   sourceCampaign?: string;
+  /** Optional: destination pillar for targeted donation */
+  destinationPillar?: DonationPillar;
 }
 
 export interface DonationRecord extends DonationPayload {

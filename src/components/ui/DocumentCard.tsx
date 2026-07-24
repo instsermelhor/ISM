@@ -46,11 +46,13 @@ export const DocumentCard: React.FC<Props> = ({ data }) => {
 
       <a
         href={data.documentFile}
+        download={data.documentName}
         className="ml-3 w-9 h-9 rounded-full bg-secondary-900 text-secondary-400 hover:bg-brand-600 hover:text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shrink-0"
         title={`Baixar ${data.documentName}`}
-        aria-label={`Baixar ${data.documentName}`}
+        aria-label={`Baixar ${data.documentName} (PDF)`}
+        rel="noopener noreferrer"
       >
-        <Download size={16} />
+        <Download size={16} aria-hidden="true" />
       </a>
     </div>
   );
