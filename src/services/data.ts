@@ -255,11 +255,9 @@ export const InstitutionalService = {
   getPrograms: async (): Promise<ProgramData[]> => {
     const mockPrograms: ProgramData[] = [
       { id: '1', order: 1, title: 'Educação Transformadora', slug: 'educacao-transformadora', description: 'Programa de desenvolvimento de líderes comunitários com metodologia baseada em evidências.', longDescription: '', iconEmoji: '📚', imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80', isPublished: true, targetAudience: 'Jovens de 16 a 29 anos', tags: ['Educação', 'Jovens'], ctaLabel: 'Saiba Mais', ctaUrl: '#', impactMetric: 'Jovens Capacitados', impactValue: '50.000+', linkUrl: '', linkLabel: '' },
-      { id: '2', order: 2, title: 'Proteção de Biomas', slug: 'protecao-biomas', description: 'Monitoramento e recuperação de biomas ameaçados com tecnologia de satélite.', longDescription: '', iconEmoji: '🌿', imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80', isPublished: true, targetAudience: 'Comunidades ribeirinhas', tags: ['Meio Ambiente'], ctaLabel: 'Ver Relatório', ctaUrl: '#', impactMetric: 'Hectares Recuperados', impactValue: '120.000', linkUrl: '', linkLabel: '' },
-      { id: '3', order: 3, title: 'Saúde & Bem-Estar Comunitário', slug: 'saude-comunidade', description: 'Clínicas móveis e campanhas de prevenção em regiões sem cobertura de saúde pública.', longDescription: '', iconEmoji: '❤️', imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80', isPublished: true, targetAudience: 'Famílias em regiões de baixo IDH', tags: ['Saúde'], ctaLabel: 'Conhecer Programa', ctaUrl: '#', impactMetric: 'Atendimentos/ano', impactValue: '200.000', linkUrl: '', linkLabel: '' },
       {
         id: '4',
-        order: 4,
+        order: 2,
         title: 'Projeto AURA',
         slug: 'projeto-aura',
         description: 'Apoio psicossocial integrativo para o fortalecimento da vida. Com o compromisso de quebrar ciclos de violência e adoecimento mental, o Projeto AURA atua no suporte psicossocial de pessoas em extrema vulnerabilidade social e no cuidado mental preventivo para agentes de segurança pública. Nosso objetivo é construir pontes de empatia, promover a resiliência e garantir o direito ao bem-estar emocional para quem mais precisa.',
@@ -273,9 +271,11 @@ export const InstitutionalService = {
         ctaUrl: 'https://www.aura.institutosermelhor.org',
         impactMetric: 'Pessoas Atendidas',
         impactValue: 'Em expansão',
-        linkUrl: 'https://www.aura.institutosermelhor.org',
-        linkLabel: 'aura.institutosermelhor.org',
+        linkUrl: '',
+        linkLabel: '',
       },
+      { id: '2', order: 3, title: 'Proteção de Biomas', slug: 'protecao-biomas', description: 'Monitoramento e recuperação de biomas ameaçados com tecnologia de satélite.', longDescription: '', iconEmoji: '🌿', imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80', isPublished: true, targetAudience: 'Comunidades ribeirinhas', tags: ['Meio Ambiente'], ctaLabel: 'Ver Relatório', ctaUrl: '#', impactMetric: 'Hectares Recuperados', impactValue: '120.000', linkUrl: '', linkLabel: '' },
+      { id: '3', order: 4, title: 'Saúde & Bem-Estar Comunitário', slug: 'saude-comunidade', description: 'Clínicas móveis e campanhas de prevenção em regiões sem cobertura de saúde pública.', longDescription: '', iconEmoji: '❤️', imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80', isPublished: true, targetAudience: 'Famílias em regiões de baixo IDH', tags: ['Saúde'], ctaLabel: 'Conhecer Programa', ctaUrl: '#', impactMetric: 'Atendimentos/ano', impactValue: '200.000', linkUrl: '', linkLabel: '' },
     ];
     if (!FIREBASE_ENABLED) return mockPrograms;
     try {
