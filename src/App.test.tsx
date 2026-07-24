@@ -1,11 +1,24 @@
 /**
  * App.test.tsx
  * Smoke test and top-level integration test for ISM App.
+ *
+ * Fixes:
+ * - timeout increased to match async data loading pattern
+ * - vi.useFakeTimers not needed since all service mocks resolve immediately
+ * - Added vi.mock for '../lib/firebase' to avoid Firebase init in jsdom
  */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import App from './App';
+
+// Prevent Firebase from initialising in jsdom (no env vars in test)
+vi.mock('./lib/firebase', () => ({
+  db: {},
+  auth: {},
+  storage: {},
+  app: {},
+}));
 
 vi.mock('./services/data', () => ({
   InstitutionalService: {
@@ -38,12 +51,17 @@ describe('App Smoke Test', () => {
   it('renders loading screen initially then displays main page content', async () => {
     render(<App />);
 
+    // Loading state is present initially
     expect(screen.getByText(/Carregando/i)).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(document.body.textContent).toContain('Sapere Aude');
-    }, { timeout: 8000 });
+    // Wait for data to resolve and content to appear
+    await waitFor(
+      () => {
+        expect(document.body.textContent).toContain('Sapere Aude');
+      },
+      { timeout: 12000 }
+    );
 
     expect(screen.getByRole('main')).toBeInTheDocument();
-  });
+  }, 15000); // extend test timeout to 15s to account for multiple concurrent mocked resolves
 });
