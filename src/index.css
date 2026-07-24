@@ -159,8 +159,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Selection ─────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(34, 197, 94, 0.25);
-  color: #0f172a;
+  background: var(--color-ism-education, #1E3A8A);
+  color: #ffffff;
 }
 
 /* ── Focus Ring (WCAG 2.1 AAA Compliance) ─────────────────────────── */
