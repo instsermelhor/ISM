@@ -92,6 +92,23 @@ const ECGDIILPPage = lazy(() => import('./pages/ECGDIILPPage'));
 const EAGSCIRPPage = lazy(() => import('./pages/EAGSCIRPPage'));
 const EAMCIOSPage = lazy(() => import('./pages/EAMCIOSPage'));
 const EPFCSRFPage = lazy(() => import('./pages/EPFCSRFPage'));
+const EBIDAWEDSFPage = lazy(() => import('./pages/EBIDAWEDSFPage'));
+const EAIKMIAFPage = lazy(() => import('./pages/EAIKMIAFPage'));
+const EIIAMEFPage = lazy(() => import('./pages/EIIAMEFPage'));
+const EGRCICCAFPage = lazy(() => import('./pages/EGRCICCAFPage'));
+const EPVPESCPRFPage = lazy(() => import('./pages/EPVPESCPRFPage'));
+const EGLHOSCIFPage = lazy(() => import('./pages/EGLHOSCIFPage'));
+const EFAIACSEFPage = lazy(() => import('./pages/EFAIACSEFPage'));
+const EPLITECMFPage = lazy(() => import('./pages/EPLITECMFPage'));
+const ESPMIIMFPage = lazy(() => import('./pages/ESPMIIMFPage'));
+const EKMOLIMFPage = lazy(() => import('./pages/EKMOLIMFPage'));
+const EECPSMFPage = lazy(() => import('./pages/EECPSMFPage'));
+const EIIDSFPage = lazy(() => import('./pages/EIIDSFPage'));
+const EAGSDBFPage = lazy(() => import('./pages/EAGSDBFPage'));
+const EIGEATFPage = lazy(() => import('./pages/EIGEATFPage'));
+const EORBCCMFPage = lazy(() => import('./pages/EORBCCMFPage'));
+const ESILSFPage = lazy(() => import('./pages/ESILSFPage'));
+const EPRIVPCFPage = lazy(() => import('./pages/EPRIVPCFPage'));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -190,6 +207,23 @@ function App() {
               <Route path="autonomous-governance-eagscirp" element={<EAGSCIRPPage />} />
               <Route path="mission-critical-eamcios" element={<EAMCIOSPage />} />
               <Route path="final-certification-epfcsrf" element={<EPFCSRFPage />} />
+              <Route path="ebidwaedsf" element={<EBIDAWEDSFPage />} />
+              <Route path="eaikmiaf" element={<EAIKMIAFPage />} />
+              <Route path="eiiamef" element={<EIIAMEFPage />} />
+              <Route path="egrciccaf" element={<EGRCICCAFPage />} />
+              <Route path="epvpescprf" element={<EPVPESCPRFPage />} />
+              <Route path="eglhoscif" element={<EGLHOSCIFPage />} />
+              <Route path="efaiacsef" element={<EFAIACSEFPage />} />
+              <Route path="eplitecmf" element={<EPLITECMFPage />} />
+              <Route path="espmiimf" element={<ESPMIIMFPage />} />
+              <Route path="ekmolimf" element={<EKMOLIMFPage />} />
+              <Route path="eecpsmf" element={<EECPSMFPage />} />
+              <Route path="eiidsf" element={<EIIDSFPage />} />
+              <Route path="eagsdbf" element={<EAGSDBFPage />} />
+              <Route path="eigeatf" element={<EIGEATFPage />} />
+              <Route path="eorbccmf" element={<EORBCCMFPage />} />
+              <Route path="esilsf" element={<ESILSFPage />} />
+              <Route path="eprivpcf" element={<EPRIVPCFPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="parceiros" element={<PartnersPage />} />
               <Route path="comunicacao" element={<CommunicationPage />} />

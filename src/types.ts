@@ -97,7 +97,7 @@ export interface FinancialEntry {
 // --- NEW TYPES FOR FORMS ---
 
 // 6. Collection Type: partner-application
-export type PartnerType = 'Corporativo' | 'Institucional/ONG' | 'Pesquisa/Academia' | 'Individual';
+export type PartnerType = 'Corporativo' | 'Empresarial' | 'Institucional/ONG' | 'Pesquisa/Academia' | 'Individual';
 export type PartnerStatus = 'Novo' | 'Em Análise' | 'Contato Inicial' | 'Rejeitado' | 'Parceria Formalizada';
 
 export interface PartnerApplicationPayload {
@@ -105,13 +105,14 @@ export interface PartnerApplicationPayload {
   type: PartnerType;
   companyName?: string;
   contactName: string;
-  contactTitle: string;
+  contactTitle?: string;
   email: string;
   phone?: string;
   areaOfInterest: string;
   intendedContribution?: string;
   status: PartnerStatus;
 }
+
 
 // 7. Collection Type: donation-record
 export type DonationType = 'Única' | 'Mensal' | 'Anual';

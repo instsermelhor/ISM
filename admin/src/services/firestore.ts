@@ -12,6 +12,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+export { db };
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
