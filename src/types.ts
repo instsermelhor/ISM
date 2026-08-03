@@ -177,6 +177,9 @@ export interface ProgramData {
   linkLabel: string;
   pillarsTitle?: string;
   pillars?: string[];
+  actionLinesTitle?: string;
+  actionLinesSub?: string;
+  actionLines?: string[];
   commitmentTitle?: string;
   commitment?: string;
 }

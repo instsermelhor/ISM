@@ -17,7 +17,10 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
   const contentId = `program-content-${p.id}`;
 
   const hasExtraContent = Boolean(
-    p.longDescription || (p.pillars && p.pillars.length > 0) || p.commitment
+    p.longDescription ||
+      (p.pillars && p.pillars.length > 0) ||
+      (p.actionLines && p.actionLines.length > 0) ||
+      p.commitment
   );
 
   return (
@@ -113,15 +116,42 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
                     </div>
                   )}
 
+                  {/* Linhas de Atuação */}
+                  {p.actionLines && p.actionLines.length > 0 && (
+                    <div className="bg-white/90 rounded-2xl p-4 border border-brand-100 shadow-sm space-y-3">
+                      <h4 className="text-xs font-bold text-brand-900 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-brand-600" />
+                        {p.actionLinesTitle || 'Linhas de atuação'}
+                      </h4>
+                      {p.actionLinesSub && (
+                        <p className="text-xs text-secondary-600 font-medium leading-relaxed">
+                          {p.actionLinesSub}
+                        </p>
+                      )}
+                      <ul className="space-y-2">
+                        {p.actionLines.map((lineItem, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs text-secondary-700 font-medium leading-snug">
+                            <CheckCircle2 size={14} className="text-brand-600 shrink-0 mt-0.5" />
+                            <span>{lineItem}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Nosso Compromisso */}
                   {p.commitment && (
                     <div className="bg-brand-50/80 rounded-2xl p-4 border border-brand-200/60 space-y-1.5">
                       <h4 className="text-xs font-bold text-brand-900 uppercase tracking-wider">
                         {p.commitmentTitle || 'Nosso compromisso'}
                       </h4>
-                      <p className="text-xs text-brand-950 font-normal leading-relaxed">
-                        {p.commitment}
-                      </p>
+                      <div className="space-y-2">
+                        {p.commitment.split('\n\n').map((commParagraph, cIdx) => (
+                          <p key={cIdx} className="text-xs text-brand-950 font-normal leading-relaxed">
+                            {commParagraph}
+                          </p>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </motion.div>

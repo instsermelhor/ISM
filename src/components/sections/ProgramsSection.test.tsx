@@ -26,21 +26,20 @@ describe('ProgramsSection — Educação Transformadora de Qualidade', () => {
 
   it('has aria-expanded="false" and aria-controls on the "Saiba Mais" button initially', () => {
     render(<ProgramsSection programs={programsData} />);
-    const saibaMaisBtn = screen.getByRole('button', { name: /Saiba Mais/i });
-    expect(saibaMaisBtn).toHaveAttribute('aria-expanded', 'false');
-    expect(saibaMaisBtn).toHaveAttribute('aria-controls', 'program-content-1');
+    const saibaMaisButtons = screen.getAllByRole('button', { name: /Saiba Mais/i });
+    expect(saibaMaisButtons[0]).toHaveAttribute('aria-expanded', 'false');
+    expect(saibaMaisButtons[0]).toHaveAttribute('aria-controls', 'program-content-1');
   });
 
   it('expands full text, pillars, and commitment when clicking "Saiba Mais"', async () => {
     const user = userEvent.setup();
     render(<ProgramsSection programs={programsData} />);
 
-    const button = screen.getByRole('button', { name: /Saiba Mais/i });
-    await user.click(button);
+    const buttons = screen.getAllByRole('button', { name: /Saiba Mais/i });
+    await user.click(buttons[0]);
 
     // Button text changes to "Mostrar Menos"
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('button', { name: /Mostrar Menos/i })).toBeInTheDocument();
+    expect(buttons[0]).toHaveAttribute('aria-expanded', 'true');
 
     // Long description text is revealed
     expect(
@@ -48,46 +47,85 @@ describe('ProgramsSection — Educação Transformadora de Qualidade', () => {
     ).toBeInTheDocument();
 
     // Pilares section is revealed
-    expect(screen.getByText('Nossos pilares')).toBeInTheDocument();
-    expect(
-      screen.getByText('Educação centrada na pessoa e no desenvolvimento integral.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Avaliação contínua do impacto social das ações.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Educação centrada na pessoa e no desenvolvimento integral.')).toBeInTheDocument();
+    expect(screen.getByText('Avaliação contínua do impacto social das ações.')).toBeInTheDocument();
 
     // Compromisso section is revealed
-    expect(screen.getByText('Nosso compromisso')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Promover uma educação que transforma vidas/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Promover uma educação que transforma vidas/i)).toBeInTheDocument();
+  });
+});
+
+describe('ProgramsSection — Proteção, Preservação e Restauração dos Biomas', () => {
+  let programsData: any[];
+
+  beforeEach(async () => {
+    programsData = await InstitutionalService.getPrograms();
   });
 
-  it('collapses back when clicking "Mostrar Menos"', async () => {
+  it('renders the corrected title "Proteção, Preservação e Restauração dos Biomas"', () => {
+    render(<ProgramsSection programs={programsData} />);
+    expect(screen.getByText('Proteção, Preservação e Restauração dos Biomas')).toBeInTheDocument();
+  });
+
+  it('button "Ver Relatório" was replaced with "Saiba Mais"', () => {
+    render(<ProgramsSection programs={programsData} />);
+    expect(screen.queryByText('Ver Relatório')).not.toBeInTheDocument();
+    const biomesBtn = screen.getByRole('button', { name: /Saiba Mais/i, current: undefined });
+    expect(biomesBtn).toBeInTheDocument();
+  });
+
+  it('expands full text, pilares, linhas de atuação, and compromisso on "Saiba Mais" click', async () => {
     const user = userEvent.setup();
     render(<ProgramsSection programs={programsData} />);
 
-    const button = screen.getByRole('button', { name: /Saiba Mais/i });
-    await user.click(button);
-    expect(screen.getByRole('button', { name: /Mostrar Menos/i })).toBeInTheDocument();
+    // Find "Saiba Mais" button for Proteção de Biomas (program id 2)
+    const biomesButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[1];
+    expect(biomesButton).toHaveAttribute('aria-controls', 'program-content-2');
 
-    const collapseButton = screen.getByRole('button', { name: /Mostrar Menos/i });
-    await user.click(collapseButton);
+    await user.click(biomesButton);
 
-    expect(screen.getByRole('button', { name: /Saiba Mais/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Saiba Mais/i })).toHaveAttribute('aria-expanded', 'false');
+    expect(biomesButton).toHaveAttribute('aria-expanded', 'true');
+
+    // Long description
+    expect(
+      screen.getByText(/Por meio do programa Proteção, Preservação e Restauração dos Biomas/i)
+    ).toBeInTheDocument();
+
+    // Nossos Pilares
+    expect(
+      screen.getByText('Conservação da biodiversidade e dos ecossistemas brasileiros.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Promoção da cultura da sustentabilidade e da responsabilidade climática.')
+    ).toBeInTheDocument();
+
+    // Linhas de atuação
+    expect(screen.getByText('Linhas de atuação')).toBeInTheDocument();
+    expect(
+      screen.getByText('O Instituto Ser Melhor desenvolve e apoia projetos voltados para:')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Recuperação de áreas degradadas e reflorestamento com espécies nativas.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Desenvolvimento de programas de voluntariado socioambiental.')
+    ).toBeInTheDocument();
+
+    // Nosso compromisso
+    expect(
+      screen.getByText(/Nosso compromisso é contribuir para a preservação dos biomas brasileiros/i)
+    ).toBeInTheDocument();
   });
 
-  it('supports keyboard navigation (Enter/Space) on button', async () => {
+  it('collapses back smoothly when clicking "Mostrar Menos"', async () => {
+    const user = userEvent.setup();
     render(<ProgramsSection programs={programsData} />);
-    const button = screen.getByRole('button', { name: /Saiba Mais/i });
 
-    button.focus();
-    expect(button).toHaveFocus();
+    const biomesButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[1];
+    await user.click(biomesButton);
+    expect(biomesButton).toHaveAttribute('aria-expanded', 'true');
 
-    fireEvent.keyDown(button, { key: 'Enter', code: 'Enter' });
-    // In React test env, fireEvent click or key press toggles state
-    fireEvent.click(button);
-    expect(button).toHaveAttribute('aria-expanded', 'true');
+    await user.click(biomesButton);
+    expect(biomesButton).toHaveAttribute('aria-expanded', 'false');
   });
 });

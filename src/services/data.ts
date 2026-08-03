@@ -313,7 +313,63 @@ Mais do que oferecer cursos ou atividades educativas, criamos oportunidades para
         linkUrl: '',
         linkLabel: '',
       },
-      { id: '2', order: 3, title: 'Proteção de Biomas', slug: 'protecao-biomas', description: 'Monitoramento e recuperação de biomas ameaçados com tecnologia de satélite.', longDescription: '', iconEmoji: '🌿', imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80', isPublished: true, targetAudience: 'Comunidades ribeirinhas', tags: ['Meio Ambiente'], ctaLabel: 'Ver Relatório', ctaUrl: '#', impactMetric: 'Hectares Recuperados', impactValue: '120.000', linkUrl: '', linkLabel: '' },
+      {
+        id: '2',
+        order: 3,
+        title: 'Proteção, Preservação e Restauração dos Biomas',
+        slug: 'protecao-biomas',
+        description: 'O Instituto Ser Melhor compreende que a proteção dos biomas brasileiros é uma responsabilidade coletiva e um compromisso essencial com as atuais e futuras gerações. Nossa atuação socioambiental busca promover a conservação da biodiversidade, a recuperação de áreas degradadas e o fortalecimento da relação harmoniosa entre as pessoas e a natureza, reconhecendo que o equilíbrio ambiental é indispensável para a qualidade de vida, a saúde e o desenvolvimento sustentável.',
+        longDescription: `Por meio do programa Proteção, Preservação e Restauração dos Biomas, desenvolvemos iniciativas que unem educação ambiental, mobilização comunitária, ciência, inovação e ação prática para proteger os ecossistemas naturais e fortalecer a consciência ambiental da sociedade.
+
+Nossa metodologia é inspirada nas melhores práticas nacionais e internacionais de conservação, promovendo ações integradas que envolvem governos, universidades, organizações da sociedade civil, empresas e comunidades locais na construção de soluções sustentáveis para os desafios ambientais contemporâneos. A restauração ecológica é compreendida não apenas como o plantio de árvores, mas como um processo contínuo de recuperação dos ecossistemas, valorização da biodiversidade e fortalecimento das comunidades que convivem com esses territórios.
+
+Acreditamos que preservar a natureza também significa promover inclusão social, geração de conhecimento, fortalecimento das economias sustentáveis e valorização dos saberes tradicionais. Por isso, nossas ações priorizam a participação ativa da sociedade, estimulando o protagonismo de crianças, adolescentes, jovens e adultos como agentes de transformação ambiental.
+
+Mais do que conservar áreas naturais, buscamos formar uma cultura permanente de responsabilidade socioambiental, incentivando atitudes conscientes, consumo responsável, respeito à biodiversidade e compromisso com a sustentabilidade em todos os espaços da vida.`,
+        pillarsTitle: 'Nossos pilares',
+        pillars: [
+          'Conservação da biodiversidade e dos ecossistemas brasileiros.',
+          'Proteção dos biomas e dos recursos naturais.',
+          'Restauração ecológica de áreas degradadas.',
+          'Educação ambiental transformadora e permanente.',
+          'Formação de multiplicadores socioambientais.',
+          'Participação comunitária e voluntariado ambiental.',
+          'Valorização dos povos e comunidades tradicionais.',
+          'Incentivo à economia sustentável e à sociobiodiversidade.',
+          'Pesquisa, inovação e monitoramento ambiental.',
+          'Parcerias estratégicas para ampliar o impacto socioambiental.',
+          'Promoção da cultura da sustentabilidade e da responsabilidade climática.',
+        ],
+        actionLinesTitle: 'Linhas de atuação',
+        actionLinesSub: 'O Instituto Ser Melhor desenvolve e apoia projetos voltados para:',
+        actionLines: [
+          'Recuperação de áreas degradadas e reflorestamento com espécies nativas.',
+          'Proteção de nascentes, rios, matas ciliares e recursos hídricos.',
+          'Conservação da fauna e da flora.',
+          'Educação ambiental em escolas, comunidades e instituições.',
+          'Mutirões de limpeza e recuperação de espaços naturais.',
+          'Incentivo à coleta seletiva, reciclagem e economia circular.',
+          'Formação de lideranças ambientais comunitárias.',
+          'Apoio a iniciativas de agricultura sustentável e sistemas agroflorestais.',
+          'Campanhas de conscientização sobre mudanças climáticas e consumo consciente.',
+          'Desenvolvimento de programas de voluntariado socioambiental.',
+        ],
+        commitmentTitle: 'Nosso compromisso',
+        commitment: `Nosso compromisso é contribuir para a preservação dos biomas brasileiros por meio de ações que integrem conservação ambiental, desenvolvimento humano e inclusão social. Acreditamos que proteger a natureza é proteger a vida, fortalecer as comunidades e garantir que as próximas gerações herdem um planeta mais equilibrado, resiliente e sustentável.
+
+Cada projeto desenvolvido pelo Instituto Ser Melhor busca gerar impacto ambiental mensurável, fortalecer a cidadania ecológica e transformar pessoas em protagonistas da conservação dos recursos naturais, promovendo um futuro em que desenvolvimento e preservação caminhem lado a lado.`,
+        iconEmoji: '🌿',
+        imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80',
+        isPublished: true,
+        targetAudience: 'Comunidades locais, ribeirinhas, escolas e sociedade em geral',
+        tags: ['Meio Ambiente', 'Restauração', 'Biodiversidade', 'Sustentabilidade'],
+        ctaLabel: 'Saiba Mais',
+        ctaUrl: '#',
+        impactMetric: 'Hectares Recuperados',
+        impactValue: '120.000',
+        linkUrl: '',
+        linkLabel: '',
+      },
       { id: '3', order: 4, title: 'Saúde & Bem-Estar Comunitário', slug: 'saude-comunidade', description: 'Clínicas móveis e campanhas de prevenção em regiões sem cobertura de saúde pública.', longDescription: '', iconEmoji: '❤️', imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80', isPublished: true, targetAudience: 'Famílias em regiões de baixo IDH', tags: ['Saúde'], ctaLabel: 'Conhecer Programa', ctaUrl: '#', impactMetric: 'Atendimentos/ano', impactValue: '200.000', linkUrl: '', linkLabel: '' },
     ];
     if (!FIREBASE_ENABLED) return mockPrograms;
