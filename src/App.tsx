@@ -357,9 +357,9 @@ function App() {
 
   // ── Normaliza coleções do Strapi para o formato plano ───────────────────
   function flattenStrapi<T>(items: any[]): T[] {
-    if (!items || items.length === 0) return [];
+    if (!items || !Array.isArray(items) || items.length === 0) return [];
     if (items[0]?.attributes !== undefined) {
-      return items.map((item: any) => ({ id: item.id, ...item.attributes })) as T[];
+      return items.map((item: any) => (item ? { id: item.id, ...item.attributes } : {})) as T[];
     }
     return items as T[];
   }

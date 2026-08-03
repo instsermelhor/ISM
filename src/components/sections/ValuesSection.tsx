@@ -8,9 +8,12 @@ interface Props {
   values: StrapiItem<ValueBlockAttributes>[];
 }
 
-export const ValuesSection: React.FC<Props> = ({ values }) => {
+export const ValuesSection: React.FC<Props> = ({ values = [] }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
+  const safeValues = Array.isArray(values) ? values : [];
+
+  if (safeValues.length === 0) return null;
 
   return (
     <section id="values" className="py-24 bg-slate-50 section-pattern">
@@ -36,8 +39,8 @@ export const ValuesSection: React.FC<Props> = ({ values }) => {
 
         {/* BUG FIX: grid 2x2 para 4 itens, sem card orfão desalinhado */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {values.map((item, index) => (
-            <ValueBlock key={item.id} data={item.attributes} index={index} />
+          {safeValues.map((item, index) => (
+            <ValueBlock key={item?.id || index} data={item?.attributes || ({} as any)} index={index} />
           ))}
         </div>
       </div>

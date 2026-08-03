@@ -137,7 +137,9 @@ const YEAR_ICONS: Record<number, React.ElementType> = {
  * fica em full.
  */
 function firestoreToEntry(raw: any): MilestoneEntry {
-  const full: string = raw.impactDescription || raw.full || '';
+  if (!raw) return { year: 2007, title: '', summary: '', full: '' };
+  const rawFull = raw.impactDescription || raw.full || '';
+  const full: string = typeof rawFull === 'string' ? rawFull : String(rawFull || '');
   const paragraphs = full.split('\n').filter((p: string) => p.trim() !== '');
   const firstParagraph = paragraphs[0] || '';
   const summary =
@@ -145,8 +147,8 @@ function firestoreToEntry(raw: any): MilestoneEntry {
       ? firstParagraph.slice(0, 180).trimEnd() + '…'
       : firstParagraph;
   return {
-    year: Number(raw.year),
-    title: raw.title || '',
+    year: Number(raw.year || 2007),
+    title: String(raw.title || ''),
     summary,
     full,
   };
@@ -177,10 +179,11 @@ const MilestoneCard: React.FC<CardProps> = React.memo(
     tabId,
   }) => {
     const IconComponent = YEAR_ICONS[entry.year] ?? Calendar;
-    const fullParagraphs = entry.full
+    const safeFull = typeof entry.full === 'string' ? entry.full : '';
+    const fullParagraphs = safeFull
       .split('\n')
       .filter((p) => p.trim() !== '');
-    const hasMore = entry.full !== entry.summary || fullParagraphs.length > 1;
+    const hasMore = safeFull !== entry.summary || fullParagraphs.length > 1;
 
     return (
       <div

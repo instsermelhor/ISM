@@ -26,11 +26,14 @@ const instanceColors = [
   'from-orange-500 to-orange-600',
 ];
 
-export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro, instances, members }) => {
+export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro, instances = [], members = [] }) => {
   const headerRef = useRef(null);
   const isInView = useInView(headerRef, { once: true, margin: '-80px' });
 
-  const sorted = [...instances].sort((a, b) => a.attributes.order - b.attributes.order);
+  const safeInstances = Array.isArray(instances) ? instances : [];
+  const safeMembers = Array.isArray(members) ? members : [];
+
+  const sorted = [...safeInstances].sort((a, b) => (a?.attributes?.order ?? 0) - (b?.attributes?.order ?? 0));
 
   return (
     <section id="governance" className="bg-slate-50 py-24 sm:py-32 section-pattern overflow-hidden">
@@ -58,11 +61,16 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
         {/* BUG FIX: grid 2→3 colunas para 5 itens sem layout quebrado */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {sorted.map((instance, index) => {
-            const Icon = getIconForInstance(instance.attributes.title);
+            const attrs = instance?.attributes || ({} as any);
+            const title = attrs.title || '';
+            const order = attrs.order ?? (index + 1);
+            const summary = attrs.summary || '';
+            const keyAttrs: any[] = Array.isArray(attrs.keyAttributes) ? attrs.keyAttributes : [];
+            const Icon = getIconForInstance(title);
             const gradient = instanceColors[index % instanceColors.length];
             return (
               <motion.div
-                key={instance.id}
+                key={instance?.id || index}
                 initial={{ opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
@@ -77,10 +85,10 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
                     </div>
                     <div>
                       <span className="text-white/60 text-xs font-bold uppercase tracking-widest">
-                        Instância {String(instance.attributes.order).padStart(2, '0')}
+                        Instância {String(order).padStart(2, '0')}
                       </span>
                       <h3 className="text-white font-bold text-base leading-tight mt-0.5">
-                        {instance.attributes.title}
+                        {title}
                       </h3>
                     </div>
                   </div>
@@ -89,13 +97,13 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
                 {/* Card body */}
                 <div className="p-6">
                   <p className="text-secondary-600 text-sm leading-relaxed mb-5">
-                    {instance.attributes.summary}
+                    {summary}
                   </p>
                   <ul className="space-y-2.5">
-                    {instance.attributes.keyAttributes.map((attr, idx) => (
+                    {keyAttrs.map((attr, idx) => (
                       <li key={idx} className="flex items-start gap-2.5 text-sm text-secondary-500">
                         <CheckCircle size={15} className="text-brand-500 shrink-0 mt-0.5" />
-                        <span className="leading-relaxed">{attr.attributeText}</span>
+                        <span className="leading-relaxed">{attr?.attributeText || attr}</span>
                       </li>
                     ))}
                   </ul>
@@ -106,7 +114,7 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
         </div>
 
         {/* Members Section */}
-        {members && members.length > 0 && (
+        {safeMembers.length > 0 && (
           <div className="mt-24 pt-16 border-t border-gray-200">
             <motion.h3
               initial={{ opacity: 0, y: 20 }}
@@ -118,30 +126,33 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
               Nossa Liderança
             </motion.h3>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 justify-center max-w-2xl mx-auto">
-              {members.map((member, i) => (
-                <motion.div
-                  key={member.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  className="flex flex-col items-center text-center bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300"
-                >
-                  <div className="relative mb-5">
-                    <img
-                      className="h-24 w-24 rounded-2xl object-cover shadow-md"
-                      src={member.attributes.imageUrl}
-                      alt={member.attributes.name}
-                    />
-                    <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
-                      <CheckCircle size={14} className="text-white" />
+              {safeMembers.map((member, i) => {
+                const mAttrs = member?.attributes || ({} as any);
+                return (
+                  <motion.div
+                    key={member?.id || i}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                    className="flex flex-col items-center text-center bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300"
+                  >
+                    <div className="relative mb-5">
+                      <img
+                        className="h-24 w-24 rounded-2xl object-cover shadow-md"
+                        src={mAttrs.imageUrl || 'https://picsum.photos/200/200'}
+                        alt={mAttrs.name || 'Membro'}
+                      />
+                      <div className="absolute -bottom-2 -right-2 w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
+                        <CheckCircle size={14} className="text-white" />
+                      </div>
                     </div>
-                  </div>
-                  <h4 className="text-lg font-bold text-secondary-900 mb-1">{member.attributes.name}</h4>
-                  <p className="text-sm font-semibold text-brand-600 mb-2">{member.attributes.role}</p>
-                  <p className="text-sm text-secondary-400">{member.attributes.bio}</p>
-                </motion.div>
-              ))}
+                    <h4 className="text-lg font-bold text-secondary-900 mb-1">{mAttrs.name}</h4>
+                    <p className="text-sm font-semibold text-brand-600 mb-2">{mAttrs.role}</p>
+                    <p className="text-sm text-secondary-400">{mAttrs.bio}</p>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         )}

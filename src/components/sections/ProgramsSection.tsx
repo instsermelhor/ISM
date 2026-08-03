@@ -237,17 +237,19 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
   );
 };
 
-export const ProgramsSection: React.FC<Props> = ({ programs, servicesPage }) => {
+export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
   const sectionBadge = servicesPage?.sectionBadge || 'O Que Fazemos';
   const sectionTitle = servicesPage?.sectionTitle || 'Projetos em Campo';
   const sectionSubtitle = servicesPage?.sectionSubtitle || 'Iniciativas de alto impacto social, ambiental e educacional transformando realidades diariamente.';
 
+  const safePrograms = Array.isArray(programs) ? programs : [];
+
   // Filter only published programs
-  const publishedPrograms = programs
-    .filter(p => p.isPublished)
-    .sort((a, b) => a.order - b.order);
+  const publishedPrograms = safePrograms
+    .filter(p => p && p.isPublished)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   if (publishedPrograms.length === 0) return null;
 

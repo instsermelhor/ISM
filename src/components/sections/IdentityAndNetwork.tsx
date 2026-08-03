@@ -32,11 +32,14 @@ const networkCards = [
 ];
 
 export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dynamicCards }) => {
+  const safeData = pageData || ({} as any);
+  const logoImage = safeData.logoImage || '/logo-ism.png';
+  const motto = safeData.motto || 'Sapere Aude';
   const networkRef = useRef(null);
   const symbolRef = useRef(null);
   const networkInView = useInView(networkRef, { once: true, margin: '-80px' });
   const symbolInView = useInView(symbolRef, { once: true, margin: '-80px' });
-  const cardsToRender = (dynamicCards && dynamicCards.length > 0) ? dynamicCards : networkCards;
+  const cardsToRender = (Array.isArray(dynamicCards) && dynamicCards.length > 0) ? dynamicCards : networkCards;
 
   return (
     <section id="identity" className="bg-white">
@@ -134,7 +137,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
               <div className="relative">
                 <div className="absolute inset-0 bg-brand-500/5 rounded-full blur-xl scale-150" />
                 <img
-                  src={pageData.logoImage}
+                  src={logoImage}
                   alt="Logo Símbolo do Instituto Ser Melhor"
                   className="relative w-36 h-36 object-contain drop-shadow-md"
                 />
@@ -195,7 +198,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
                   Ser Melhor
                 </span>
               </div>
-              <span className="text-xs uppercase tracking-[0.35em] text-brand-600 font-bold">{pageData.motto}</span>
+              <span className="text-xs uppercase tracking-[0.35em] text-brand-600 font-bold">{motto}</span>
             </div>
 
             <div className="space-y-6 mt-auto relative z-10">
@@ -214,7 +217,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
               <div className="bg-white/5 p-5 rounded-2xl border border-white/8">
                 <div className="flex items-center gap-2 text-brand-400 mb-3">
                   <Quote size={18} />
-                  <span className="font-serif italic text-lg font-bold">{pageData.motto}</span>
+                  <span className="font-serif italic text-lg font-bold">{motto}</span>
                 </div>
                 <p className="text-sm text-secondary-300 italic mb-2">"Ousa Saber" ou "Ousa ser sábio".</p>
                 <p className="text-xs text-secondary-400 leading-relaxed">

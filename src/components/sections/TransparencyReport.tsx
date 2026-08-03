@@ -71,13 +71,15 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 /* ── Component ── */
 export const TransparencyReport: React.FC<Props> = ({
-  documents,
-  financials,
-  intro,
+  documents = [],
+  financials = [],
+  intro = '',
   efficiencyPct,
   integrityPillars: dynamicPillars,
 }) => {
-  const pillarsToRender = dynamicPillars?.length ? dynamicPillars : DEFAULT_INTEGRITY_PILLARS;
+  const safeDocs = Array.isArray(documents) ? documents : [];
+  const safeFinancials = Array.isArray(financials) ? financials : [];
+  const pillarsToRender = (Array.isArray(dynamicPillars) && dynamicPillars.length) ? dynamicPillars : DEFAULT_INTEGRITY_PILLARS;
   const effPct = efficiencyPct !== undefined ? efficiencyPct : 90;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
@@ -92,25 +94,24 @@ export const TransparencyReport: React.FC<Props> = ({
   /* Derive available years from documents */
   const availableYears = useMemo(() => {
     const years = Array.from(
-      new Set(documents.map((d) => new Date(d.publicationDate).getFullYear().toString())),
+      new Set(safeDocs.map((d) => (d?.publicationDate ? new Date(d.publicationDate).getFullYear().toString() : '2024'))),
     ).sort((a, b) => Number(b) - Number(a));
     return ['Todos', ...years];
-  }, [documents]);
+  }, [safeDocs]);
 
   /* Filtered list */
   const filtered = useMemo(() => {
-    return documents.filter((doc) => {
-      const yearMatch =
-        selectedYear === 'Todos' ||
-        new Date(doc.publicationDate).getFullYear().toString() === selectedYear;
-      const catMatch =
-        selectedCat === 'Todos' || doc.documentType === selectedCat;
+    return safeDocs.filter((doc) => {
+      if (!doc) return false;
+      const pubYear = doc.publicationDate ? new Date(doc.publicationDate).getFullYear().toString() : '2024';
+      const yearMatch = selectedYear === 'Todos' || pubYear === selectedYear;
+      const catMatch = selectedCat === 'Todos' || doc.documentType === selectedCat;
       const textMatch =
         !searchText ||
-        doc.documentName.toLowerCase().includes(searchText.toLowerCase());
+        (doc.documentName || '').toLowerCase().includes(searchText.toLowerCase());
       return yearMatch && catMatch && textMatch;
     });
-  }, [documents, selectedYear, selectedCat, searchText]);
+  }, [safeDocs, selectedYear, selectedCat, searchText]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;

@@ -104,7 +104,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
             transition={{ duration: 0.9, delay: 0.3 }}
             className="mb-6 text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] text-white"
           >
-            {(heroTitle || '').split('—')[0].trim()}
+            {(typeof heroTitle === 'string' ? heroTitle : 'Instituto Ser Melhor — Sapere Aude').split('—')[0].trim()}
           </motion.h1>
 
           <motion.p
