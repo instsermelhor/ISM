@@ -175,4 +175,8 @@ export interface ProgramData {
   impactValue: string;
   linkUrl: string;
   linkLabel: string;
+  pillarsTitle?: string;
+  pillars?: string[];
+  commitmentTitle?: string;
+  commitment?: string;
 }

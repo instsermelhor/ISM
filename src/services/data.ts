@@ -254,7 +254,46 @@ export const InstitutionalService = {
   /** Retorna todos os programas cadastrados no Admin */
   getPrograms: async (): Promise<ProgramData[]> => {
     const mockPrograms: ProgramData[] = [
-      { id: '1', order: 1, title: 'Educação Transformadora', slug: 'educacao-transformadora', description: 'Programa de desenvolvimento de líderes comunitários com metodologia baseada em evidências.', longDescription: '', iconEmoji: '📚', imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80', isPublished: true, targetAudience: 'Jovens de 16 a 29 anos', tags: ['Educação', 'Jovens'], ctaLabel: 'Saiba Mais', ctaUrl: '#', impactMetric: 'Jovens Capacitados', impactValue: '50.000+', linkUrl: '', linkLabel: '' },
+      {
+        id: '1',
+        order: 1,
+        title: 'Educação Transformadora de Qualidade',
+        slug: 'educacao-transformadora',
+        description: 'O Instituto Ser Melhor acredita que a educação é o instrumento mais poderoso para romper ciclos de vulnerabilidade, promover dignidade humana e construir uma sociedade mais justa, segura e inclusiva. Por isso, desenvolvemos uma proposta de Educação Transformadora de Qualidade, que vai além da transmissão de conteúdos e busca formar seres humanos preparados para enfrentar os desafios da vida com conhecimento, ética, equilíbrio emocional e responsabilidade social.',
+        longDescription: `Nossa atuação considera cada pessoa em sua integralidade, valorizando suas potencialidades, sua história e seu contexto social. Acreditamos que aprender significa desenvolver competências acadêmicas, emocionais, sociais e profissionais capazes de gerar autonomia, protagonismo e oportunidades reais de transformação.
+
+Nossa metodologia integra práticas reconhecidas internacionalmente, como aprendizagem baseada em projetos, metodologias ativas, educação socioemocional, cultura da paz, inovação, pensamento crítico, resolução de problemas e trabalho colaborativo. O aprendizado é construído por meio de experiências significativas, permitindo que crianças, adolescentes, jovens e adultos sejam protagonistas de sua própria jornada de desenvolvimento.
+
+No Instituto Ser Melhor, a educação também representa proteção social. Cada ação educativa fortalece vínculos familiares e comunitários, promove o respeito aos direitos humanos, previne situações de violência e amplia as perspectivas de futuro das pessoas atendidas.
+
+Mais do que oferecer cursos ou atividades educativas, criamos oportunidades para que cada indivíduo desenvolva competências para a vida, fortaleça sua autoestima, descubra seus talentos e construa um projeto de vida baseado em valores, cidadania e propósito.`,
+        pillarsTitle: 'Nossos pilares',
+        pillars: [
+          'Educação centrada na pessoa e no desenvolvimento integral.',
+          'Aprendizagem significativa com metodologias inovadoras.',
+          'Desenvolvimento de competências socioemocionais.',
+          'Formação para cidadania, ética e direitos humanos.',
+          'Inclusão, diversidade e equidade.',
+          'Cultura da paz e prevenção das violências.',
+          'Desenvolvimento profissional e empregabilidade.',
+          'Tecnologia, inovação e competências digitais.',
+          'Participação da família e fortalecimento comunitário.',
+          'Avaliação contínua do impacto social das ações.',
+        ],
+        commitmentTitle: 'Nosso compromisso',
+        commitment: 'Promover uma educação que transforma vidas, fortalece comunidades e cria oportunidades permanentes de desenvolvimento humano. Cada estudante atendido pelo Instituto Ser Melhor é incentivado a tornar-se agente de transformação em sua família, em sua comunidade e na sociedade, contribuindo para um futuro mais justo, solidário e sustentável.',
+        iconEmoji: '📚',
+        imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80',
+        isPublished: true,
+        targetAudience: 'Crianças, adolescentes, jovens e adultos em situação de vulnerabilidade social',
+        tags: ['Educação', 'Jovens', 'Metodologias Ativas', 'Socioemocional'],
+        ctaLabel: 'Saiba Mais',
+        ctaUrl: '#',
+        impactMetric: 'Jovens Capacitados',
+        impactValue: '50.000+',
+        linkUrl: '',
+        linkLabel: '',
+      },
       {
         id: '4',
         order: 2,
