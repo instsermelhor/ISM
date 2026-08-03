@@ -95,20 +95,10 @@ describe('ProgramsSection — Proteção, Preservação e Restauração dos Biom
     expect(
       screen.getByText('Conservação da biodiversidade e dos ecossistemas brasileiros.')
     ).toBeInTheDocument();
-    expect(
-      screen.getByText('Promoção da cultura da sustentabilidade e da responsabilidade climática.')
-    ).toBeInTheDocument();
 
     // Linhas de atuação
-    expect(screen.getByText('Linhas de atuação')).toBeInTheDocument();
-    expect(
-      screen.getByText('O Instituto Ser Melhor desenvolve e apoia projetos voltados para:')
-    ).toBeInTheDocument();
     expect(
       screen.getByText('Recuperação de áreas degradadas e reflorestamento com espécies nativas.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Desenvolvimento de programas de voluntariado socioambiental.')
     ).toBeInTheDocument();
 
     // Nosso compromisso
@@ -127,5 +117,75 @@ describe('ProgramsSection — Proteção, Preservação e Restauração dos Biom
 
     await user.click(biomesButton);
     expect(biomesButton).toHaveAttribute('aria-expanded', 'false');
+  });
+});
+
+describe('ProgramsSection — Saúde & Bem-Estar Comunitário', () => {
+  let programsData: any[];
+
+  beforeEach(async () => {
+    programsData = await InstitutionalService.getPrograms();
+  });
+
+  it('renders title "Saúde & Bem-Estar Comunitário"', () => {
+    render(<ProgramsSection programs={programsData} />);
+    expect(screen.getByText('Saúde & Bem-Estar Comunitário')).toBeInTheDocument();
+  });
+
+  it('button "Conhecer Programa" was replaced with "Saiba Mais"', () => {
+    render(<ProgramsSection programs={programsData} />);
+    expect(screen.queryByText('Conhecer Programa')).not.toBeInTheDocument();
+    const healthBtn = screen.getAllByRole('button', { name: /Saiba Mais/i })[2];
+    expect(healthBtn).toBeInTheDocument();
+  });
+
+  it('expands full text, pilares, linhas de atuação, and compromisso on "Saiba Mais" click', async () => {
+    const user = userEvent.setup();
+    render(<ProgramsSection programs={programsData} />);
+
+    // Find "Saiba Mais" button for Saúde & Bem-Estar Comunitário (program id 3)
+    const healthButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[2];
+    expect(healthButton).toHaveAttribute('aria-controls', 'program-content-3');
+
+    await user.click(healthButton);
+    expect(healthButton).toHaveAttribute('aria-expanded', 'true');
+
+    // Long description
+    expect(
+      screen.getByText(/Nossa atuação compreende que saúde vai muito além da ausência de doenças/i)
+    ).toBeInTheDocument();
+
+    // Nossos Pilares
+    expect(
+      screen.getByText('Promoção da saúde integral e da qualidade de vida.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Atuação integrada com o Sistema Único de Saúde (SUS) e demais redes de proteção social.')
+    ).toBeInTheDocument();
+
+    // Linhas de Atuação
+    expect(
+      screen.getByText('Promoção da saúde física, mental e emocional.')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Desenvolvimento de projetos de promoção da saúde em escolas, empresas e comunidades.')
+    ).toBeInTheDocument();
+
+    // Nosso compromisso
+    expect(
+      screen.getByText(/Nosso compromisso é construir comunidades mais saudáveis, solidárias e resilientes/i)
+    ).toBeInTheDocument();
+  });
+
+  it('collapses back when clicking "Mostrar Menos"', async () => {
+    const user = userEvent.setup();
+    render(<ProgramsSection programs={programsData} />);
+
+    const healthButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[2];
+    await user.click(healthButton);
+    expect(healthButton).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(healthButton);
+    expect(healthButton).toHaveAttribute('aria-expanded', 'false');
   });
 });

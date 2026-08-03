@@ -370,7 +370,65 @@ Cada projeto desenvolvido pelo Instituto Ser Melhor busca gerar impacto ambienta
         linkUrl: '',
         linkLabel: '',
       },
-      { id: '3', order: 4, title: 'Saúde & Bem-Estar Comunitário', slug: 'saude-comunidade', description: 'Clínicas móveis e campanhas de prevenção em regiões sem cobertura de saúde pública.', longDescription: '', iconEmoji: '❤️', imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80', isPublished: true, targetAudience: 'Famílias em regiões de baixo IDH', tags: ['Saúde'], ctaLabel: 'Conhecer Programa', ctaUrl: '#', impactMetric: 'Atendimentos/ano', impactValue: '200.000', linkUrl: '', linkLabel: '' },
+      {
+        id: '3',
+        order: 4,
+        title: 'Saúde & Bem-Estar Comunitário',
+        slug: 'saude-comunidade',
+        description: 'O Instituto Ser Melhor acredita que a saúde é um direito fundamental e um dos principais pilares para o desenvolvimento humano, a inclusão social e a construção de comunidades mais resilientes. Por isso, desenvolvemos o programa Saúde & Bem-Estar Comunitário, uma iniciativa que promove o cuidado integral das pessoas por meio de ações preventivas, educativas, assistenciais e de fortalecimento dos vínculos comunitários.',
+        longDescription: `Nossa atuação compreende que saúde vai muito além da ausência de doenças. Ela envolve o equilíbrio físico, mental, emocional, social e ambiental, permitindo que cada indivíduo desenvolva plenamente suas capacidades, fortaleça sua autonomia e viva com dignidade e qualidade de vida.
+
+Inspirado nas melhores práticas nacionais e internacionais de promoção da saúde, o Instituto Ser Melhor desenvolve projetos que integram educação em saúde, saúde mental, prevenção de doenças, práticas integrativas, incentivo aos hábitos saudáveis, fortalecimento das redes de apoio e ampliação do acesso aos serviços essenciais, especialmente para pessoas em situação de vulnerabilidade social.
+
+Nossa metodologia prioriza a prevenção, a promoção da saúde e o cuidado humanizado, fortalecendo a participação ativa das famílias e das comunidades na construção de ambientes mais saudáveis, seguros e acolhedores. Trabalhamos de forma integrada com profissionais de diferentes áreas, instituições públicas, universidades, empresas, voluntários e organizações parceiras para ampliar o impacto social das nossas ações.
+
+O Instituto Ser Melhor também reconhece que fatores como educação, alimentação, moradia, segurança, trabalho, cultura, lazer, meio ambiente e acesso à informação influenciam diretamente a saúde das pessoas. Por isso, desenvolvemos ações interdisciplinares que enfrentam os determinantes sociais da saúde e promovem soluções sustentáveis para o bem-estar coletivo.
+
+Mais do que oferecer atendimentos e serviços, buscamos fortalecer a capacidade das comunidades de cuidar de si mesmas, promovendo conhecimento, autonomia, solidariedade e participação cidadã como instrumentos permanentes de transformação social.`,
+        pillarsTitle: 'Nossos pilares',
+        pillars: [
+          'Promoção da saúde integral e da qualidade de vida.',
+          'Prevenção de doenças e agravos à saúde.',
+          'Saúde mental e apoio psicossocial.',
+          'Educação em saúde e promoção do autocuidado.',
+          'Alimentação saudável e segurança alimentar.',
+          'Incentivo à prática de atividades físicas e hábitos saudáveis.',
+          'Fortalecimento dos vínculos familiares e comunitários.',
+          'Atenção humanizada às populações em situação de vulnerabilidade.',
+          'Inclusão social, equidade e respeito à diversidade.',
+          'Atuação integrada com o Sistema Único de Saúde (SUS) e demais redes de proteção social.',
+          'Monitoramento e avaliação do impacto social das ações.',
+        ],
+        actionLinesTitle: 'Linhas de atuação',
+        actionLinesSub: 'O Instituto Ser Melhor desenvolve e apoia iniciativas voltadas para:',
+        actionLines: [
+          'Promoção da saúde física, mental e emocional.',
+          'Atendimento psicológico, psiquiátrico e psicossocial, conforme os projetos institucionais.',
+          'Programas de prevenção ao uso de álcool, tabaco e outras drogas.',
+          'Campanhas de vacinação, prevenção e educação em saúde em parceria com a rede pública.',
+          'Educação alimentar, nutricional e incentivo à alimentação saudável.',
+          'Ações de combate ao sedentarismo e incentivo à atividade física.',
+          'Promoção da saúde da mulher, da criança, do adolescente, da pessoa idosa e das pessoas com deficiência.',
+          'Apoio às vítimas de violência e pessoas em situação de vulnerabilidade.',
+          'Formação de agentes comunitários e multiplicadores de saúde.',
+          'Desenvolvimento de projetos de promoção da saúde em escolas, empresas e comunidades.',
+        ],
+        commitmentTitle: 'Nosso compromisso',
+        commitment: `Nosso compromisso é construir comunidades mais saudáveis, solidárias e resilientes, onde cada pessoa tenha acesso a oportunidades de cuidado, desenvolvimento e qualidade de vida. Acreditamos que investir em saúde é investir na dignidade humana, na prevenção das vulnerabilidades e no fortalecimento do capital social das comunidades.
+
+Por meio de ações integradas, humanizadas e baseadas em evidências, o Instituto Ser Melhor promove um modelo de cuidado que coloca as pessoas no centro das decisões, fortalece a cidadania e contribui para uma sociedade mais justa, inclusiva e comprometida com o bem-estar coletivo.`,
+        iconEmoji: '❤️',
+        imageUrl: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80',
+        isPublished: true,
+        targetAudience: 'Famílias em situação de vulnerabilidade, comunidades locais e sociedade em geral',
+        tags: ['Saúde', 'Bem-Estar', 'Prevenção', 'Apoio Psicossocial'],
+        ctaLabel: 'Saiba Mais',
+        ctaUrl: '#',
+        impactMetric: 'Atendimentos/ano',
+        impactValue: '200.000',
+        linkUrl: '',
+        linkLabel: '',
+      },
     ];
     if (!FIREBASE_ENABLED) return mockPrograms;
     try {
