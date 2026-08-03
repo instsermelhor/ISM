@@ -17,11 +17,11 @@ describe('ProgramsSection — Educação Transformadora de Qualidade', () => {
     expect(screen.getByText('Educação Transformadora de Qualidade')).toBeInTheDocument();
   });
 
-  it('displays the first paragraph description initially in collapsed state', () => {
+  it('does not display description text initially in compact collapsed state', () => {
     render(<ProgramsSection programs={programsData} />);
     expect(
-      screen.getByText(/O Instituto Ser Melhor acredita que a educação é o instrumento mais poderoso/i)
-    ).toBeInTheDocument();
+      screen.queryByText(/O Instituto Ser Melhor acredita que a educação é o instrumento mais poderoso/i)
+    ).not.toBeInTheDocument();
   });
 
   it('has aria-expanded="false" and aria-controls on the "Saiba Mais" button initially', () => {
@@ -70,7 +70,7 @@ describe('ProgramsSection — Proteção, Preservação e Restauração dos Biom
   it('button "Ver Relatório" was replaced with "Saiba Mais"', () => {
     render(<ProgramsSection programs={programsData} />);
     expect(screen.queryByText('Ver Relatório')).not.toBeInTheDocument();
-    const biomesBtn = screen.getAllByRole('button', { name: /Saiba Mais/i })[1];
+    const biomesBtn = screen.getByRole('button', { name: /Saiba mais sobre Proteção, Preservação e Restauração dos Biomas/i });
     expect(biomesBtn).toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe('ProgramsSection — Proteção, Preservação e Restauração dos Biom
     render(<ProgramsSection programs={programsData} />);
 
     // Find "Saiba Mais" button for Proteção de Biomas (program id 2)
-    const biomesButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[1];
+    const biomesButton = screen.getByRole('button', { name: /Saiba mais sobre Proteção, Preservação e Restauração dos Biomas/i });
     expect(biomesButton).toHaveAttribute('aria-controls', 'program-content-2');
 
     await user.click(biomesButton);
@@ -111,7 +111,7 @@ describe('ProgramsSection — Proteção, Preservação e Restauração dos Biom
     const user = userEvent.setup();
     render(<ProgramsSection programs={programsData} />);
 
-    const biomesButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[1];
+    const biomesButton = screen.getByRole('button', { name: /Saiba mais sobre Proteção, Preservação e Restauração dos Biomas/i });
     await user.click(biomesButton);
     expect(biomesButton).toHaveAttribute('aria-expanded', 'true');
 
@@ -135,7 +135,7 @@ describe('ProgramsSection — Saúde & Bem-Estar Comunitário', () => {
   it('button "Conhecer Programa" was replaced with "Saiba Mais"', () => {
     render(<ProgramsSection programs={programsData} />);
     expect(screen.queryByText('Conhecer Programa')).not.toBeInTheDocument();
-    const healthBtn = screen.getAllByRole('button', { name: /Saiba Mais/i })[2];
+    const healthBtn = screen.getByRole('button', { name: /Saiba mais sobre Saúde & Bem-Estar Comunitário/i });
     expect(healthBtn).toBeInTheDocument();
   });
 
@@ -144,7 +144,7 @@ describe('ProgramsSection — Saúde & Bem-Estar Comunitário', () => {
     render(<ProgramsSection programs={programsData} />);
 
     // Find "Saiba Mais" button for Saúde & Bem-Estar Comunitário (program id 3)
-    const healthButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[2];
+    const healthButton = screen.getByRole('button', { name: /Saiba mais sobre Saúde & Bem-Estar Comunitário/i });
     expect(healthButton).toHaveAttribute('aria-controls', 'program-content-3');
 
     await user.click(healthButton);
@@ -181,7 +181,7 @@ describe('ProgramsSection — Saúde & Bem-Estar Comunitário', () => {
     const user = userEvent.setup();
     render(<ProgramsSection programs={programsData} />);
 
-    const healthButton = screen.getAllByRole('button', { name: /Saiba Mais/i })[2];
+    const healthButton = screen.getByRole('button', { name: /Saiba mais sobre Saúde & Bem-Estar Comunitário/i });
     await user.click(healthButton);
     expect(healthButton).toHaveAttribute('aria-expanded', 'true');
 
