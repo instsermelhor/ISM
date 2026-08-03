@@ -17,10 +17,10 @@ const STAT_ICON_MAP: Record<string, React.ElementType> = {
   '🌐': Globe,
 };
 
-export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data, heroSection }) => {
-  const eyebrowText = heroSection?.eyebrowText || (data as any).eyebrowText || 'Desde 2007 · Transformação Social';
-  const heroTitle = heroSection?.title || data.title;
-  const heroSubtitle = heroSection?.subtitle || data.introduction;
+export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} as InstitutionalPageAttributes, heroSection }) => {
+  const eyebrowText = heroSection?.eyebrowText || (data as any)?.eyebrowText || 'Desde 2007 · Transformação Social';
+  const heroTitle = heroSection?.title || data?.title || 'Instituto Ser Melhor — Sapere Aude';
+  const heroSubtitle = heroSection?.subtitle || data?.introduction || 'Somos uma organização não-governamental brasileira que atua como catalisadora de transformações sociais e ambientais.';
 
   const rawStats = heroSection?.stats && heroSection.stats.length > 0
     ? heroSection.stats
@@ -36,15 +36,22 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data, hero
     Icon: STAT_ICON_MAP[s.icon] || STAT_ICON_MAP[s.iconKey] || Leaf,
   }));
 
+  const bgImage = data?.heroImage || 'https://picsum.photos/1920/1080?grayscale';
+  const motto = data?.motto || 'Sapere Aude';
+  const mottoExplanation = data?.mottoExplanation || 'Ouse Saber. Reflete nosso valor de excelência e transformação.';
+
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-secondary-950 flex flex-col">
 
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src={data.heroImage}
+          src={bgImage}
           alt="Hero Background"
           className="h-full w-full object-cover opacity-30 animate-slow-zoom"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://picsum.photos/1920/1080?grayscale';
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-secondary-950/70 via-secondary-900/60 to-secondary-950" />
         <div className="absolute inset-0 bg-gradient-to-r from-secondary-950/40 via-transparent to-secondary-950/20" />
@@ -116,10 +123,10 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data, hero
             transition={{ duration: 0.9, delay: 0.7 }}
             className="inline-flex flex-col sm:flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-3.5 backdrop-blur-md mb-10 max-w-xl mx-auto"
           >
-            <span className="font-serif text-xl italic text-brand-300">"{data.motto}"</span>
+            <span className="font-serif text-xl italic text-brand-300">"{motto}"</span>
             <span className="hidden sm:block w-px h-5 bg-white/20 shrink-0" />
             <span className="text-sm text-secondary-400 max-w-xs text-center sm:text-left">
-              {data.mottoExplanation}
+              {mottoExplanation}
             </span>
           </motion.div>
 

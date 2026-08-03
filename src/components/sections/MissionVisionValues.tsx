@@ -43,18 +43,21 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
 
+  const missionText = data?.missionStatement || 'Promover a completa emancipação humana e o desenvolvimento sustentável integral, atuando como catalisador inigualável de transformações sociais, ambientais, educacionais e culturais.';
+  const visionText = data?.visionStatement || 'Ser o fator decisivo na construção de um mundo equitativo, próspero e regenerativo, onde a necessidade da assistência social como a conhecemos tenha sido mitigada pela eficácia de nossas soluções.';
+
   const cards = [
     {
       Icon: Target,
       label: 'Nossa Missão',
-      text: data.missionStatement,
+      text: missionText,
       accent: 'border-brand-500',
       iconBg: 'bg-brand-600',
     },
     {
       Icon: Eye,
       label: 'Nossa Visão',
-      text: data.visionStatement,
+      text: visionText,
       accent: 'border-secondary-700',
       iconBg: 'bg-secondary-800',
     },

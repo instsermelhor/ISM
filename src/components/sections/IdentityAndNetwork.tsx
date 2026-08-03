@@ -67,7 +67,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
               <span className="text-gradient-brand">de Elite</span>
             </h2>
             <p className="text-secondary-300 text-lg leading-relaxed max-w-2xl mx-auto">
-              {pageData.networkIntro}
+              {pageData?.networkIntro || 'O Instituto Ser Melhor reconhece que a excelência não é alcançada no isolamento. Nossa Rede de Colaboração é um ecossistema seletivo de stakeholders globais.'}
             </p>
           </motion.div>
 
@@ -110,7 +110,9 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
           <h2 className="text-4xl md:text-5xl font-black text-secondary-900 mb-5 leading-tight">
             Símbolo <span className="text-gradient-brand">Institucional</span>
           </h2>
-          <p className="text-secondary-500 text-lg leading-relaxed">{pageData.logoExplanation}</p>
+          <p className="text-secondary-500 text-lg leading-relaxed">
+            {pageData?.logoExplanation || 'O emblema circular com três figuras humanas estilizadas representa o nosso foco no Desenvolvimento Sustentável Integral.'}
+          </p>
         </motion.div>
 
         <div className="flex flex-col lg:flex-row items-stretch gap-8">
