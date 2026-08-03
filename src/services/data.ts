@@ -263,7 +263,7 @@ export const InstitutionalService = {
         description: 'Apoio psicossocial integrativo para o fortalecimento da vida. Com o compromisso de quebrar ciclos de violência e adoecimento mental, o Projeto AURA atua no suporte psicossocial de pessoas em extrema vulnerabilidade social e no cuidado mental preventivo para agentes de segurança pública. Nosso objetivo é construir pontes de empatia, promover a resiliência e garantir o direito ao bem-estar emocional para quem mais precisa.',
         longDescription: '',
         iconEmoji: '🌟',
-        imageUrl: 'https://images.unsplash.com/photo-1521305916504-4a1121188589?w=600&q=80',
+        imageUrl: '/images/projeto-aura.jpg',
         isPublished: true,
         targetAudience: 'Pessoas em vulnerabilidade social e agentes de segurança pública',
         tags: ['Social', 'Saúde Mental'],
