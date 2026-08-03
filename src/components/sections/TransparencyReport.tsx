@@ -44,7 +44,7 @@ const DEFAULT_INTEGRITY_PILLARS = [
     Icon: Megaphone,
     title: 'Canal de Integridade',
     body: 'Canal de Denúncias operado por empresa terceirizada independente. Garantia absoluta de anonimato e imparcialidade na apuração de desvios do Código de Conduta.',
-    cta: { label: 'Acessar Ouvidoria', href: '#' },
+    cta: { label: 'Acessar Ouvidoria', href: 'mailto:ouvidoria@institutosermelhor.org' },
   },
   {
     Icon: Fingerprint,
@@ -326,7 +326,13 @@ export const TransparencyReport: React.FC<Props> = ({
             const Icon = pillar.Icon || ShieldCheck;
             const title = pillar.title;
             const body = pillar.body;
-            const cta = pillar.cta || (pillar.ctaLabel ? { label: pillar.ctaLabel, href: pillar.ctaHref || '#' } : null);
+            let cta = pillar.cta || (pillar.ctaLabel ? { label: pillar.ctaLabel, href: pillar.ctaHref || '#' } : null);
+            if (title === 'Canal de Integridade' || cta?.label === 'Acessar Ouvidoria') {
+              cta = {
+                label: cta?.label || 'Acessar Ouvidoria',
+                href: (cta?.href && cta.href !== '#') ? cta.href : 'mailto:ouvidoria@institutosermelhor.org',
+              };
+            }
             const emoji = pillar.icon;
             return (
               <motion.div
