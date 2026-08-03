@@ -119,20 +119,18 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, footerData
             </h4>
             <ul className="space-y-3">
               {[
-                'Educação',
-                'Educação Ambiental',
-                'Proteção Animal',
-                'Preservação Ambiental',
-                'Justiça Social',
-                'Desenvolvimento Social',
-              ].map((label) => (
-                <li key={label}>
+                { label: 'Educação de Qualidade', href: '#programs' },
+                { label: 'Preservação Ambiental', href: '#pillars' },
+                { label: 'Justiça Social', href: '#values' },
+                { label: 'Desenvolvimento Social', href: '#impact' },
+              ].map((item) => (
+                <li key={item.label}>
                   <a
-                    href="#"
+                    href={item.href}
                     className="text-secondary-400 text-sm hover:text-brand-400 transition-colors duration-150 flex items-center gap-2 group"
                   >
                     <span className="w-0 h-px bg-brand-400 group-hover:w-3 transition-all duration-200" />
-                    {label}
+                    {item.label}
                   </a>
                 </li>
               ))}

@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
     >
       <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2.5 group z-50 relative">
+        <a href="#hero" aria-label="Instituto Ser Melhor - Ir para o topo" className="flex items-center gap-2.5 group z-50 relative">
           <img
             src="/logo-ism.png"
             alt="Logo Instituto Ser Melhor"

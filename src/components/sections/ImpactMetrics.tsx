@@ -111,22 +111,31 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'file-text': FileText,
 };
 
+const DEFAULT_METRICS: MetricItem[] = [
+  { id: '1', value: 15000, suffix: '+', prefix: '', label: 'Vidas Impactadas', sublabel: 'Atendimentos diretos em programas sociais', Icon: Users, color: '#4ade80', decimals: 0 },
+  { id: '2', value: 42, suffix: '', prefix: '', label: 'Comunidades Atendidas', sublabel: 'Territórios em estado de vulnerabilidade', Icon: MapPin, color: '#60a5fa', decimals: 0 },
+  { id: '3', value: 128, suffix: '', prefix: '', label: 'Parcerias Ativas', sublabel: 'Organizações, empresas e institutos', Icon: Handshake, color: '#f59e0b', decimals: 0 },
+  { id: '4', value: 4.83, suffix: '', prefix: '1:', label: 'Retorno Social (SROI)', sublabel: 'Índice de retorno por real investido', Icon: TrendingUp, color: '#34d399', decimals: 2 },
+];
+
 export const ImpactMetrics: React.FC<ImpactMetricsProps> = ({ items }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
-  // Mapeia dados do Firestore (any[]) para MetricItem tipado
-  const activeMetrics: MetricItem[] = (items || []).map(m => ({
-    id: m.id || m.label,
-    value: parseFloat(m.value) || 0,
-    suffix: m.suffix || '',
-    prefix: m.prefix || '',
-    label: m.label || '',
-    sublabel: m.sublabel || '',
-    Icon: ICON_MAP[m.iconKey] || Users,
-    color: m.color || '#16a34a',
-    decimals: m.decimals ?? 0,
-  }));
+  // Mapeia dados do Firestore (any[]) para MetricItem tipado ou usa os padrões canônicos
+  const activeMetrics: MetricItem[] = (items && items.length > 0)
+    ? items.map(m => ({
+        id: m.id || m.label,
+        value: parseFloat(m.value) || 0,
+        suffix: m.suffix || '',
+        prefix: m.prefix || '',
+        label: m.label || '',
+        sublabel: m.sublabel || '',
+        Icon: ICON_MAP[m.iconKey] || Users,
+        color: m.color || '#4ade80',
+        decimals: m.decimals ?? 0,
+      }))
+    : DEFAULT_METRICS;
 
   return (
     <section
