@@ -148,7 +148,7 @@ export const BIEnterpriseService = {
     };
     if (kpi.id) {
       const { id, ...rest } = payload;
-      await setDoc(doc(db, 'bi_executive_dashboards', id), rest, { merge: true });
+      await setDoc(doc(db, 'bi_executive_dashboards', id!), rest, { merge: true });
       return id;
     }
     const ref = await addDoc(collection(db, 'bi_executive_dashboards'), payload);

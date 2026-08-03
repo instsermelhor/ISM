@@ -205,8 +205,8 @@ export const ScheduleEnterpriseService = {
 
     if (data.id) {
       const { id, ...rest } = payload;
-      await setDoc(doc(db, 'intelligent_appointments', id), rest, { merge: true });
-      return id;
+      await setDoc(doc(db, 'intelligent_appointments', id!), rest, { merge: true });
+      return id!;
     }
 
     const ref = await addDoc(collection(db, 'intelligent_appointments'), payload);

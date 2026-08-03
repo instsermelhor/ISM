@@ -57,14 +57,14 @@ export interface EPFCSRFDashboardKPIs {
 // ── Dados Seed ────────────────────────────────────────────────────────────────
 
 const SEED_PILLARS: ArchitecturePillarScore[] = [
-  { pilarCode: 'PILAR-001', pilarName: 'Arquitetura Corporativa (DDD, Clean Arch, SOLID, TOGAF)', score: 100, standards: ['TOGAF ADM', 'DDD', 'Clean Architecture', 'SOLID'], status: 'CERTIFICADO' },
-  { pilarCode: 'PILAR-002', pilarName: 'Segurança & Zero Trust (ISO 27001, NIST CSF 2.0, LGPD)', score: 100, standards: ['ISO 27001', 'NIST CSF 2.0', 'LGPD', 'Zero Trust'], status: 'CERTIFICADO' },
-  { pilarCode: 'PILAR-003', pilarName: 'Governança & Riscos (COBIT 2019, ISO 31000, ISO 37301)', score: 100, standards: ['COBIT 2019', 'ISO 31000', 'ISO 37301', 'RACI 100%'], status: 'CERTIFICADO' },
-  { pilarCode: 'PILAR-004', pilarName: 'Inteligência Artificial Responsável (ISO 42001, XAI 99.4%)', score: 99, standards: ['ISO 42001', 'Vertex AI', 'XAI 99.4%', 'Human-in-Loop'], status: 'EXCELENTE' },
-  { pilarCode: 'PILAR-005', pilarName: 'Continuidade & Resiliência (ISO 22301 BCM, Chaos Engineering)', score: 100, standards: ['ISO 22301', 'Chaos 100%', 'RTO 4.2s', 'RPO 0s'], status: 'CERTIFICADO' },
-  { pilarCode: 'PILAR-006', pilarName: 'Qualidade & Excelência (ISO 9001, EFQM, CMMI Nível 5)', score: 100, standards: ['ISO 9001', 'CMMI L5', 'EFQM', 'Lean Six Sigma'], status: 'CERTIFICADO' },
-  { pilarCode: 'PILAR-007', pilarName: 'Engenharia de Software (TypeScript 0 Error, React 19, GCP)', score: 100, standards: ['TypeScript 0 Error', 'React 19', 'GCP Cloud Run', 'AlloyDB'], status: 'CERTIFICADO' },
-  { pilarCode: 'PILAR-008', pilarName: 'Impacto Social & Sustentabilidade (SROI 5.4x, 1.24M Beneficiários)', score: 100, standards: ['SROI 5.4x', 'ESG 96.5', 'ODS ONU', '142 Municípios'], status: 'CERTIFICADO' },
+  { pillarCode: 'PILAR-001', pilarName: 'Arquitetura Corporativa (DDD, Clean Arch, SOLID, TOGAF)', score: 100, standards: ['TOGAF ADM', 'DDD', 'Clean Architecture', 'SOLID'], status: 'CERTIFICADO' },
+  { pillarCode: 'PILAR-002', pilarName: 'Segurança & Zero Trust (ISO 27001, NIST CSF 2.0, LGPD)', score: 100, standards: ['ISO 27001', 'NIST CSF 2.0', 'LGPD', 'Zero Trust'], status: 'CERTIFICADO' },
+  { pillarCode: 'PILAR-003', pilarName: 'Governança & Riscos (COBIT 2019, ISO 31000, ISO 37301)', score: 100, standards: ['COBIT 2019', 'ISO 31000', 'ISO 37301', 'RACI 100%'], status: 'CERTIFICADO' },
+  { pillarCode: 'PILAR-004', pilarName: 'Inteligência Artificial Responsável (ISO 42001, XAI 99.4%)', score: 99, standards: ['ISO 42001', 'Vertex AI', 'XAI 99.4%', 'Human-in-Loop'], status: 'EXCELENTE' },
+  { pillarCode: 'PILAR-005', pilarName: 'Continuidade & Resiliência (ISO 22301 BCM, Chaos Engineering)', score: 100, standards: ['ISO 22301', 'Chaos 100%', 'RTO 4.2s', 'RPO 0s'], status: 'CERTIFICADO' },
+  { pillarCode: 'PILAR-006', pilarName: 'Qualidade & Excelência (ISO 9001, EFQM, CMMI Nível 5)', score: 100, standards: ['ISO 9001', 'CMMI L5', 'EFQM', 'Lean Six Sigma'], status: 'CERTIFICADO' },
+  { pillarCode: 'PILAR-007', pilarName: 'Engenharia de Software (TypeScript 0 Error, React 19, GCP)', score: 100, standards: ['TypeScript 0 Error', 'React 19', 'GCP Cloud Run', 'AlloyDB'], status: 'CERTIFICADO' },
+  { pillarCode: 'PILAR-008', pilarName: 'Impacto Social & Sustentabilidade (SROI 5.4x, 1.24M Beneficiários)', score: 100, standards: ['SROI 5.4x', 'ESG 96.5', 'ODS ONU', '142 Municípios'], status: 'CERTIFICADO' },
 ];
 
 const SEED_INVENTORY: MasterInventorySummary = {

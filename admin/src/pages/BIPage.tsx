@@ -294,7 +294,7 @@ function GovernanceTab() {
                 </div>
                 <button
                   onClick={() => a.id && BIEnterpriseService.resolveDataQualityAlert(a.id).then(() => setAlerts(prev => prev.filter(x => x.id !== a.id)))}
-                  style={{ ...btnOutline, padding: '4px 10px', fontSize: 10 }}
+                  style={{ padding: '4px 10px', fontSize: 10, border: '1px solid #d1d5db', borderRadius: 6, background: 'transparent', cursor: 'pointer', color: '#374151', fontWeight: 600 }}
                 >Resolver</button>
               </div>
             ))}

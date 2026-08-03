@@ -197,8 +197,8 @@ export const SecurityGovernanceEnterpriseService = {
     };
     if (risk.id) {
       const { id, ...rest } = payload;
-      await setDoc(doc(db, 'security_risk_registry', id), rest, { merge: true });
-      return id;
+      await setDoc(doc(db, 'security_risk_registry', id!), rest, { merge: true });
+      return id!;
     }
     const ref = await addDoc(collection(db, 'security_risk_registry'), payload);
     return ref.id;

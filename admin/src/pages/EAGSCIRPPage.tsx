@@ -195,7 +195,7 @@ export function EAGSCIRPPage() {
 
       <div style={styles.row}>
         {kpis && <>
-          {kpiCard('Enterprise Governance Score', kpis.enterpriseGoveranceScore?.toFixed(1) ?? '99.3', '/100', '#4ade80', '🛡️')}
+          {kpiCard('Enterprise Governance Score', kpis.enterpriseGovernanceScore?.toFixed(1) ?? '99.3', '/100', '#4ade80', '🛡️')}
           {kpiCard('Coordenação Estratégica', `${kpis.strategicCoordinationIndex}%`, '', '#38bdf8', '🎯')}
           {kpiCard('Resiliência Institucional', `${kpis.institutionalResilienceIndex}%`, 'ISO 22301', '#34d399', '🔄')}
           {kpiCard('Simulações BCM Passadas', `${kpis.bcmSimulationsPassed}/24`, '100%', '#c084fc', '👯')}

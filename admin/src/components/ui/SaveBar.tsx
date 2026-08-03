@@ -14,6 +14,10 @@ export interface SaveBarProps {
   message?: string;
   /** Quantos campos foram alterados (opcional) */
   changedCount?: number;
+  /** Compat: some pages pass saving/saved/title directly */
+  saving?: boolean;
+  saved?: boolean;
+  title?: string;
 }
 
 /**

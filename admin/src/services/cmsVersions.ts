@@ -16,8 +16,9 @@ import {
 import { db } from '../lib/firebase';
 
 export type CMSModuleId =
-  | 'hero' | 'about' | 'programs' | 'donation'
-  | 'seo' | 'blog' | 'team' | 'governance' | 'partners';
+  | 'hero' | 'about' | 'programs' | 'donation' | 'donations'
+  | 'seo' | 'blog' | 'team' | 'governance' | 'partners'
+  | 'leads' | 'pipeline';
 
 export type CMSVersionStatus =
   | 'DRAFT' | 'REVIEW' | 'SCHEDULED' | 'PUBLISHED' | 'ARCHIVED';
