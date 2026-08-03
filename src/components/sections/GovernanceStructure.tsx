@@ -33,7 +33,11 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
   const safeInstances = Array.isArray(instances) ? instances : [];
   const safeMembers = Array.isArray(members) ? members : [];
 
-  const sorted = [...safeInstances].sort((a, b) => (a?.attributes?.order ?? 0) - (b?.attributes?.order ?? 0));
+  const sorted = [...safeInstances].sort((a, b) => {
+    const aOrder = a?.attributes?.order ?? a?.order ?? 0;
+    const bOrder = b?.attributes?.order ?? b?.order ?? 0;
+    return aOrder - bOrder;
+  });
 
   return (
     <section id="governance" className="bg-slate-50 py-24 sm:py-32 section-pattern overflow-hidden">
@@ -61,7 +65,7 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
         {/* BUG FIX: grid 2→3 colunas para 5 itens sem layout quebrado */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {sorted.map((instance, index) => {
-            const attrs = instance?.attributes || ({} as any);
+            const attrs = instance?.attributes ? instance.attributes : instance;
             const title = attrs.title || '';
             const order = attrs.order ?? (index + 1);
             const summary = attrs.summary || '';
@@ -127,7 +131,7 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
             </motion.h3>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 justify-center max-w-2xl mx-auto">
               {safeMembers.map((member, i) => {
-                const mAttrs = member?.attributes || ({} as any);
+                const mAttrs = member?.attributes ? member.attributes : member;
                 return (
                   <motion.div
                     key={member?.id || i}
