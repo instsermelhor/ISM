@@ -20,75 +20,6 @@ interface MetricItem {
   decimals: number;
 }
 
-const METRICS: MetricItem[] = [
-  {
-    id: 'beneficiarios',
-    value: 32000,
-    suffix: '+',
-    prefix: '',
-    label: 'Beneficiários Diretos',
-    sublabel: 'Famílias e indivíduos assistidos anualmente',
-    Icon: Users,
-    color: '#1E3A8A',
-    decimals: 0,
-  },
-  {
-    id: 'municipios',
-    value: 78,
-    suffix: '',
-    prefix: '',
-    label: 'Municípios',
-    sublabel: 'Presença em todo o território nacional',
-    Icon: MapPin,
-    color: '#D97706',
-    decimals: 0,
-  },
-  {
-    id: 'parceiros',
-    value: 50,
-    suffix: '+',
-    prefix: '',
-    label: 'Parceiros Globais',
-    sublabel: 'Organizações, empresas e governos',
-    Icon: Handshake,
-    color: '#15803D',
-    decimals: 0,
-  },
-  {
-    id: 'anos',
-    value: 15,
-    suffix: '+',
-    prefix: '',
-    label: 'Anos de Impacto',
-    sublabel: 'Construindo futuro desde 2007',
-    Icon: Calendar,
-    color: '#C2410C',
-    decimals: 0,
-  },
-  {
-    id: 'sroi',
-    value: 4.85,
-    suffix: '',
-    prefix: 'R$',
-    label: 'SROI por Real Investido',
-    sublabel: 'Retorno social comprovado por metodologia SROI',
-    Icon: TrendingUp,
-    color: '#16a34a',
-    decimals: 2,
-  },
-  {
-    id: 'documentos',
-    value: 100,
-    suffix: '%',
-    prefix: '',
-    label: 'Transparência',
-    sublabel: 'Todas as contas auditadas e publicadas',
-    Icon: FileText,
-    color: '#6366f1',
-    decimals: 0,
-  },
-];
-
 /* Animated counter hook */
 function useCountUp(target: number, decimals: number, inView: boolean, duration = 1.8) {
   const motionVal = useMotionValue(0);
@@ -167,9 +98,35 @@ const MetricCard: React.FC<{ metric: MetricItem; delay: number }> = ({ metric, d
 };
 
 /* ── Main Section ──────────────────────────────────────────────────── */
-export const ImpactMetrics: React.FC = () => {
+export interface ImpactMetricsProps {
+  items?: any[];
+}
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  users: Users,
+  'map-pin': MapPin,
+  handshake: Handshake,
+  calendar: Calendar,
+  'trending-up': TrendingUp,
+  'file-text': FileText,
+};
+
+export const ImpactMetrics: React.FC<ImpactMetricsProps> = ({ items }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
+
+  // Mapeia dados do Firestore (any[]) para MetricItem tipado
+  const activeMetrics: MetricItem[] = (items || []).map(m => ({
+    id: m.id || m.label,
+    value: parseFloat(m.value) || 0,
+    suffix: m.suffix || '',
+    prefix: m.prefix || '',
+    label: m.label || '',
+    sublabel: m.sublabel || '',
+    Icon: ICON_MAP[m.iconKey] || Users,
+    color: m.color || '#16a34a',
+    decimals: m.decimals ?? 0,
+  }));
 
   return (
     <section
@@ -213,7 +170,7 @@ export const ImpactMetrics: React.FC = () => {
           className="grid grid-cols-2 md:grid-cols-3 gap-5"
           aria-label="Indicadores de impacto social"
         >
-          {METRICS.map((metric, idx) => (
+          {activeMetrics.map((metric, idx) => (
             <MetricCard
               key={metric.id}
               metric={metric}

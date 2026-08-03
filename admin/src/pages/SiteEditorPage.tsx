@@ -168,6 +168,9 @@ export const SiteEditorPage: React.FC = () => {
     { id: 'programs' as CMSModuleId, title: 'Projetos & Programas', desc: 'Programas sociais, estatísticas de impacto e apresentação de projetos.', icon: <Layers size={20} color="#d97706" />, path: '/site/projetos', accentColor: '#d97706' },
     { id: 'donation' as CMSModuleId, title: 'Seção de Doação', desc: 'Metas de doação, chaves Pix, informações bancárias e benefícios.', icon: <Heart size={20} color="#dc2626" />, path: '/site/doacoes', accentColor: '#dc2626' },
     { id: 'seo' as CMSModuleId, title: 'Site & SEO', desc: 'Título do site, metatags, OpenGraph, JSON-LD e Google Analytics.', icon: <Globe size={20} color="#7c3aed" />, path: '/site/seo', accentColor: '#7c3aed' },
+    { id: 'hero' as CMSModuleId, title: 'Métricas de Impacto', desc: 'Contadores animados com indicadores de pessoas atendidas e transparência.', icon: <Zap size={20} color="#059669" />, path: '/site/metricas', accentColor: '#059669' },
+    { id: 'about' as CMSModuleId, title: 'Pilares Institucionais', desc: 'Educação, Social, Meio Ambiente e Cultura com KPIs e programas.', icon: <Layers size={20} color="#2563eb" />, path: '/site/pilares', accentColor: '#2563eb' },
+    { id: 'seo' as CMSModuleId, title: 'Navegação & Rodapé', desc: 'Menus superiores do Header, links do Footer, telefone e redes sociais.', icon: <Globe size={20} color="#0284c7" />, path: '/site/navegacao', accentColor: '#0284c7' },
   ];
 
   // Contagem de módulos publicados

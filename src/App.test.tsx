@@ -1,18 +1,13 @@
 /**
  * App.test.tsx
  * Smoke test and top-level integration test for ISM App.
- *
- * Fixes:
- * - timeout increased to match async data loading pattern
- * - vi.useFakeTimers not needed since all service mocks resolve immediately
- * - Added vi.mock for '../lib/firebase' to avoid Firebase init in jsdom
  */
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import App from './App';
 
-// Prevent Firebase from initialising in jsdom (no env vars in test)
+// Prevent Firebase from initialising in jsdom
 vi.mock('./lib/firebase', () => ({
   db: {},
   auth: {},
@@ -25,7 +20,7 @@ vi.mock('./services/data', () => ({
     getPage: vi.fn().mockResolvedValue({
       data: {
         attributes: {
-          title: 'Instituto Ser Melhor — Transformando Vidas',
+          title: 'Instituto Ser Melhor',
           introduction: 'Construindo o futuro.',
           motto: 'Sapere Aude',
           mottoExplanation: 'Ouse Saber',
@@ -44,6 +39,13 @@ vi.mock('./services/data', () => ({
     getServicesPage: vi.fn().mockResolvedValue({}),
     getDonationSection: vi.fn().mockResolvedValue({}),
     getSeoSettings: vi.fn().mockResolvedValue({ siteTitle: 'ISM Test' }),
+    getMetrics: vi.fn().mockResolvedValue([]),
+    getPillars: vi.fn().mockResolvedValue([]),
+    getNavigation: vi.fn().mockResolvedValue(null),
+    getFooter: vi.fn().mockResolvedValue(null),
+    getHeroSection: vi.fn().mockResolvedValue(null),
+    getBlogPosts: vi.fn().mockResolvedValue([]),
+    getPartners: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -63,5 +65,5 @@ describe('App Smoke Test', () => {
     );
 
     expect(document.getElementById('main-content')).toBeInTheDocument();
-  }, 15000); // extend test timeout to 15s to account for multiple concurrent mocked resolves
+  }, 15000);
 });

@@ -8,49 +8,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Users, Leaf, Palette, ArrowRight, TrendingUp, MapPin, Award } from 'lucide-react';
 import type { PillarKey } from '../ui/PillarBadge';
 
-/* ── Pillar Data ─────────────────────────────────────────────────── */
-interface PillarKPI {
-  value: string;
-  label: string;
-  icon: React.ElementType;
-}
-interface PillarData {
-  key: PillarKey;
-  order: number;
-  label: string;
-  headline: string;
-  description: string;
-  longDescription: string;
-  Icon: React.ElementType;
-  color: string;          // accent hex
-  colorLight: string;     // tint hex
-  gradient: string;       // CSS gradient string
-  bgClass: string;        // CSS class from index.css
-  kpis: PillarKPI[];
-  programs: string[];
-  ctaHref: string;
+export interface PillarsSectionProps {
+  pillars?: any[];
 }
 
-const PILLARS: PillarData[] = [
+const PILLAR_ICON_MAP: Record<string, React.ElementType> = {
+  'book-open': BookOpen,
+  users: Users,
+  leaf: Leaf,
+  palette: Palette,
+};
+
+const DEFAULT_PILLARS = [
   {
     key: 'education',
     order: 1,
     label: 'Educação',
     headline: 'Formando líderes que transformam o amanhã',
     description: 'Acreditamos que a educação de qualidade é a alavanca mais poderosa para romper ciclos de vulnerabilidade.',
-    longDescription:
-      'Nossos programas de educação cobrem desde a literacia digital para jovens em situação de risco até bolsas de formação continuada para educadores de base. Utilizamos metodologias ativas, tecnologia e mentoria para garantir que cada aluno desenvolva pensamento crítico, competências digitais e protagonismo social.',
-    Icon: BookOpen,
+    longDescription: 'Nossos programas de educação cobrem desde a literacia digital para jovens em situação de risco até bolsas de formação continuada para educadores de base.',
+    iconKey: 'book-open',
     color: '#1E3A8A',
     colorLight: '#dbeafe',
-    gradient: 'linear-gradient(135deg, #1E3A8A 0%, #3b82f6 100%)',
     bgClass: 'pillar-bg-edu',
-    kpis: [
-      { value: '18.400+', label: 'Estudantes atendidos', icon: Users },
-      { value: '142',     label: 'Escolas parceiras',   icon: MapPin },
-      { value: '94%',     label: 'Aprovação ensino médio', icon: Award },
-    ],
-    programs: ['Bolsas Universitárias', 'Letramento Digital', 'Mentoria de Carreira', 'Formação de Professores'],
+    kpis: [{ value: '18.400+', label: 'Estudantes atendidos' }, { value: '142', label: 'Escolas parceiras' }],
+    programs: ['Bolsas Universitárias', 'Letramento Digital', 'Mentoria de Carreira'],
     ctaHref: '#programs',
   },
   {
@@ -59,81 +41,85 @@ const PILLARS: PillarData[] = [
     label: 'Social',
     headline: 'Redes de proteção que ninguém deixa para trás',
     description: 'Construímos sistemas de apoio social resilientes, centrados na dignidade e na autonomia das pessoas.',
-    longDescription:
-      'Atuamos na linha de frente da vulnerabilidade social, oferecendo assistência jurídica, apoio psicossocial, programas de habitação digna e geração de renda para famílias em situação de extrema pobreza. Cada ação é co-desenhada com as próprias comunidades beneficiárias.',
-    Icon: Users,
-    color: '#D97706',
-    colorLight: '#fef3c7',
-    gradient: 'linear-gradient(135deg, #D97706 0%, #fbbf24 100%)',
+    longDescription: 'Atuamos na linha de frente da vulnerabilidade social, oferecendo assistência jurídica, apoio psicossocial e geração de renda.',
+    iconKey: 'users',
+    color: '#C2410C',
+    colorLight: '#ffedd5',
     bgClass: 'pillar-bg-soc',
-    kpis: [
-      { value: '32.000+', label: 'Famílias assistidas',  icon: Users },
-      { value: '78',      label: 'Municípios cobertos',  icon: MapPin },
-      { value: 'R$4,85',  label: 'SROI por real investido', icon: TrendingUp },
-    ],
-    programs: ['Assistência Jurídica Gratuita', 'Apoio Psicossocial', 'Geração de Renda', 'Habitação Digna'],
+    kpis: [{ value: '32.000+', label: 'Famílias assistidas' }, { value: '78', label: 'Municípios cobertos' }],
+    programs: ['Assistência Jurídica Gratuita', 'Apoio Psicossocial', 'Geração de Renda'],
     ctaHref: '#programs',
   },
   {
     key: 'environment',
     order: 3,
     label: 'Meio Ambiente',
-    headline: 'Protegendo os biomas para as próximas gerações',
-    description: 'Ciência, tecnologia e comunidade unidas na defesa dos ecossistemas brasileiros.',
-    longDescription:
-      'Combinamos monitoramento via satélite, educação ambiental comunitária e advocacia de políticas públicas para proteger biomas críticos. Nossos projetos de restauração ecológica já reintegraram milhares de hectares ao sistema hídrico nacional, reduzindo desertificação e preservando biodiversidade.',
-    Icon: Leaf,
+    headline: 'Protegendo biomas para as próximas gerações',
+    description: 'Nossas ações ambientais integram conservação, restauração ecológica e educação ambiental transformadora.',
+    longDescription: 'Desenvolvemos projetos de proteção e restauração de biomas brasileiros, combinando ciência de ponta e participação comunitária.',
+    iconKey: 'leaf',
     color: '#15803D',
     colorLight: '#dcfce7',
-    gradient: 'linear-gradient(135deg, #15803D 0%, #22c55e 100%)',
     bgClass: 'pillar-bg-env',
-    kpis: [
-      { value: '12.800ha', label: 'Áreas restauradas', icon: Leaf },
-      { value: '2.4M t',   label: 'CO₂ evitados',      icon: TrendingUp },
-      { value: '87',       label: 'Comunidades ribeirinhas', icon: Users },
-    ],
-    programs: ['Restauração de Biomas', 'Monitoramento Satelital', 'Educação Ambiental', 'Crédito de Carbono Social'],
+    kpis: [{ value: '120k', label: 'Hectares recuperados' }, { value: '850k', label: 'Árvores plantadas' }],
+    programs: ['Reflorestamento', 'Educação Ambiental', 'Monitoramento por Satélite'],
     ctaHref: '#programs',
   },
   {
     key: 'culture',
     order: 4,
-    label: 'Cultura',
-    headline: 'Arte e memória como instrumentos de liberdade',
-    description: 'A expressão cultural é um direito humano fundamental e um vetor poderoso de transformação social.',
-    longDescription:
-      'Financiamos e co-produzimos projetos culturais em periferias e territórios historicamente invisibilizados. De bibliotecas comunitárias a festivais de cinema, teatro e música, acreditamos que a arte é a linguagem universal que une comunidades, preserva identidades e alimenta a esperança.',
-    Icon: Palette,
-    color: '#C2410C',
-    colorLight: '#ffedd5',
-    gradient: 'linear-gradient(135deg, #C2410C 0%, #f97316 100%)',
+    label: 'Cultura & Arte',
+    headline: 'Arte como ferramenta de transformação social',
+    description: 'Acreditamos no poder da cultura e da arte para restaurar identidades e fortalecer comunidades.',
+    longDescription: 'Nossos programas culturais oferecem acesso democrático à arte, à música, ao teatro e à literatura para comunidades historicamente desatendidas.',
+    iconKey: 'palette',
+    color: '#7C3AED',
+    colorLight: '#ede9fe',
     bgClass: 'pillar-bg-cul',
-    kpis: [
-      { value: '380+',  label: 'Projetos culturais financiados', icon: Award },
-      { value: '96',    label: 'Territórios alcançados',         icon: MapPin },
-      { value: '1.2M+', label: 'Espectadores / participantes',   icon: Users },
-    ],
-    programs: ['Bibliotecas Comunitárias', 'Cinema nas Periferias', 'Festivais Culturais', 'Patrimônio Imaterial'],
+    kpis: [{ value: '200+', label: 'Projetos culturais' }, { value: '45k+', label: 'Participantes' }],
+    programs: ['Arte-Educação', 'Música nas Escolas', 'Teatro Comunitário'],
     ctaHref: '#programs',
   },
 ];
 
-/* ── Component ───────────────────────────────────────────────────── */
-export const PillarsSection: React.FC = () => {
+export const PillarsSection: React.FC<PillarsSectionProps> = ({ pillars: customPillars }) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const sectionId = useId();
   const panelId = `${sectionId}-panel`;
 
-  const activePillar = PILLARS[activeIdx];
+  const rawPillars = customPillars && customPillars.length > 0 ? customPillars : DEFAULT_PILLARS;
+
+  const list = rawPillars.map((p, i) => ({
+    key: p.key || `pillar-${i}`,
+    order: p.order || i + 1,
+    label: p.label || '',
+    headline: p.headline || '',
+    description: p.description || '',
+    longDescription: p.longDescription || '',
+    Icon: PILLAR_ICON_MAP[p.iconKey] || BookOpen,
+    color: p.color || '#1E3A8A',
+    colorLight: p.colorLight || '#dbeafe',
+    gradient: `linear-gradient(135deg, ${p.color || '#1E3A8A'} 0%, #3b82f6 100%)`,
+    bgClass: p.bgClass || 'pillar-bg-edu',
+    kpis: (p.kpis || []).map((k: any) => ({
+      value: k.value,
+      label: k.label,
+      icon: Users,
+    })),
+    programs: p.programs || [],
+    ctaHref: p.ctaHref || '#programs',
+  }));
+
+  const activePillar = list[activeIdx] || list[0];
 
   /* Keyboard navigation for ARIA tablist */
   const handleKeyDown = (e: React.KeyboardEvent, idx: number) => {
     let next = idx;
-    if (e.key === 'ArrowRight') next = (idx + 1) % PILLARS.length;
-    else if (e.key === 'ArrowLeft') next = (idx - 1 + PILLARS.length) % PILLARS.length;
+    if (e.key === 'ArrowRight') next = (idx + 1) % list.length;
+    else if (e.key === 'ArrowLeft') next = (idx - 1 + list.length) % list.length;
     else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = PILLARS.length - 1;
+    else if (e.key === 'End') next = list.length - 1;
     else return;
     e.preventDefault();
     setActiveIdx(next);
@@ -201,36 +187,34 @@ export const PillarsSection: React.FC = () => {
           aria-orientation="horizontal"
           className="flex flex-wrap justify-center gap-3 mb-12"
         >
-          {PILLARS.map((p, idx) => {
+          {list.map((p, idx) => {
             const isActive = idx === activeIdx;
             return (
               <button
                 key={p.key}
-                id={`${sectionId}-tab-${p.key}`}
                 ref={(el) => { tabsRef.current[idx] = el; }}
                 role="tab"
                 aria-selected={isActive}
                 aria-controls={panelId}
                 tabIndex={isActive ? 0 : -1}
-                onKeyDown={(e) => handleKeyDown(e, idx)}
                 onClick={() => setActiveIdx(idx)}
-                className="relative flex items-center gap-2.5 px-5 py-3 rounded-full font-bold text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-secondary-950"
-                style={{
-                  color: isActive ? '#fff' : '#94a3b8',
-                  background: isActive ? p.gradient : 'rgba(255,255,255,0.05)',
-                  border: isActive ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                  boxShadow: isActive ? `0 4px 24px ${p.color}40` : 'none',
-                  // @ts-ignore
-                  '--tw-ring-color': p.color,
-                }}
+                onKeyDown={(e) => handleKeyDown(e, idx)}
+                className={`flex items-center gap-3 px-6 py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                  isActive
+                    ? 'text-white shadow-lg scale-105'
+                    : 'bg-secondary-900/80 text-secondary-400 border border-secondary-800 hover:text-white hover:border-secondary-700'
+                }`}
+                style={
+                  isActive
+                    ? {
+                        background: p.gradient,
+                        boxShadow: `0 8px 24px ${p.color}40`,
+                      }
+                    : {}
+                }
               >
-                <p.Icon size={15} aria-hidden="true" />
-                <span>
-                  <span className="text-[10px] block opacity-70 uppercase tracking-wider leading-none">
-                    {p.order}º Pilar
-                  </span>
-                  {p.label}
-                </span>
+                <p.Icon size={18} />
+                <span>{p.label}</span>
               </button>
             );
           })}
@@ -240,69 +224,59 @@ export const PillarsSection: React.FC = () => {
         <div
           id={panelId}
           role="tabpanel"
-          aria-labelledby={`${sectionId}-tab-${activePillar.key}`}
+          aria-labelledby={`tab-${activePillar.key}`}
           tabIndex={0}
-          data-testid="pillar-panel"
-          className="focus-visible:outline-none"
+          className="bg-secondary-900/90 border border-secondary-800 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           <AnimatePresence mode="wait">
             <motion.div
               key={activePillar.key}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center"
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center"
             >
-              {/* Left: Text content */}
-              <div>
-                <div
-                  className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-6"
-                  style={{ background: activePillar.gradient, boxShadow: `0 8px 32px ${activePillar.color}50` }}
-                  aria-hidden="true"
-                >
-                  <activePillar.Icon size={26} className="text-white" />
-                </div>
-
-                <h3 className="text-3xl md:text-4xl font-black text-white mb-4 leading-snug">
+              {/* Left & Middle: Details */}
+              <div className="lg:col-span-2">
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
                   {activePillar.headline}
                 </h3>
-                <p className="text-secondary-300 text-lg leading-relaxed mb-6">
-                  {activePillar.longDescription}
+                <p className="text-secondary-300 text-base leading-relaxed mb-6">
+                  {activePillar.longDescription || activePillar.description}
                 </p>
 
-                {/* Programs list */}
-                <div className="mb-8">
-                  <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: activePillar.color }}>
-                    Programas em destaque
-                  </p>
-                  <ul className="grid grid-cols-2 gap-2" aria-label={`Programas do pilar ${activePillar.label}`}>
-                    {activePillar.programs.map((prog) => (
-                      <li
-                        key={prog}
-                        className="flex items-center gap-2 text-sm text-secondary-300"
-                      >
+                {/* Programs Chips */}
+                {activePillar.programs.length > 0 && (
+                  <div className="mb-8">
+                    <p className="text-xs font-bold uppercase tracking-wider text-secondary-400 mb-3">
+                      Programas Relacionados
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {activePillar.programs.map((prog: string) => (
                         <span
-                          className="w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ background: activePillar.color }}
-                          aria-hidden="true"
-                        />
-                        {prog}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                          key={prog}
+                          className="px-3 py-1.5 rounded-full text-xs font-medium border"
+                          style={{
+                            color: activePillar.colorLight,
+                            borderColor: `${activePillar.color}40`,
+                            background: `${activePillar.color}15`,
+                          }}
+                        >
+                          {prog}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <a
                   href={activePillar.ctaHref}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm text-white transition-all duration-200 hover:scale-105"
-                  style={{
-                    background: activePillar.gradient,
-                    boxShadow: `0 4px 20px ${activePillar.color}50`,
-                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm text-white transition-all shadow-md hover:scale-105"
+                  style={{ background: activePillar.gradient }}
                 >
-                  Ver projetos deste pilar
-                  <ArrowRight size={15} aria-hidden="true" />
+                  <span>Conhecer Projetos de {activePillar.label}</span>
+                  <ArrowRight size={16} />
                 </a>
               </div>
 
@@ -329,9 +303,8 @@ export const PillarsSection: React.FC = () => {
                     </div>
                     <div>
                       <p
-                        className="text-2xl font-black leading-none"
+                        className="text-2xl font-black leading-none text-white"
                         aria-label={`${kpi.value} — ${kpi.label}`}
-                        style={{ color: activePillar.colorLight !== '#fff' ? '#fff' : '#fff' }}
                       >
                         {kpi.value}
                       </p>
@@ -355,7 +328,7 @@ export const PillarsSection: React.FC = () => {
 
         {/* Pillar dots progress */}
         <div className="flex justify-center gap-2.5 mt-10" aria-hidden="true">
-          {PILLARS.map((p, idx) => (
+          {list.map((p, idx) => (
             <button
               key={p.key}
               onClick={() => setActiveIdx(idx)}

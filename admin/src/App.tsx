@@ -136,6 +136,9 @@ function App() {
               <Route path="site/projetos" element={<ServicesPage />} />
               <Route path="site/doacoes" element={<DonationEditorPage />} />
               <Route path="site/seo" element={<CMSSeoManagerPage />} />
+              <Route path="site/metricas" element={<React.createElement(lazy(() => import('./pages/ImpactMetricsPage').then(m => ({ default: m.ImpactMetricsPage }))))} />
+              <Route path="site/pilares" element={<React.createElement(lazy(() => import('./pages/PillarsEditorPage').then(m => ({ default: m.PillarsEditorPage }))))} />
+              <Route path="site/navegacao" element={<React.createElement(lazy(() => import('./pages/NavigationEditorPage').then(m => ({ default: m.NavigationEditorPage }))))} />
 
               {/* Gestão da Instituição */}
               <Route path="blog" element={<BlogPage />} />
@@ -161,7 +164,7 @@ function App() {
               <Route path="enterprise-intelligence" element={<EnterpriseIntelligencePage />} />
               <Route path="business-continuity" element={<BusinessContinuityPage />} />
               <Route path="digital-governance" element={<DigitalGovernancePage />} />
-              <Route path="command-center" element={<EnterpriseCommandCenterPage />} />
+              <Route path="enterprise-command-center" element={<EnterpriseCommandCenterPage />} />
               <Route path="architecture-quality" element={<EnterpriseArchitectureQualityPage />} />
               <Route path="integration-validation" element={<EnterpriseIntegrationValidationPage />} />
               <Route path="continuous-evolution" element={<ContinuousEvolutionPage />} />

@@ -5,15 +5,27 @@
  * e cai de volta nos mocks locais em dev sem configuração Firebase.
  *
  * Coleções lidas (escritas pelo Painel Admin):
- *   • institutional_page   (doc "main")
- *   • value_blocks
- *   • governance_instances
- *   • timeline_milestones
- *   • governance_members
+ *   • institutional_page   (doc "main")  → página principal
+ *   • value_blocks                       → blocos de valores
+ *   • governance_instances               → instâncias de governança
+ *   • timeline_milestones                → marcos históricos
+ *   • governance_members                 → membros dos conselhos
+ *   • programs                           → programas/projetos
+ *   • impact_metrics                     → métricas de impacto
+ *   • pillars                            → pilares institucionais
+ *   • hero_section/main                  → seção hero
+ *   • site_navigation/main               → menu header
+ *   • site_footer/main                   → rodapé
+ *   • blog_posts                         → artigos do blog
+ *   • partners                           → parceiros publicados
+ *   • seo_settings/main                  → configurações SEO
+ *   • services_page/main                 → transparência/parcerias
+ *   • donation_section/main              → seção de doações
  *
  * Formulários (gravados pelo site, lidos pelo admin):
  *   • partner_applications
  *   • donations
+ *   • leads
  */
 
 import {
@@ -31,7 +43,7 @@ import {
 } from '../types';
 import {
   collection, addDoc, getDoc, getDocs,
-  doc, query, orderBy, serverTimestamp
+  doc, query, orderBy, where, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -91,12 +103,72 @@ const mockGovernanceInstancesResponse: StrapiCollectionResponse<GovernanceInstan
 
 const mockTimelineMilestonesResponse: StrapiCollectionResponse<TimelineMilestoneAttributes> = {
   data: [
-    { id: 1, attributes: { year: 2007, title: "Fundação Conceitual", impactDescription: "Estabelecimento do Instituto a partir da fusão de três fundações líderes e criação da Metodologia M-IS." } },
-    { id: 2, attributes: { year: 2012, title: "Fundo Perpétuo", impactDescription: "Alcance da independência operacional com o Fundo F-P, assegurando 100% das doações para programas finalísticos." } },
-    { id: 3, attributes: { year: 2015, title: "Prêmio Global GEA", impactDescription: "Recebimento do Global Excellence Award da ONU. A Metodologia M-IS torna-se benchmark global." } },
-    { id: 4, attributes: { year: 2025, title: "Marco do Milhão", impactDescription: "Aproximação da meta de impactar um milhão de vidas e lançamento da Agenda 2035." } },
+    {
+      id: 1,
+      attributes: {
+        year: 2007,
+        title: "Fundação Conceitual",
+        impactDescription: "Surge a Associação de Bairro Vila Margarida, com o objetivo de representar a comunidade junto ao poder público e buscar melhorias essenciais para o bairro, como pavimentação das vias, iluminação pública e infraestrutura urbana."
+      }
+    },
+    {
+      id: 2,
+      attributes: {
+        year: 2012,
+        title: "A Associação a Serviço da Sociedade",
+        impactDescription: "A Associação de Bairro Vila Margarida amplia sua atuação e passa a desenvolver ações sociais voltadas às famílias em situação de vulnerabilidade, promovendo a distribuição de cestas básicas, leite e oferecendo transporte comunitário para facilitar o acesso da população aos serviços essenciais."
+      }
+    },
+    {
+      id: 3,
+      attributes: {
+        year: 2015,
+        title: "Vila Margarida e a Educação",
+        impactDescription: "É firmada parceria com a Associação de Professores da Educação Infantil, ampliando a atuação institucional para o atendimento de crianças da educação básica por meio de projetos educacionais."
+      }
+    },
+    {
+      id: 4,
+      attributes: {
+        year: 2017,
+        title: "A Educação como Foco",
+        impactDescription: "Uma nova parceria é estabelecida com a Associação Cultural Tiradentes, marcando o início do desenvolvimento de projetos de grande impacto social, educacional e cultural, fortalecendo o compromisso com a transformação das comunidades atendidas."
+      }
+    },
+    {
+      id: 5,
+      attributes: {
+        year: 2022,
+        title: "O Surgimento do Instituto Ser Melhor",
+        impactDescription: "A fusão das três entidades parceiras resulta na criação do Instituto Ser Melhor, consolidando uma nova estrutura institucional voltada ao desenvolvimento humano, à inovação social e à ampliação do impacto das ações realizadas."
+      }
+    },
+    {
+      id: 6,
+      attributes: {
+        year: 2023,
+        title: "Consolidação dos Valores Institucionais",
+        impactDescription: "Os princípios, valores e diretrizes institucionais são revisados e fortalecidos com a participação de profissionais de diversas áreas. Neste mesmo período, o Instituto Ser Melhor torna-se participante do Pacto Global das Nações Unidas, alinhando suas ações aos 17 Objetivos de Desenvolvimento Sustentável (ODS)."
+      }
+    },
+    {
+      id: 7,
+      attributes: {
+        year: 2024,
+        title: "Reconhecimento Internacional",
+        impactDescription: "O Instituto Ser Melhor recebe o Global Excellence Award (GEA) em reconhecimento às suas boas práticas institucionais. A Metodologia M-IS passa a ser reconhecida como referência internacional em inovação social. Também é implantada a metodologia SROI (Social Return on Investment), alcançando o índice de 1:4,83, demonstrando elevado retorno social sobre os investimentos realizados."
+      }
+    },
+    {
+      id: 8,
+      attributes: {
+        year: 2025,
+        title: "Criação do Fundo Perpétuo",
+        impactDescription: "É criado o Fundo Perpétuo (F-P), assegurando a sustentabilidade financeira da instituição e sua independência operacional. Com essa estrutura, 100% das doações recebidas passam a ser destinadas aos programas finalísticos, fortalecendo o compromisso com a transparência, a eficiência e o impacto social."
+      }
+    }
   ],
-  meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 4 } }
+  meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 8 } }
 };
 
 const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> = {
@@ -477,6 +549,125 @@ Por meio de ações integradas, humanizadas e baseadas em evidências, o Institu
     } catch (err) {
       console.error('[Firestore] Erro ao buscar seo_settings:', err);
       return null;
+    }
+  },
+
+  /** Retorna a seção Hero da capa */
+  getHeroSection: async (): Promise<Record<string, any> | null> => {
+    if (!FIREBASE_ENABLED) return null;
+    try {
+      const snap = await getDoc(doc(db, 'hero_section', 'main'));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar hero_section:', err);
+      return null;
+    }
+  },
+
+  /** Retorna as métricas de impacto */
+  getMetrics: async (): Promise<any[]> => {
+    // Fallback para dev sem Firebase — espelha o seed do admin
+    const METRICS_FALLBACK = [
+      { id: 'm1', order: 1, value: '32000', suffix: '+', prefix: '', label: 'Beneficiários Diretos', sublabel: 'Famílias e indivíduos assistidos anualmente', iconKey: 'users', color: '#1E3A8A', decimals: 0 },
+      { id: 'm2', order: 2, value: '78', suffix: '', prefix: '', label: 'Municípios', sublabel: 'Presença em todo o território nacional', iconKey: 'map-pin', color: '#D97706', decimals: 0 },
+      { id: 'm3', order: 3, value: '50', suffix: '+', prefix: '', label: 'Parceiros Globais', sublabel: 'Organizações, empresas e governos', iconKey: 'handshake', color: '#15803D', decimals: 0 },
+      { id: 'm4', order: 4, value: '15', suffix: '+', prefix: '', label: 'Anos de Impacto', sublabel: 'Construindo futuro desde 2007', iconKey: 'calendar', color: '#C2410C', decimals: 0 },
+      { id: 'm5', order: 5, value: '4.85', suffix: '', prefix: 'R$', label: 'SROI por Real Investido', sublabel: 'Retorno social comprovado por metodologia SROI', iconKey: 'trending-up', color: '#16a34a', decimals: 2 },
+      { id: 'm6', order: 6, value: '100', suffix: '%', prefix: '', label: 'Transparência', sublabel: 'Todas as contas auditadas e publicadas', iconKey: 'file-text', color: '#6366f1', decimals: 0 },
+    ];
+    if (!FIREBASE_ENABLED) return METRICS_FALLBACK;
+    try {
+      const q = query(collection(db, 'impact_metrics'), orderBy('order'));
+      const snap = await getDocs(q);
+      if (!snap.empty) return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return METRICS_FALLBACK;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar impact_metrics:', err);
+      return METRICS_FALLBACK;
+    }
+  },
+
+  /** Retorna os pilares de atuação */
+  getPillars: async (): Promise<any[]> => {
+    // Fallback para dev sem Firebase — espelha o seed do admin
+    const PILLARS_FALLBACK = [
+      { id: 'p1', order: 1, key: 'education', label: 'Educação', headline: 'Formando líderes que transformam o amanhã', description: 'Acreditamos que a educação de qualidade é a alavanca mais poderosa para romper ciclos de vulnerabilidade.', longDescription: 'Nossos programas de educação cobrem desde a literacia digital para jovens em situação de risco até bolsas de formação continuada para educadores de base.', iconKey: 'book-open', color: '#1E3A8A', colorLight: '#dbeafe', kpis: [{ value: '18.400+', label: 'Estudantes atendidos' }, { value: '142', label: 'Escolas parceiras' }, { value: '94%', label: 'Aprovação ensino médio' }], programs: ['Bolsas Universitárias', 'Letramento Digital', 'Mentoria de Carreira', 'Formação de Professores'], ctaHref: '#programs' },
+      { id: 'p2', order: 2, key: 'social', label: 'Social', headline: 'Redes de proteção que ninguém deixa para trás', description: 'Construímos sistemas de apoio social resilientes, centrados na dignidade e na autonomia das pessoas.', longDescription: 'Atuamos na linha de frente da vulnerabilidade social, oferecendo assistência jurídica, apoio psicossocial, programas de habitação digna e geração de renda.', iconKey: 'users', color: '#D97706', colorLight: '#fef3c7', kpis: [{ value: '32.000+', label: 'Famílias assistidas' }, { value: '78', label: 'Municípios cobertos' }, { value: 'R$4,85', label: 'SROI por real investido' }], programs: ['Assistência Jurídica Gratuita', 'Apoio Psicossocial', 'Geração de Renda', 'Habitação Digna'], ctaHref: '#programs' },
+      { id: 'p3', order: 3, key: 'environment', label: 'Meio Ambiente', headline: 'Protegendo biomas para as próximas gerações', description: 'Nossas ações ambientais integram conservação, restauração ecológica e educação ambiental transformadora.', longDescription: 'Desenvolvemos projetos de proteção e restauração de biomas brasileiros, combinando ciência de ponta, tecnologia de monitoramento e participação comunitária.', iconKey: 'leaf', color: '#15803D', colorLight: '#dcfce7', kpis: [{ value: '120k', label: 'Hectares recuperados' }, { value: '850k', label: 'Árvores plantadas' }, { value: '5', label: 'Biomas protegidos' }], programs: ['Reflorestamento', 'Educação Ambiental', 'Monitoramento por Satélite', 'Comunidades Sustentáveis'], ctaHref: '#programs' },
+      { id: 'p4', order: 4, key: 'culture', label: 'Cultura & Arte', headline: 'Arte como ferramenta de transformação social', description: 'Acreditamos no poder da cultura e da arte para restaurar identidades, fortalecer comunidades e criar pontes de diálogo.', longDescription: 'Nossos programas culturais oferecem acesso democrático à arte, à música, ao teatro e à literatura para comunidades historicamente privadas desse direito.', iconKey: 'palette', color: '#7C3AED', colorLight: '#ede9fe', kpis: [{ value: '200+', label: 'Projetos culturais' }, { value: '45k+', label: 'Participantes' }, { value: '18', label: 'Estados alcançados' }], programs: ['Arte-Educação', 'Música nas Escolas', 'Teatro Comunitário', 'Biblioteca Viva'], ctaHref: '#programs' },
+    ];
+    if (!FIREBASE_ENABLED) return PILLARS_FALLBACK;
+    try {
+      const q = query(collection(db, 'pillars'), orderBy('order'));
+      const snap = await getDocs(q);
+      if (!snap.empty) return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return PILLARS_FALLBACK;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar pillars:', err);
+      return PILLARS_FALLBACK;
+    }
+  },
+
+  /** Retorna a estrutura de navegação do header */
+  getNavigation: async (): Promise<Record<string, any> | null> => {
+    if (!FIREBASE_ENABLED) return null;
+    try {
+      const snap = await getDoc(doc(db, 'site_navigation', 'main'));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar site_navigation:', err);
+      return null;
+    }
+  },
+
+  /** Retorna os dados do rodapé */
+  getFooter: async (): Promise<Record<string, any> | null> => {
+    if (!FIREBASE_ENABLED) return null;
+    try {
+      const snap = await getDoc(doc(db, 'site_footer', 'main'));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar site_footer:', err);
+      return null;
+    }
+  },
+
+  /** Retorna artigos do blog publicados */
+  getBlogPosts: async (): Promise<any[]> => {
+    const BLOG_FALLBACK = [
+      { id: 'b1', title: 'Relatório de Impacto Socioambiental 2024', slug: 'relatorio-impacto-2024', summary: 'Apresentamos os resultados alcançados pelo Instituto Ser Melhor no último ano, destacando mais de 32 mil vidas impactadas e 120 mil hectares de bioma protegidos.', coverImage: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=800&q=80', author: { name: 'Rikardo Ribeiro', role: 'Presidente Executivo' }, category: 'Relatório de Impacto', tags: ['Transparência', 'ESG'], status: 'PUBLISHED', publishedAt: new Date('2024-12-15').toISOString(), readTimeMinutes: 6, featured: true },
+      { id: 'b2', title: 'Projeto AURA: Cuidado Mental Preventivo e Suporte Psicossocial', slug: 'projeto-aura-saude-mental', summary: 'Conheça o modelo integrativo de acolhimento psicossocial do Projeto AURA, focado no fortalecimento emocional e quebra de ciclos de vulnerabilidade.', coverImage: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80', author: { name: 'Equipe AURA', role: 'Núcleo Psicossocial' }, category: 'Saúde & Bem-Estar', tags: ['Saúde Mental', 'AURA'], status: 'PUBLISHED', publishedAt: new Date('2025-01-20').toISOString(), readTimeMinutes: 4, featured: false },
+    ];
+    if (!FIREBASE_ENABLED) return BLOG_FALLBACK;
+    try {
+      const q = query(
+        collection(db, 'blog_posts'),
+        where('status', '==', 'PUBLISHED'),
+        orderBy('publishedAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return BLOG_FALLBACK;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar blog_posts:', err);
+      return BLOG_FALLBACK;
+    }
+  },
+
+  /** Retorna parceiros publicados no site */
+  getPartners: async (): Promise<any[]> => {
+    if (!FIREBASE_ENABLED) return [];
+    try {
+      const q = query(
+        collection(db, 'partners'),
+        where('isPublished', '==', true),
+        orderBy('order')
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar partners:', err);
+      return [];
     }
   },
 

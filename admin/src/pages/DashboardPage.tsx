@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell
 } from 'recharts';
+import { SyncHealthDashboard } from '../components/ui/SyncHealthDashboard';
 
 const KpiCard = ({ label, value, delta, deltaType, Icon, color, loading }: {
   label: string; value: string | number; delta?: string; deltaType?: string;
@@ -275,6 +276,11 @@ export const DashboardPage: React.FC = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* Sync Health Dashboard — Single Source of Truth Monitor */}
+      <div style={{ marginTop: 16 }}>
+        <SyncHealthDashboard />
       </div>
 
       <style>{`

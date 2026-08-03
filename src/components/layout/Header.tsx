@@ -31,7 +31,12 @@ const NAV_ITEMS: NavItem[] = [
   }
 ];
 
-export const Header: React.FC = () => {
+export interface HeaderProps {
+  navData?: any;
+}
+
+export const Header: React.FC<HeaderProps> = ({ navData }) => {
+  const navItems: NavItem[] = navData?.items && navData.items.length > 0 ? navData.items : NAV_ITEMS;
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -103,7 +108,7 @@ export const Header: React.FC = () => {
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-1">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <div
               key={item.label}
               className="relative"
@@ -211,7 +216,7 @@ export const Header: React.FC = () => {
       >
         <nav className="flex flex-col h-full pt-24 pb-10 px-6 overflow-y-auto">
           <div className="flex-grow space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <div key={item.label} className="border-b border-gray-100">
                 <div
                   className="flex justify-between items-center py-4 cursor-pointer"

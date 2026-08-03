@@ -10,16 +10,25 @@ const ADMIN_URL =
 interface Props {
   onOpenPrivacy: () => void;
   onOpenTerms: () => void;
+  footerData?: any;
 }
 
-const socialLinks = [
-  { Icon: Instagram, label: 'Instagram' },
-  { Icon: Facebook, label: 'Facebook' },
-  { Icon: Linkedin, label: 'LinkedIn' },
-  { Icon: Twitter, label: 'Twitter / X' },
+const defaultSocialLinks = [
+  { Icon: Instagram, label: 'Instagram', url: 'https://instagram.com/institutosermelhor' },
+  { Icon: Facebook, label: 'Facebook', url: 'https://facebook.com/institutosermelhor' },
+  { Icon: Linkedin, label: 'LinkedIn', url: 'https://linkedin.com/company/institutosermelhor' },
+  { Icon: Twitter, label: 'Twitter / X', url: 'https://twitter.com/instsermelhor' },
 ];
 
-export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
+export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, footerData }) => {
+  const tagline = footerData?.tagline || 'Trabalhando desde 2007 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.';
+  const activeSocials = footerData?.socialLinks && footerData.socialLinks.length > 0
+    ? footerData.socialLinks.map((s: any) => ({
+        Icon: s.platform === 'facebook' ? Facebook : s.platform === 'linkedin' ? Linkedin : s.platform === 'twitter' ? Twitter : Instagram,
+        label: s.label || s.platform,
+        url: s.url || '#',
+      }))
+    : defaultSocialLinks;
   return (
     <footer className="relative bg-secondary-950 text-white overflow-hidden">
       {/* Decorative gradient top border */}
@@ -56,14 +65,16 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
               </div>
             </div>
             <p className="text-secondary-400 text-sm leading-relaxed">
-              Trabalhando desde 2007 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.
+              {tagline}
             </p>
             {/* Social Icons */}
             <div className="flex gap-3 pt-1">
-              {socialLinks.map(({ Icon, label }) => (
+              {activeSocials.map(({ Icon, label, url }: any) => (
                 <a
                   key={label}
-                  href="#"
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={label}
                   className="w-9 h-9 rounded-lg bg-secondary-800 flex items-center justify-center text-secondary-400 hover:bg-brand-600 hover:text-white transition-all duration-200 hover:scale-110"
                 >
@@ -140,24 +151,30 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms }) => {
                   <MapPin size={15} className="text-brand-400" />
                 </div>
                 <span className="text-secondary-400 text-sm leading-relaxed">
-                  Av. Henry Ford, S/N — Presidente Altino<br />
-                  Osasco — SP, 06210-900
+                  {footerData?.address || (
+                    <>
+                      Av. Henry Ford, S/N — Presidente Altino<br />
+                      Osasco — SP, 06210-900
+                    </>
+                  )}
                 </span>
               </li>
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-secondary-800 flex items-center justify-center shrink-0">
-                  <Phone size={15} className="text-brand-400" />
-                </div>
-                <a href="tel:+5511962765715" className="text-secondary-400 text-sm hover:text-brand-400 transition-colors">
-                  +55 (11) 96276-5715
-                </a>
-              </li>
+              {(footerData?.phone || !footerData) && (
+                <li className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-secondary-800 flex items-center justify-center shrink-0">
+                    <Phone size={15} className="text-brand-400" />
+                  </div>
+                  <a href={`tel:${(footerData?.phone || '+5511962765715').replace(/[^0-9+]/g, '')}`} className="text-secondary-400 text-sm hover:text-brand-400 transition-colors">
+                    {footerData?.phone || '+55 (11) 96276-5715'}
+                  </a>
+                </li>
+              )}
               <li className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-secondary-800 flex items-center justify-center shrink-0">
                   <Mail size={15} className="text-brand-400" />
                 </div>
-                <a href="mailto:contato@institutosermelhor.org" className="text-secondary-400 text-sm hover:text-brand-400 transition-colors">
-                  contato@institutosermelhor.org
+                <a href={`mailto:${footerData?.email || 'contato@institutosermelhor.org'}`} className="text-secondary-400 text-sm hover:text-brand-400 transition-colors">
+                  {footerData?.email || 'contato@institutosermelhor.org'}
                 </a>
               </li>
             </ul>

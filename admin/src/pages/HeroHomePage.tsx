@@ -205,22 +205,16 @@ export const HeroHomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const isDirty = JSON.stringify(data) !== JSON.stringify(savedVersion);
 
-  // Carregar dados do Firestore ao montar
+  // Carregar dados do HeroService (hero_section/main) ao montar
   useEffect(() => {
-    InstitutionalFirestoreService.getPage().then(page => {
-      if (page) {
-        const fromFirestore: Partial<HeroData> = {
-          eyebrowText: (page as any).eyebrowText || DEFAULT_DATA.eyebrowText,
-          title: page.title || DEFAULT_DATA.title,
-          subtitle: page.introduction || DEFAULT_DATA.subtitle,
-          heroImageUrl: page.heroImage || DEFAULT_DATA.heroImageUrl,
-          motto: page.motto || DEFAULT_DATA.motto,
-          mottoExplanation: page.mottoExplanation || DEFAULT_DATA.mottoExplanation,
-        };
-        setData(prev => ({ ...prev, ...fromFirestore }));
-        setSavedVersion(prev => ({ ...prev, ...fromFirestore }));
-      }
-    }).catch(console.error).finally(() => setLoading(false));
+    import('../services/heroService').then(({ HeroService }) => {
+      HeroService.getOrSeed().then(heroData => {
+        if (heroData) {
+          setData(prev => ({ ...prev, ...heroData }));
+          setSavedVersion(prev => ({ ...prev, ...heroData }));
+        }
+      }).catch(console.error).finally(() => setLoading(false));
+    });
   }, []);
 
   // Auto-save draft no localStorage
@@ -235,14 +229,8 @@ export const HeroHomePage: React.FC = () => {
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
-      const savePromise = InstitutionalFirestoreService.savePage({
-        eyebrowText: data.eyebrowText,
-        title: data.title,
-        introduction: data.subtitle,
-        heroImage: data.heroImageUrl,
-        motto: data.motto,
-        mottoExplanation: data.mottoExplanation,
-      } as any);
+      const { HeroService } = await import('../services/heroService');
+      const savePromise = HeroService.save(data);
 
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('TIMEOUT: Firestore não respondeu em 10s — verifique as regras do banco e a conexão')), 10000)

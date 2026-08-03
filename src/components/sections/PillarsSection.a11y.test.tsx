@@ -1,8 +1,6 @@
 /**
  * PillarsSection.a11y.test.tsx
  * Automated accessibility audits using vitest-axe / axe-core.
- *
- * Note: `toHaveNoViolations` is exported from 'vitest-axe/matchers' (not 'vitest-axe').
  */
 import React from 'react';
 import { render } from '@testing-library/react';
@@ -14,13 +12,13 @@ import { ImpactMetrics } from './ImpactMetrics';
 describe('Accessibility Audits (axe-core)', () => {
   it('PillarsSection has 0 critical accessibility violations', async () => {
     const { container } = render(<PillarsSection />);
-    const results = await axe(container.innerHTML);
+    const results = await axe(container);
     expect(results.violations).toHaveLength(0);
   });
 
   it('ImpactMetrics has 0 critical accessibility violations', async () => {
     const { container } = render(<ImpactMetrics />);
-    const results = await axe(container.innerHTML);
+    const results = await axe(container);
     expect(results.violations).toHaveLength(0);
   });
 });

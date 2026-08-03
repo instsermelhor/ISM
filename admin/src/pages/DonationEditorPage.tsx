@@ -56,6 +56,22 @@ export const DonationEditorPage: React.FC = () => {
       for (const camp of campaigns) {
         await FundraisingEnterpriseService.saveCampaign(camp);
       }
+      // Sincroniza também com donation_section/main para consumo direto pelo site principal
+      if (campaigns.length > 0) {
+        const mainCamp = campaigns[0];
+        await InstitutionalFirestoreService.saveDonationSection({
+          badge: 'Apoie Agora',
+          title: mainCamp.title,
+          subtitle: mainCamp.description,
+          pixKey: '000.000.000-00 (Chave PIX Oficial)',
+          bankName: 'Banco do Brasil',
+          benefits: mainCamp.benefits || [
+            'Financiamento de bolsas para jovens líderes climáticos.',
+            'Proteção de biomas através de tecnologia de monitoramento via satélite.',
+            'Independência total de verbas governamentais.'
+          ],
+        });
+      }
       await CMSVersionService.saveDraft('donations', { campaigns } as unknown as Record<string, unknown>, 'admin', 'Atualização Módulo de Captação & Doações');
       autosave.clearSaved();
       setSaved(true);

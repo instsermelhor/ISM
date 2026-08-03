@@ -20,7 +20,27 @@ export const BlogPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    PostsService.getAll().then(setPosts).finally(() => setLoading(false));
+    import('../services/blogService').then(({ BlogService }) => {
+      BlogService.getOrSeed().then(bPosts => {
+        const adapted: Post[] = bPosts.map(p => ({
+          id: p.id || '',
+          title: p.title,
+          slug: p.slug,
+          excerpt: p.summary,
+          content: p.content,
+          status: p.status as PostStatus,
+          authorName: p.author?.name || 'Autor',
+          publishedAt: p.publishedAt || undefined,
+          scheduledFor: p.scheduledFor || undefined,
+          updatedAt: new Date().toISOString(),
+          viewsCount: p.viewsCount || 0,
+          category: p.category,
+          tags: p.tags,
+          coverImage: p.coverImage,
+        }));
+        setPosts(adapted);
+      }).catch(console.error).finally(() => setLoading(false));
+    });
   }, []);
 
   const filtered = posts.filter(p => {

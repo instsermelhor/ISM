@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useCallback } from 'react';
 
 // Layout
 import { InstitutionalWrapper } from './components/layout/InstitutionalWrapper';
@@ -16,6 +16,7 @@ import { PartnerSection } from './components/sections/PartnerSection';
 import { DonationSection } from './components/sections/DonationSection';
 import { ProgramsSection } from './components/sections/ProgramsSection';
 import { PillarsSection } from './components/sections/PillarsSection';
+import { NewsSection } from './components/sections/NewsSection';
 
 // UI & Legal
 import { Modal } from './components/ui/Modal';
@@ -26,7 +27,130 @@ import { TermsOfUse } from './components/legal/TermsOfUse';
 import { InstitutionalService } from './services/data';
 import { AppData } from './types';
 
-// Fallback loader component
+// Realtime hooks (onSnapshot — atualização em < 1s quando admin publica)
+import {
+  useRealtimeDocument,
+  useRealtimeCollection,
+  useRealtimeHero,
+  useRealtimeNavigation,
+  useRealtimeFooter,
+  useRealtimeSeoSettings,
+  useRealtimeInstitutionalPage,
+  useRealtimeServicesPage,
+  useRealtimeDonationSection,
+  useRealtimeMetrics,
+  useRealtimePillars,
+  useRealtimeValueBlocks,
+  useRealtimeGovernanceInstances,
+  useRealtimeGovernanceMembers,
+  useRealtimeTimeline,
+  useRealtimePrograms,
+  useRealtimeBlogPosts,
+  useRealtimePublishedPartners,
+} from './hooks/useRealtimeContent';
+
+// ── SEO Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Aplica ou atualiza uma meta tag pelo atributo de seleção.
+ */
+function setMeta(selector: string, attribute: string, content: string) {
+  if (!content) return;
+  let el = document.querySelector(selector) as HTMLMetaElement | null;
+  if (!el) {
+    el = document.createElement('meta');
+    const parts = selector.match(/\[(.+?)="(.+?)"\]/);
+    if (parts) el.setAttribute(parts[1], parts[2]);
+    document.head.appendChild(el);
+  }
+  el.setAttribute(attribute, content);
+}
+
+/**
+ * Atualiza todos os metadados SEO (title, description, OG, Twitter, Schema.org).
+ */
+function applySeoSettings(seo: Record<string, any>) {
+  if (!seo) return;
+
+  // Title
+  const title = seo.siteTitle || 'Instituto Ser Melhor';
+  document.title = title;
+
+  // Basic Meta
+  setMeta('meta[name="description"]', 'content', seo.siteDescription || '');
+  setMeta('meta[name="keywords"]', 'content', seo.keywords || '');
+  setMeta('meta[name="robots"]', 'content', seo.robotsDirective || 'index, follow');
+
+  // Canonical
+  if (seo.canonicalUrl) {
+    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      document.head.appendChild(link);
+    }
+    link.setAttribute('href', seo.canonicalUrl);
+  }
+
+  // Open Graph
+  setMeta('meta[property="og:title"]', 'content', seo.ogTitle || title);
+  setMeta('meta[property="og:description"]', 'content', seo.ogDescription || seo.siteDescription || '');
+  setMeta('meta[property="og:image"]', 'content', seo.ogImage || seo.heroImage || '');
+  setMeta('meta[property="og:url"]', 'content', seo.canonicalUrl || window.location.href);
+  setMeta('meta[property="og:type"]', 'content', 'website');
+  setMeta('meta[property="og:site_name"]', 'content', 'Instituto Ser Melhor');
+  setMeta('meta[property="og:locale"]', 'content', 'pt_BR');
+
+  // Twitter Cards
+  setMeta('meta[name="twitter:card"]', 'content', 'summary_large_image');
+  setMeta('meta[name="twitter:title"]', 'content', seo.twitterTitle || seo.ogTitle || title);
+  setMeta('meta[name="twitter:description"]', 'content', seo.twitterDescription || seo.ogDescription || seo.siteDescription || '');
+  setMeta('meta[name="twitter:image"]', 'content', seo.twitterImage || seo.ogImage || '');
+  setMeta('meta[name="twitter:site"]', 'content', seo.twitterHandle || '@instsermelhor');
+
+  // Schema.org JSON-LD — Organization
+  const existingLd = document.getElementById('schema-org-organization');
+  if (existingLd) existingLd.remove();
+
+  const ldScript = document.createElement('script');
+  ldScript.id = 'schema-org-organization';
+  ldScript.type = 'application/ld+json';
+  ldScript.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'NGO',
+    name: 'Instituto Ser Melhor',
+    alternateName: 'ISM',
+    url: seo.canonicalUrl || 'https://institutosermelhor.org',
+    logo: seo.logoUrl || '/logo-ism.png',
+    description: seo.siteDescription || '',
+    foundingDate: '2022',
+    email: seo.contactEmail || 'contato@institutosermelhor.org',
+    sameAs: [
+      'https://instagram.com/institutosermelhor',
+      'https://facebook.com/institutosermelhor',
+      'https://linkedin.com/company/institutosermelhor',
+    ],
+    areaServed: 'BR',
+    nonprofitStatus: 'Nonprofit501c3',
+  });
+  document.head.appendChild(ldScript);
+
+  // Google Analytics (se ainda não carregado)
+  if (seo.googleAnalyticsId && !document.getElementById('ga-script')) {
+    const gaScript = document.createElement('script');
+    gaScript.id = 'ga-script';
+    gaScript.async = true;
+    gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${seo.googleAnalyticsId}`;
+    document.head.appendChild(gaScript);
+
+    const gaConfig = document.createElement('script');
+    gaConfig.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${seo.googleAnalyticsId}');`;
+    document.head.appendChild(gaConfig);
+  }
+}
+
+// ── Loading / Error Screens ────────────────────────────────────────────────────
+
 const LoadingScreen = () => (
   <div className="flex items-center justify-center h-screen bg-secondary-950">
     <div className="flex flex-col items-center gap-6">
@@ -44,7 +168,6 @@ const LoadingScreen = () => (
   </div>
 );
 
-// Error component
 const ErrorScreen = ({ onRetry }: { onRetry: () => void }) => (
   <div className="flex items-center justify-center h-screen bg-secondary-950">
     <div className="flex flex-col items-center gap-5 text-center px-6 max-w-sm">
@@ -65,29 +188,70 @@ const ErrorScreen = ({ onRetry }: { onRetry: () => void }) => (
   </div>
 );
 
+// ── App State ─────────────────────────────────────────────────────────────────
+
+interface AppState {
+  data: AppData | null;
+  servicesPage: Record<string, any> | null;
+  error: boolean;
+  isPrivacyOpen: boolean;
+  isTermsOpen: boolean;
+}
+
 function App() {
-  const [data, setData] = useState<AppData | null>(null);
-  const [servicesPage, setServicesPage] = useState<Record<string, any> | null>(null);
-  const [donationSection, setDonationSection] = useState<Record<string, any> | null>(null);
-  const [error, setError] = useState(false);
+  const [state, setState] = React.useState<AppState>({
+    data: null,
+    servicesPage: null,
+    error: false,
+    isPrivacyOpen: false,
+    isTermsOpen: false,
+  });
 
-  // Modal State
-  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
-  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  // ── Realtime listeners — admin changes reflect in < 1s ───────────────────
 
-  const loadData = async () => {
-    setError(false);
+  // Documentos únicos
+  const realtimeHero       = useRealtimeHero<any>();
+  const realtimeNav        = useRealtimeNavigation<any>();
+  const realtimeFooter     = useRealtimeFooter<any>();
+  const realtimeSeo        = useRealtimeSeoSettings<any>();
+  const realtimeInstPage   = useRealtimeInstitutionalPage<any>();
+  const realtimeServices   = useRealtimeServicesPage<any>();
+  const realtimeDonation   = useRealtimeDonationSection<any>();
+
+  // Coleções
+  const realtimeMetrics          = useRealtimeMetrics<any>();
+  const realtimePillars          = useRealtimePillars<any>();
+  const realtimeValueBlocks      = useRealtimeValueBlocks<any>();
+  const realtimeGovInstances     = useRealtimeGovernanceInstances<any>();
+  const realtimeGovMembers       = useRealtimeGovernanceMembers<any>();
+  const realtimeTimeline         = useRealtimeTimeline<any>();
+  const realtimePrograms         = useRealtimePrograms<any>();
+  const realtimeBlogPosts        = useRealtimeBlogPosts<any>();
+  const realtimePartners         = useRealtimePublishedPartners<any>();
+
+  // ── SEO — aplica em tempo real sempre que seo_settings mudar ────────────
+  useEffect(() => {
+    if (realtimeSeo) applySeoSettings(realtimeSeo);
+  }, [realtimeSeo]);
+
+  // ── Carga inicial (fallback para dados existentes no Firestore) ──────────
+  const loadData = useCallback(async () => {
+    setState(s => ({ ...s, error: false }));
     try {
       const [
-        pageRes, 
-        valuesRes, 
-        governanceInstRes, 
-        timelineRes, 
+        pageRes,
+        valuesRes,
+        governanceInstRes,
+        timelineRes,
         membersRes,
         programsRes,
         servicesPageRes,
         donationSectionRes,
-        seoSettingsRes
+        seoSettingsRes,
+        metricsRes,
+        pillarsRes,
+        heroSectionRes,
+        blogPostsRes,
       ] = await Promise.all([
         InstitutionalService.getPage(),
         InstitutionalService.getValueBlocks(),
@@ -97,113 +261,188 @@ function App() {
         InstitutionalService.getPrograms(),
         InstitutionalService.getServicesPage(),
         InstitutionalService.getDonationSection(),
-        InstitutionalService.getSeoSettings()
+        InstitutionalService.getSeoSettings(),
+        InstitutionalService.getMetrics(),
+        InstitutionalService.getPillars(),
+        InstitutionalService.getHeroSection(),
+        InstitutionalService.getBlogPosts(),
       ]);
 
-      setServicesPage(servicesPageRes);
-      setDonationSection(donationSectionRes);
+      // Aplicar SEO inicial
+      if (seoSettingsRes) applySeoSettings(seoSettingsRes);
 
-      // Atualiza SEO no Document Head
-      if (seoSettingsRes) {
-        document.title = seoSettingsRes.siteTitle || 'Instituto Ser Melhor';
-        
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-          metaDesc = document.createElement('meta');
-          metaDesc.setAttribute('name', 'description');
-          document.head.appendChild(metaDesc);
-        }
-        metaDesc.setAttribute('content', seoSettingsRes.siteDescription || '');
+      setState(s => ({
+        ...s,
+        servicesPage: servicesPageRes,
+        data: {
+          page: pageRes.data,
+          valueBlocks: valuesRes.data,
+          governanceInstances: governanceInstRes.data,
+          timelineMilestones: timelineRes.data,
+          governanceMembers: membersRes.data,
+          programs: programsRes,
+          financials: servicesPageRes?.financialSlices?.length
+            ? servicesPageRes.financialSlices.map((s: any, i: number) => ({ id: i + 1, name: s.name, value: Number(s.value), color: s.color }))
+            : [
+                { id: 1, name: 'Programas', value: 75, color: '#16a34a' },
+                { id: 2, name: 'Admin', value: 15, color: '#1e293b' },
+                { id: 3, name: 'Captação', value: 10, color: '#94a3b8' },
+              ],
+        },
+      }));
 
-        let metaKeywords = document.querySelector('meta[name="keywords"]');
-        if (!metaKeywords) {
-          metaKeywords = document.createElement('meta');
-          metaKeywords.setAttribute('name', 'keywords');
-          document.head.appendChild(metaKeywords);
-        }
-        metaKeywords.setAttribute('content', seoSettingsRes.keywords || '');
-      }
-
-      setData({
-        page: pageRes.data,
-        valueBlocks: valuesRes.data,
-        governanceInstances: governanceInstRes.data,
-        timelineMilestones: timelineRes.data,
-        governanceMembers: membersRes.data,
-        programs: programsRes,
-        financials: servicesPageRes?.financialSlices?.length
-          ? servicesPageRes.financialSlices.map((s: any, i: number) => ({ id: i + 1, name: s.name, value: Number(s.value), color: s.color }))
-          : [
-              { id: 1, name: 'Programas', value: 75, color: '#16a34a' },
-              { id: 2, name: 'Admin', value: 15, color: '#1e293b' },
-              { id: 3, name: 'Captação', value: 10, color: '#94a3b8' },
-            ]
-      });
-    } catch (error) {
-      console.error("Failed to fetch institutional data", error);
-      setError(true);
+      // Inicializar hero e blog com dados da carga inicial (serão sobrescritos pelo realtime)
+      void heroSectionRes;
+      void metricsRes;
+      void pillarsRes;
+      void blogPostsRes;
+    } catch (err) {
+      console.error('[ISM] Falha ao carregar dados institucionais:', err);
+      setState(s => ({ ...s, error: true }));
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
-  if (error) {
-    return <ErrorScreen onRetry={loadData} />;
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Merge: Realtime sobrescreve dados da carga inicial ──────────────────
+
+  const { data, servicesPage, error, isPrivacyOpen, isTermsOpen } = state;
+
+  // Documentos únicos — usa realtime quando disponível, cai no carregamento inicial
+  const activeHero     = realtimeHero     || null;
+  const activeNav      = realtimeNav      || null;
+  const activeFooter   = realtimeFooter   || null;
+  const activeDonation = realtimeDonation || servicesPage;
+  const activeServices = realtimeServices || servicesPage;
+
+  // Dados da página institucional — realtime merge sobre dados carregados
+  const activePageAttrs = realtimeInstPage
+    ? { ...data?.page?.attributes, ...realtimeInstPage }
+    : data?.page?.attributes;
+
+  // Coleções — usa realtime quando disponível, cai no mock/fallback do data.ts
+  const activeMetrics   = realtimeMetrics.length     > 0 ? realtimeMetrics   : [];
+  const activePillars   = realtimePillars.length     > 0 ? realtimePillars   : [];
+  const activeValues    = realtimeValueBlocks.length  > 0 ? realtimeValueBlocks  : (data?.valueBlocks ?? []);
+  const activeGovInst   = realtimeGovInstances.length > 0 ? realtimeGovInstances : (data?.governanceInstances ?? []);
+  const activeGovMem    = realtimeGovMembers.length   > 0 ? realtimeGovMembers   : (data?.governanceMembers ?? []);
+  const activeTimeline  = realtimeTimeline.length     > 0 ? realtimeTimeline     : (data?.timelineMilestones ?? []);
+  const activePrograms  = realtimePrograms.length     > 0 ? realtimePrograms     : (data?.programs ?? []);
+  const activeBlog      = realtimeBlogPosts.length    > 0 ? realtimeBlogPosts    : [];
+  const activePartners  = realtimePartners;
+
+  // ── Normaliza coleções do Strapi para o formato plano ───────────────────
+  // Quando os dados vêm do Firestore (admin), já são planos.
+  // Quando vêm do mock (StrapiCollectionResponse), estão em .attributes.
+  function flattenStrapi<T>(items: any[]): T[] {
+    if (!items || items.length === 0) return [];
+    if (items[0]?.attributes !== undefined) {
+      return items.map((item: any) => ({ id: item.id, ...item.attributes })) as T[];
+    }
+    return items as T[];
   }
 
-  if (!data) {
-    return <LoadingScreen />;
-  }
+  const flatValues    = flattenStrapi<any>(activeValues);
+  const flatGovInst   = flattenStrapi<any>(activeGovInst);
+  const flatGovMem    = flattenStrapi<any>(activeGovMem);
+  const flatTimeline  = flattenStrapi<any>(activeTimeline);
 
+  // ── Render Guards ───────────────────────────────────────────────────────
+  if (error) return <ErrorScreen onRetry={loadData} />;
+  if (!data && !realtimeInstPage) return <LoadingScreen />;
+
+  // ── Render ──────────────────────────────────────────────────────────────
   return (
     <>
       {/* Skip to main content — keyboard a11y */}
       <a href="#main-content" className="skip-link">Ir para o conteúdo principal</a>
 
       <InstitutionalWrapper
-        onOpenPrivacy={() => setIsPrivacyOpen(true)}
-        onOpenTerms={() => setIsTermsOpen(true)}
+        onOpenPrivacy={() => setState(s => ({ ...s, isPrivacyOpen: true }))}
+        onOpenTerms={() => setState(s => ({ ...s, isTermsOpen: true }))}
+        navData={activeNav}
+        footerData={activeFooter}
       >
         <main id="main-content">
-          <HeroInstitutional data={data.page.attributes} />
-          <ImpactMetrics />
-          <MissionVisionValues data={data.page.attributes} />
-          <ValuesSection values={data.valueBlocks} />
-          <ProgramsSection programs={data.programs} servicesPage={servicesPage} />
-          <PillarsSection />
-          <TimelineSection milestones={data.timelineMilestones} />
-          <IdentityAndNetwork pageData={data.page.attributes} networkCards={servicesPage?.networkCards} />
+          {/* Hero — lê de hero_section/main (realtime) */}
+          <HeroInstitutional
+            data={activePageAttrs as any}
+            heroSection={activeHero}
+          />
+
+          {/* Métricas de Impacto — lê de impact_metrics (realtime) */}
+          <ImpactMetrics items={activeMetrics} />
+
+          {/* Missão / Visão / Valores — lê de institutional_page/main (realtime) */}
+          <MissionVisionValues data={activePageAttrs as any} />
+
+          {/* Valores Institucionais — lê de value_blocks (realtime) */}
+          <ValuesSection values={flatValues as any} />
+
+          {/* Programas — lê de programs (realtime) */}
+          <ProgramsSection
+            programs={activePrograms as any}
+            servicesPage={activeServices}
+          />
+
+          {/* Pilares — lê de pillars (realtime) */}
+          <PillarsSection pillars={activePillars} />
+
+          {/* Timeline — lê de timeline_milestones (realtime) */}
+          <TimelineSection milestones={flatTimeline as any} />
+
+          {/* Identidade & Rede — lê de institutional_page/main + services_page/main */}
+          <IdentityAndNetwork
+            pageData={activePageAttrs as any}
+            networkCards={activeServices?.networkCards}
+          />
+
+          {/* Governança — lê de governance_instances + governance_members (realtime) */}
           <GovernanceStructure
-            intro={data.page.attributes.governanceIntro}
-            instances={data.governanceInstances}
-            members={data.governanceMembers}
+            intro={activePageAttrs?.governanceIntro}
+            instances={flatGovInst as any}
+            members={flatGovMem as any}
           />
+
+          {/* Transparência — lê de services_page/main (realtime) */}
           <TransparencyReport
-            intro={servicesPage?.transparencyIntro || data.page.attributes.transparencyIntro}
-            documents={servicesPage?.transparencyDocuments?.length ? servicesPage.transparencyDocuments : data.page.attributes.transparencyDocuments}
-            financials={data.financials}
-            efficiencyPct={servicesPage?.efficiencyPct}
-            integrityPillars={servicesPage?.integrityPillars}
+            intro={activeServices?.transparencyIntro || activePageAttrs?.transparencyIntro}
+            documents={
+              activeServices?.transparencyDocuments?.length
+                ? activeServices.transparencyDocuments
+                : activePageAttrs?.transparencyDocuments
+            }
+            financials={data?.financials ?? []}
+            efficiencyPct={activeServices?.efficiencyPct}
+            integrityPillars={activeServices?.integrityPillars}
           />
-          <PartnerSection servicesPage={servicesPage} />
-          <DonationSection donationData={donationSection} />
+
+          {/* Blog/Notícias — lê de blog_posts (realtime, filtro PUBLISHED) */}
+          <NewsSection posts={activeBlog} />
+
+          {/* Parceiros — lê de partners (realtime, filtro isPublished) + formulário de candidatura */}
+          <PartnerSection
+            servicesPage={activeServices}
+            partners={activePartners}
+          />
+
+          {/* Doações — lê de donation_section/main (realtime) */}
+          <DonationSection donationData={activeDonation} />
         </main>
       </InstitutionalWrapper>
 
-      {/* Global Legal Modals */}
-      <Modal 
-        isOpen={isPrivacyOpen} 
-        onClose={() => setIsPrivacyOpen(false)}
+      {/* Legal Modals */}
+      <Modal
+        isOpen={isPrivacyOpen}
+        onClose={() => setState(s => ({ ...s, isPrivacyOpen: false }))}
         title="Política de Privacidade"
       >
         <PrivacyPolicy />
       </Modal>
 
-      <Modal 
-        isOpen={isTermsOpen} 
-        onClose={() => setIsTermsOpen(false)}
+      <Modal
+        isOpen={isTermsOpen}
+        onClose={() => setState(s => ({ ...s, isTermsOpen: false }))}
         title="Termos de Uso"
       >
         <TermsOfUse />

@@ -37,10 +37,9 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // REGRAS DE ACESSO POR COLEÇÃO
+    // 1. FORMULÁRIOS DE ENTRADA
+    //    Leitura restrita a Admin/Editor, Criação pública validada
     // ─────────────────────────────────────────────────────────────────────────
-
-    // ── 1. Formulários de Entrada (Leitura restrita a Admin/Editor, Criação pública validada) ──
 
     match /partner_applications/{docId} {
       allow create: if isValidPartnerApplication(request.resource.data);
@@ -60,7 +59,10 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // ── 2. Configurações Globais & SEO (Leitura pública, Escrita restrita a Admin) ──
+    // ─────────────────────────────────────────────────────────────────────────
+    // 2. CONFIGURAÇÕES GLOBAIS & SEO
+    //    Leitura pública, Escrita restrita a Admin
+    // ─────────────────────────────────────────────────────────────────────────
 
     match /settings/{key} {
       allow read: if true;
@@ -70,6 +72,41 @@ service cloud.firestore {
     match /seo_settings/{docId} {
       allow read: if true;
       allow create, update: if isAdmin() && isValidSeoSettings(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /site_navigation/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /site_footer/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 3. CONTEÚDO DO SITE — SEÇÕES PRINCIPAIS
+    //    Leitura pública, Escrita restrita a Editor/Admin
+    // ─────────────────────────────────────────────────────────────────────────
+
+    match /hero_section/{docId} {
+      allow read: if true;
+      allow create, update: if isEditor() && isValidHeroSection(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /impact_metrics/{docId} {
+      allow read: if true;
+      allow create, update: if isEditor() && isValidImpactMetric(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /pillars/{docId} {
+      allow read: if true;
+      allow create, update: if isEditor() && isValidPillar(request.resource.data);
       allow delete: if isAdmin();
     }
 
@@ -85,7 +122,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ── 3. CMS & Conteúdo Institucional (Leitura pública, Escrita restrita a Editor/Admin) ──
+    // ─────────────────────────────────────────────────────────────────────────
+    // 4. CMS & CONTEÚDO INSTITUCIONAL
+    //    Leitura pública, Escrita restrita a Editor/Admin
+    // ─────────────────────────────────────────────────────────────────────────
 
     match /programs/{docId} {
       allow read: if true;
@@ -123,7 +163,78 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ── 4. Bloqueio Global Default (Deny All por Padrão) ────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5. BLOG & CONTEÚDO EDITORIAL
+    //    Leitura pública apenas para publicados, Escrita restrita a Editor
+    // ─────────────────────────────────────────────────────────────────────────
+
+    match /blog_posts/{docId} {
+      // Leitura pública somente de posts publicados; admin lê todos
+      allow read: if resource.data.status == 'PUBLISHED' || isEditor();
+      allow create, update: if isEditor() && isValidBlogPost(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 6. PARCEIROS PUBLICADOS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    match /partners/{docId} {
+      // Leitura pública apenas de parceiros ativos
+      allow read: if resource.data.isPublished == true || isEditor();
+      allow create, update: if isEditor() && isValidPartner(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 7. CAPTAÇÃO & CAMPANHAS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    match /fundraising_campaigns/{docId} {
+      allow read: if resource.data.isPublished == true || isEditor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 8. SISTEMA — CMS Versions, Audit Logs, Beneficiários, etc.
+    //    Acesso interno somente
+    // ─────────────────────────────────────────────────────────────────────────
+
+    match /cms_versions/{docId} {
+      allow read: if isEditor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /audit_logs/{docId} {
+      allow read: if isAdmin();
+      // Escrita via sistema (admin autenticado); sem delete
+      allow create: if isEditor();
+      allow update, delete: if false;
+    }
+
+    match /users_profiles/{docId} {
+      allow read: if isEditor() || request.auth.uid == docId;
+      allow create, update: if isAdmin() || request.auth.uid == docId;
+      allow delete: if isAdmin();
+    }
+
+    match /beneficiaries/{docId} {
+      allow read: if isEditor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /pipeline_cards/{docId} {
+      allow read: if isEditor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 9. BLOQUEIO GLOBAL DEFAULT (Deny All por Padrão)
+    // ─────────────────────────────────────────────────────────────────────────
 
     match /{document=**} {
       allow read, write: if false;
@@ -131,9 +242,11 @@ service cloud.firestore {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // FUNÇÕES DE VALIDAÇÃO DE SCHEMA E TIPAGEM DE DADOS
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
+
+// ── Formulários de Entrada ───────────────────────────────────────────────────
 
 function isValidPartnerApplication(data) {
   return data.keys().hasAll(['companyName', 'contactName', 'email', 'type'])
@@ -156,10 +269,34 @@ function isValidLead(data) {
     && data.message is string && data.message.size() <= 5000;
 }
 
+// ── SEO & Configurações ──────────────────────────────────────────────────────
+
 function isValidSeoSettings(data) {
   return data.keys().hasAll(['siteTitle', 'siteDescription'])
     && data.siteTitle is string && data.siteTitle.size() <= 200
     && data.siteDescription is string && data.siteDescription.size() <= 1000;
+}
+
+// ── Seções do Site ───────────────────────────────────────────────────────────
+
+function isValidHeroSection(data) {
+  return data.keys().hasAll(['title', 'subtitle'])
+    && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+    && data.subtitle is string && data.subtitle.size() <= 2000;
+}
+
+function isValidImpactMetric(data) {
+  return data.keys().hasAll(['label', 'value', 'order'])
+    && data.label is string && data.label.size() > 0 && data.label.size() <= 200
+    && data.value is string && data.value.size() <= 50
+    && data.order is number && data.order >= 0;
+}
+
+function isValidPillar(data) {
+  return data.keys().hasAll(['label', 'headline', 'order'])
+    && data.label is string && data.label.size() > 0 && data.label.size() <= 100
+    && data.headline is string && data.headline.size() <= 300
+    && data.order is number && data.order >= 0;
 }
 
 function isValidDonationSection(data) {
@@ -169,11 +306,13 @@ function isValidDonationSection(data) {
     && data.bankName is string && data.bankName.size() <= 200;
 }
 
+// ── CMS Institucional ────────────────────────────────────────────────────────
+
 function isValidProgram(data) {
   return data.keys().hasAll(['title', 'slug', 'description'])
     && data.title is string && data.title.size() > 0 && data.title.size() <= 200
     && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 200
-    && data.description is string && data.description.size() <= 2000;
+    && data.description is string && data.description.size() <= 5000;
 }
 
 function isValidInstitutionalPage(data) {
@@ -207,4 +346,19 @@ function isValidGovernanceMember(data) {
     && data.name is string && data.name.size() > 0 && data.name.size() <= 200
     && data.role is string && data.role.size() > 0 && data.role.size() <= 200
     && data.type is string && (data.type == 'board' || data.type == 'executive' || data.type == 'advisory');
+}
+
+// ── Blog & Parceiros ─────────────────────────────────────────────────────────
+
+function isValidBlogPost(data) {
+  return data.keys().hasAll(['title', 'slug', 'status'])
+    && data.title is string && data.title.size() > 0 && data.title.size() <= 300
+    && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 300
+    && data.status is string && data.status.size() <= 50;
+}
+
+function isValidPartner(data) {
+  return data.keys().hasAll(['name', 'isPublished'])
+    && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+    && data.isPublished is bool;
 }

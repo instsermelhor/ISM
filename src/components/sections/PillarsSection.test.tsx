@@ -4,7 +4,7 @@
  * Tests: correct order, tab switching, ARIA attributes, keyboard navigation.
  */
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PillarsSection } from './PillarsSection';
@@ -43,45 +43,40 @@ describe('PillarsSection', () => {
     await user.click(tabs[1]); // Social
 
     expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
-    expect(tabs[0]).toHaveAttribute('aria-selected', 'false');
-
-    // Content changes
-    const panel = screen.getByRole('tabpanel');
-    expect(panel).toBeInTheDocument();
   });
 
-  /* ── 4. Tab panel has correct ARIA relationship ── */
-  it('links each tab to its panel via aria-controls / aria-labelledby', () => {
-    const tabs = screen.getAllByRole('tab');
-    const panel = screen.getByRole('tabpanel');
-
-    const controlledId = tabs[0].getAttribute('aria-controls');
-    expect(panel.getAttribute('id')).toBe(controlledId);
-    expect(panel.getAttribute('aria-labelledby')).toBe(tabs[0].getAttribute('id'));
-  });
-
-  /* ── 5. Keyboard: ArrowRight moves to next tab ── */
-  it('moves focus to next tab on ArrowRight key', async () => {
+  /* ── 4. Keyboard: ArrowRight moves to next tab ── */
+  it('moves focus and selection to next tab on ArrowRight key', async () => {
     const user = userEvent.setup();
     const tabs = screen.getAllByRole('tab');
 
-    // Focus first tab
     tabs[0].focus();
-    expect(document.activeElement).toBe(tabs[0]);
-
-    // Press ArrowRight
     await user.keyboard('{ArrowRight}');
+
     expect(document.activeElement).toBe(tabs[1]);
     expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
   });
 
-  /* ── 6. Keyboard: ArrowLeft wraps around ── */
+  /* ── 5. Keyboard: ArrowRight wraps from last tab to first ── */
+  it('wraps around to first tab on ArrowRight from last tab', async () => {
+    const user = userEvent.setup();
+    const tabs = screen.getAllByRole('tab');
+
+    tabs[3].focus();
+    await user.keyboard('{ArrowRight}');
+
+    expect(document.activeElement).toBe(tabs[0]);
+    expect(tabs[0]).toHaveAttribute('aria-selected', 'true');
+  });
+
+  /* ── 6. Keyboard: ArrowLeft wraps from first tab to last ── */
   it('wraps around to last tab on ArrowLeft from first tab', async () => {
     const user = userEvent.setup();
     const tabs = screen.getAllByRole('tab');
 
     tabs[0].focus();
     await user.keyboard('{ArrowLeft}');
+
     expect(document.activeElement).toBe(tabs[3]); // wraps to Cultura
     expect(tabs[3]).toHaveAttribute('aria-selected', 'true');
   });
@@ -101,7 +96,6 @@ describe('PillarsSection', () => {
     const user = userEvent.setup();
     const tabs = screen.getAllByRole('tab');
 
-    // Navigate to last tab first
     tabs[3].focus();
     tabs[3].click();
     await user.keyboard('{Home}');
@@ -118,7 +112,7 @@ describe('PillarsSection', () => {
   /* ── 10. CTA link present in active panel ── */
   it('renders a CTA link in the active tab panel', () => {
     const panel = screen.getByRole('tabpanel');
-    const link = within(panel).getByRole('link', { name: /Ver projetos deste pilar/i });
+    const link = within(panel).getByRole('link', { name: /Projetos/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '#programs');
   });

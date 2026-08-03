@@ -139,10 +139,14 @@ const SEED_GOVERNANCE: Omit<GovernanceInstanceData, 'id'>[] = [
 ];
 
 const SEED_TIMELINE: Omit<TimelineMilestoneData, 'id'>[] = [
-  { year: 2007, title: 'Fundação Conceitual', impactDescription: 'Estabelecimento do Instituto a partir da fusão de três fundações líderes e criação da Metodologia M-IS.' },
-  { year: 2012, title: 'Fundo Perpétuo', impactDescription: 'Alcance da independência operacional com o Fundo F-P, assegurando 100% das doações para programas finalísticos.' },
-  { year: 2015, title: 'Prêmio Global GEA', impactDescription: 'Recebimento do Global Excellence Award da ONU. A Metodologia M-IS torna-se benchmark global.' },
-  { year: 2025, title: 'Marco do Milhão', impactDescription: 'Aproximação da meta de impactar um milhão de vidas e lançamento da Agenda 2035.' },
+  { year: 2007, title: 'Fundação Conceitual', impactDescription: 'Surge a Associação de Bairro Vila Margarida, com o objetivo de representar a comunidade junto ao poder público e buscar melhorias essenciais para o bairro, como pavimentação das vias, iluminação pública e infraestrutura urbana.' },
+  { year: 2012, title: 'A Associação a Serviço da Sociedade', impactDescription: 'A Associação de Bairro Vila Margarida amplia sua atuação e passa a desenvolver ações sociais voltadas às famílias em situação de vulnerabilidade, promovendo a distribuição de cestas básicas, leite e oferecendo transporte comunitário para facilitar o acesso da população aos serviços essenciais.' },
+  { year: 2015, title: 'Vila Margarida e a Educação', impactDescription: 'É firmada parceria com a Associação de Professores da Educação Infantil, ampliando a atuação institucional para o atendimento de crianças da educação básica por meio de projetos educacionais.' },
+  { year: 2017, title: 'A Educação como Foco', impactDescription: 'Uma nova parceria é estabelecida com a Associação Cultural Tiradentes, marcando o início do desenvolvimento de projetos de grande impacto social, educacional e cultural, fortalecendo o compromisso com a transformação das comunidades atendidas.' },
+  { year: 2022, title: 'O Surgimento do Instituto Ser Melhor', impactDescription: 'A fusão das três entidades parceiras resulta na criação do Instituto Ser Melhor, consolidando uma nova estrutura institucional voltada ao desenvolvimento humano, à inovação social e à ampliação do impacto das ações realizadas.' },
+  { year: 2023, title: 'Consolidação dos Valores Institucionais', impactDescription: 'Os princípios, valores e diretrizes institucionais são revisados e fortalecidos com a participação de profissionais de diversas áreas. Neste mesmo período, o Instituto Ser Melhor torna-se participante do Pacto Global das Nações Unidas, alinhando suas ações aos 17 Objetivos de Desenvolvimento Sustentável (ODS).' },
+  { year: 2024, title: 'Reconhecimento Internacional', impactDescription: 'O Instituto Ser Melhor recebe o Global Excellence Award (GEA) em reconhecimento às suas boas práticas institucionais. A Metodologia M-IS passa a ser reconhecida como referência internacional em inovação social. Também é implantada a metodologia SROI (Social Return on Investment), alcançando o índice de 1:4,83, demonstrando elevado retorno social sobre os investimentos realizados.' },
+  { year: 2025, title: 'Criação do Fundo Perpétuo', impactDescription: 'É criado o Fundo Perpétuo (F-P), assegurando a sustentabilidade financeira da instituição e sua independência operacional. Com essa estrutura, 100% das doações recebidas passam a ser destinadas aos programas finalísticos, fortalecendo o compromisso com a transparência, a eficiência e o impacto social.' },
 ];
 
 const SEED_MEMBERS: Omit<GovernanceMemberData, 'id'>[] = [

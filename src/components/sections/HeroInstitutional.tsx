@@ -5,16 +5,36 @@ import { InstitutionalPageAttributes } from '../../types';
 
 interface HeroInstitutionalProps {
   data: InstitutionalPageAttributes;
+  heroSection?: Record<string, any> | null;
 }
 
-const floatingStats = [
-  { value: '15+', label: 'Anos de Impacto', Icon: Leaf },
-  { value: '1M+', label: 'Vidas Impactadas', Icon: Users },
-  { value: '50+', label: 'Parceiros Globais', Icon: Globe },
-];
+const STAT_ICON_MAP: Record<string, React.ElementType> = {
+  leaf: Leaf,
+  users: Users,
+  globe: Globe,
+  '🌿': Leaf,
+  '👥': Users,
+  '🌐': Globe,
+};
 
-export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) => {
-  const eyebrowText = (data as any).eyebrowText || 'Desde 2007 · Transformação Social';
+export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data, heroSection }) => {
+  const eyebrowText = heroSection?.eyebrowText || (data as any).eyebrowText || 'Desde 2007 · Transformação Social';
+  const heroTitle = heroSection?.title || data.title;
+  const heroSubtitle = heroSection?.subtitle || data.introduction;
+
+  const rawStats = heroSection?.stats && heroSection.stats.length > 0
+    ? heroSection.stats
+    : [
+        { value: '15+', label: 'Anos de Impacto', icon: 'leaf' },
+        { value: '1M+', label: 'Vidas Impactadas', icon: 'users' },
+        { value: '50+', label: 'Parceiros Globais', icon: 'globe' },
+      ];
+
+  const floatingStats = rawStats.map((s: any) => ({
+    value: s.value,
+    label: s.label,
+    Icon: STAT_ICON_MAP[s.icon] || STAT_ICON_MAP[s.iconKey] || Leaf,
+  }));
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-secondary-950 flex flex-col">
@@ -77,7 +97,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) =>
             transition={{ duration: 0.9, delay: 0.3 }}
             className="mb-6 text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] text-white"
           >
-            {data.title.split('—')[0].trim()}
+            {(heroTitle || '').split('—')[0].trim()}
           </motion.h1>
 
           <motion.p
@@ -86,7 +106,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data }) =>
             transition={{ duration: 0.9, delay: 0.5 }}
             className="mx-auto mb-10 max-w-2xl text-lg text-secondary-300 sm:text-xl leading-relaxed"
           >
-            {data.introduction}
+            {heroSubtitle}
           </motion.p>
 
           {/* Motto badge */}
