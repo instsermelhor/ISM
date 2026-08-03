@@ -70,7 +70,7 @@ describe('ProgramsSection — Proteção, Preservação e Restauração dos Biom
   it('button "Ver Relatório" was replaced with "Saiba Mais"', () => {
     render(<ProgramsSection programs={programsData} />);
     expect(screen.queryByText('Ver Relatório')).not.toBeInTheDocument();
-    const biomesBtn = screen.getByRole('button', { name: /Saiba Mais/i, current: undefined });
+    const biomesBtn = screen.getAllByRole('button', { name: /Saiba Mais/i })[1];
     expect(biomesBtn).toBeInTheDocument();
   });
 
