@@ -23,6 +23,9 @@ const SiteEditorPage = lazy(() => import('./pages/SiteEditorPage').then(m => ({ 
 const DonationEditorPage = lazy(() => import('./pages/DonationEditorPage').then(m => ({ default: m.DonationEditorPage })));
 const CMSSeoManagerPage = lazy(() => import('./pages/CMSSeoManagerPage').then(m => ({ default: m.CMSSeoManagerPage })));
 const PartnersPage = lazy(() => import('./pages/PartnersPage').then(m => ({ default: m.PartnersPage })));
+const ImpactMetricsPage = lazy(() => import('./pages/ImpactMetricsPage').then(m => ({ default: m.ImpactMetricsPage })));
+const PillarsEditorPage = lazy(() => import('./pages/PillarsEditorPage').then(m => ({ default: m.PillarsEditorPage })));
+const NavigationEditorPage = lazy(() => import('./pages/NavigationEditorPage').then(m => ({ default: m.NavigationEditorPage })));
 const CommunicationPage = lazy(() => import('./pages/CommunicationPage'));
 const SchedulePage = lazy(() => import('./pages/SchedulePage'));
 const EHRPage = lazy(() => import('./pages/EHRPage'));
