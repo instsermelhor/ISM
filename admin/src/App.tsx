@@ -139,9 +139,9 @@ function App() {
               <Route path="site/projetos" element={<ServicesPage />} />
               <Route path="site/doacoes" element={<DonationEditorPage />} />
               <Route path="site/seo" element={<CMSSeoManagerPage />} />
-              <Route path="site/metricas" element={<React.createElement(lazy(() => import('./pages/ImpactMetricsPage').then(m => ({ default: m.ImpactMetricsPage }))))} />
-              <Route path="site/pilares" element={<React.createElement(lazy(() => import('./pages/PillarsEditorPage').then(m => ({ default: m.PillarsEditorPage }))))} />
-              <Route path="site/navegacao" element={<React.createElement(lazy(() => import('./pages/NavigationEditorPage').then(m => ({ default: m.NavigationEditorPage }))))} />
+              <Route path="site/metricas" element={<ImpactMetricsPage />} />
+              <Route path="site/pilares" element={<PillarsEditorPage />} />
+              <Route path="site/navegacao" element={<NavigationEditorPage />} />
 
               {/* Gestão da Instituição */}
               <Route path="blog" element={<BlogPage />} />
