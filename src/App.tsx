@@ -258,11 +258,12 @@ function App() {
       const getValue = <T,>(result: PromiseSettledResult<T>, fallback: T): T =>
         result.status === 'fulfilled' ? result.value : fallback;
 
-      const pageRes            = getValue(results[0], { data: { id: 1, attributes: {} as any }, meta: {} });
-      const valuesRes          = getValue(results[1], { data: [], meta: {} });
-      const governanceInstRes  = getValue(results[2], { data: [], meta: {} });
-      const timelineRes        = getValue(results[3], { data: [], meta: {} });
-      const membersRes         = getValue(results[4], { data: [], meta: {} });
+      const EMPTY_META = { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 0 } };
+      const pageRes            = getValue(results[0], { data: { id: 1, attributes: {} as any }, meta: EMPTY_META });
+      const valuesRes          = getValue(results[1], { data: [], meta: EMPTY_META });
+      const governanceInstRes  = getValue(results[2], { data: [], meta: EMPTY_META });
+      const timelineRes        = getValue(results[3], { data: [], meta: EMPTY_META });
+      const membersRes         = getValue(results[4], { data: [], meta: EMPTY_META });
       const programsRes        = getValue(results[5], []);
       const servicesPageRes    = getValue(results[6], null);
       const seoSettingsRes     = getValue(results[8], null);
