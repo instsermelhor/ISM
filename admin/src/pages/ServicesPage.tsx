@@ -4,7 +4,8 @@ import {
   BarChart2, Target, DollarSign, Activity, Handshake,
   ArrowUp, ArrowDown, Globe, Eye, EyeOff,
   Image as ImageIcon, Share2,
-  Link2, Star, ChevronDown, ChevronUp, X, GripVertical
+  Link2, Star, ChevronDown, ChevronUp, X, GripVertical, FileEdit, Layers,
+  Archive, CheckCircle, XCircle, RefreshCw,
 } from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
 import { ImageUploadInput } from '../components/ui/ImageUploadInput';
@@ -25,6 +26,15 @@ import {
   type ProgramKpi,
   type ProgramLifecycleStage
 } from '../services/programsEnterprise';
+import {
+  ProgramsService,
+  type ProgramDataAdmin,
+  type ProgramPublicationStatus,
+  validateHttpsUrl as validateUrl,
+} from '../services/programsService';
+import { ProgramGalleryEditor, type GalleryImage } from '../components/cms/ProgramGalleryEditor';
+import { ProgramLinkFields } from '../components/cms/ProgramLinkFields';
+import { ProgramCardPreview } from '../components/cms/ProgramCardPreview';
 import { CMSVersionService } from '../services/cmsVersions';
 import { useCMSAutosave } from '../hooks/useCMSAutosave';
 import { CMSAutosaveBanner } from '../components/cms/CMSAutosaveBanner';
@@ -108,12 +118,32 @@ export const ServicesPage: React.FC = () => {
   const [saved, setSaved] = useState(false);
   const [newBadgeText, setNewBadgeText] = useState('');
 
-  // Autosave
-  const autosave = useCMSAutosave('programs', programs);
+  // Estado dos Programas Públicos (coleção 'programs' — lida pelo site)
+  const [publicPrograms, setPublicPrograms] = useState<ProgramDataAdmin[]>([]);
+  const [selectedProgId, setSelectedProgId] = useState<string | null>(null);
+  const [progEditMode, setProgEditMode] = useState<'list' | 'edit' | 'create'>('list');
+  const [progDraft, setProgDraft] = useState<Partial<ProgramDataAdmin>>({});
+  const [progSaving, setProgSaving] = useState(false);
+  const [progSaved, setProgSaved] = useState(false);
+  const [progDragOver, setProgDragOver] = useState<number | null>(null);
+  const progDragIdx = useRef<number | null>(null);
+  const [progSearch, setProgSearch] = useState('');
+  const [progStatusFilter, setProgStatusFilter] = useState<ProgramPublicationStatus | 'ALL'>('ALL');
+  const [progCategoryFilter, setProgCategoryFilter] = useState<string>('ALL');
+  const [progShowPreview, setProgShowPreview] = useState(false);
+  const [progLastSync, setProgLastSync] = useState<Date | null>(null);
+  const [progShowVersions, setProgShowVersions] = useState(false);
+
+  // Autosave — monitora publicPrograms (ProgramDataAdmin[]), não programs (SocialProgram[])
+  const autosave = useCMSAutosave('programs', publicPrograms as unknown as SocialProgram[]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      const pubs = await ProgramsService.getOrSeed();
+      setPublicPrograms(pubs);
+      setProgLastSync(new Date());
+
       let progs = await ProgramsEnterpriseService.getPrograms();
       if (!progs.length) {
         await ProgramsEnterpriseService.seedDefaults();
@@ -130,7 +160,6 @@ export const ServicesPage: React.FC = () => {
       const kpisData = await ProgramsEnterpriseService.getKpis();
       setKpis(kpisData);
 
-      // Carregar parceiros & metadados da seção Parcerias
       const published = await PublishedPartnersService.getOrSeed();
       setPartnersList(published);
 
@@ -159,7 +188,6 @@ export const ServicesPage: React.FC = () => {
         await ProgramsEnterpriseService.saveProgram(prog);
       }
 
-      // Salva a configuração da Seção Seja Parceiro
       await InstitutionalFirestoreService.saveServicesPage({
         partnerBadge,
         partnerTitle,
@@ -169,7 +197,6 @@ export const ServicesPage: React.FC = () => {
         partnerBenefits,
       });
 
-      // Salva os parceiros cadastrados no Firestore
       await PublishedPartnersService.saveAll(partnersList);
 
       await CMSVersionService.saveDraft('programs', {
@@ -193,7 +220,6 @@ export const ServicesPage: React.FC = () => {
     }
   };
 
-  // Funções de Gerenciamento de Benefícios
   const handleAddBenefit = () => {
     const newB: PartnerBenefitCard = {
       id: `benefit-${Date.now()}`,
@@ -218,7 +244,6 @@ export const ServicesPage: React.FC = () => {
     setPartnerBenefits(updated.map((item, idx) => ({ ...item, order: idx + 1 })));
   };
 
-  // Funções de Gerenciamento de Parceiros
   const handleAddPartner = () => {
     const newP: PublishedPartnerData = {
       order: partnersList.length + 1,
@@ -244,10 +269,13 @@ export const ServicesPage: React.FC = () => {
     setPartnersList(updated);
   };
 
+  const handleRemovePartner = (index: number) => {
+    setPartnersList(partnersList.filter((_, i) => i !== index));
+  };
+
   const handleDuplicatePartner = async (index: number) => {
     const p = partnersList[index];
     if (!p.id) {
-      // Parceiro ainda não salvo — duplica localmente
       const copy: PublishedPartnerData = {
         ...p,
         id: undefined,
@@ -270,7 +298,6 @@ export const ServicesPage: React.FC = () => {
     }
   };
 
-  // Drag-and-drop handlers
   const handleDragStart = (index: number) => {
     dragIdx.current = index;
   };
@@ -301,15 +328,129 @@ export const ServicesPage: React.FC = () => {
     setDragOverIdx(null);
   };
 
-  // URL validation helper
-  const urlError = (url?: string) => {
-    if (!url || url === '' || url === 'https://') return false;
-    return !url.startsWith('https://');
+  const handleProgNew = () => {
+    setProgDraft({
+      title: 'Novo Programa',
+      slug: `novo-programa-${Date.now()}`,
+      description: '',
+      status: 'DRAFT',
+      isPublished: false,
+      order: publicPrograms.length + 1,
+      isFeatured: false,
+      showOnLandingPage: true,
+      pillarsTitle: 'Nossos pilares',
+      actionLinesTitle: 'Linhas de atuação',
+      commitmentTitle: 'Nosso compromisso',
+      pillars: [],
+      actionLines: [],
+      tags: [],
+      gallery: [],
+    });
+    setProgEditMode('create');
+    setProgShowVersions(false);
   };
 
-  const selectedProgram = programs.find(p => p.id === selectedProgramId) || programs[0];
+  const handleProgEdit = (prog: ProgramDataAdmin) => {
+    setProgDraft({ ...prog });
+    setSelectedProgId(prog.id || null);
+    setProgEditMode('edit');
+    setProgShowVersions(false);
+  };
 
-  // Filtro de parceiros
+  const handleProgSave = async () => {
+    if (!progDraft.title?.trim()) { alert('O título é obrigatório.'); return; }
+    if (!progDraft.slug?.trim()) { alert('O slug é obrigatório.'); return; }
+    if (progDraft.imageUrl && !progDraft.imageAlt?.trim()) {
+      const proceed = window.confirm('A imagem principal não possui texto alternativo (ALT). Recomendamos preencher para acessibilidade WCAG 2.1 AA. Continuar mesmo assim?');
+      if (!proceed) return;
+    }
+    setProgSaving(true);
+    try {
+      // Garante campos com valores padrão antes de salvar
+      const toSave: Partial<ProgramDataAdmin> = {
+        ...progDraft,
+        pillarsTitle: progDraft.pillarsTitle || 'Nossos pilares',
+        actionLinesTitle: progDraft.actionLinesTitle || 'Linhas de atuação',
+        commitmentTitle: progDraft.commitmentTitle || 'Nosso compromisso',
+      };
+      if (progEditMode === 'create') {
+        const newId = await ProgramsService.create(toSave as Omit<ProgramDataAdmin, 'id'>, 'admin');
+        // Salva versão no histórico CMS
+        await CMSVersionService.saveDraft('programs', toSave as Record<string, unknown>, 'admin', `Criação: ${toSave.title}`);
+        const updated = await ProgramsService.getAll();
+        setPublicPrograms(updated);
+        setProgLastSync(new Date());
+        setSelectedProgId(newId);
+        setProgEditMode('edit');
+      } else if (selectedProgId) {
+        await ProgramsService.update(selectedProgId, toSave, 'admin');
+        // Salva versão no histórico CMS
+        await CMSVersionService.saveDraft('programs', toSave as Record<string, unknown>, 'admin', `Edição: ${toSave.title}`);
+        const updated = await ProgramsService.getAll();
+        setPublicPrograms(updated);
+        setProgLastSync(new Date());
+      }
+      setProgSaved(true);
+      setTimeout(() => setProgSaved(false), 3000);
+    } catch (e) {
+      console.error('[ServicesPage] Erro ao salvar programa:', e);
+      alert('Erro ao salvar o programa. Verifique o console.');
+    } finally {
+      setProgSaving(false);
+    }
+  };
+
+  const handleProgDelete = async (id: string, title: string) => {
+    if (!window.confirm(`Excluir permanentemente "${title}"? Esta ação não pode ser desfeita.`)) return;
+    await ProgramsService.delete(id, title, 'admin');
+    const updated = await ProgramsService.getAll();
+    setPublicPrograms(updated);
+    if (selectedProgId === id) { setSelectedProgId(null); setProgEditMode('list'); }
+  };
+
+  const handleProgDuplicate = async (id: string) => {
+    await ProgramsService.duplicate(id, 'admin');
+    const updated = await ProgramsService.getAll();
+    setPublicPrograms(updated);
+  };
+
+  const handleProgStatus = async (id: string, status: ProgramPublicationStatus) => {
+    await ProgramsService.setStatus(id, status, 'admin');
+    setPublicPrograms(prev => prev.map(p => p.id === id ? { ...p, status, isPublished: status === 'PUBLISHED' } : p));
+  };
+
+  const handleProgReorder = async (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    const copy = [...publicPrograms];
+    const [moved] = copy.splice(fromIdx, 1);
+    copy.splice(toIdx, 0, moved);
+    const withOrder = copy.map((p, i) => ({ ...p, order: i + 1 }));
+    setProgLastSync(new Date());
+    setPublicPrograms(withOrder);
+    await ProgramsService.reorder(withOrder.map(p => p.id!).filter(Boolean), 'admin');
+  };
+
+  const handleProgDragStart = (idx: number) => { progDragIdx.current = idx; };
+  const handleProgDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setProgDragOver(idx); };
+  const handleProgDrop = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    if (progDragIdx.current !== null) handleProgReorder(progDragIdx.current, targetIdx);
+    progDragIdx.current = null;
+    setProgDragOver(null);
+  };
+  const handleProgDragEnd = () => { progDragIdx.current = null; setProgDragOver(null); };
+
+  const filteredPrograms = publicPrograms.filter(p => {
+    const q = progSearch.toLowerCase();
+    const matchSearch = !q || p.title.toLowerCase().includes(q) || p.slug.includes(q) || (p.category || '').toLowerCase().includes(q) || (p.thematicArea || '').toLowerCase().includes(q);
+    const matchStatus = progStatusFilter === 'ALL' || p.status === progStatusFilter;
+    const matchCategory = progCategoryFilter === 'ALL' || p.category === progCategoryFilter;
+    return matchSearch && matchStatus && matchCategory;
+  });
+
+  // Categorias únicas presentes na lista para o filtro
+  const uniqueCategories = Array.from(new Set(publicPrograms.map(p => p.category).filter(Boolean))) as string[];
+
   const filteredPartnersList = partnersList.filter(p => {
     const matchSearch = !partnerSearch ||
       p.name.toLowerCase().includes(partnerSearch.toLowerCase()) ||
@@ -334,7 +475,6 @@ export const ServicesPage: React.FC = () => {
     <div style={{ maxWidth: 1150, margin: '0 auto', padding: '12px 0' }}>
       <SaveBar saving={saving} saved={saved} onSave={handleSave} title="Editor → Serviços & Programas → Parcerias" />
 
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -354,7 +494,6 @@ export const ServicesPage: React.FC = () => {
         />
       )}
 
-      {/* Tabs */}
       <div style={{ display: 'flex', gap: 6, borderBottom: '1px solid #e5e7eb', marginBottom: 24, overflowX: 'auto' }}>
         {tabs.map(t => (
           <button
@@ -372,67 +511,523 @@ export const ServicesPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Tab: Portfólio de Programas */}
       {activeTab === 'portafolio' && (
         <div style={{ display: 'grid', gap: 20 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
-            {programs.map(prog => (
-              <div
-                key={prog.id}
-                style={{
-                  background: 'white', border: '1px solid #e5e7eb', borderRadius: 14, padding: 20,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                    <span style={{ fontSize: 24 }}>{prog.iconEmoji}</span>
-                    <span style={{
-                      background: `${STAGE_COLORS[prog.stage]}18`, color: STAGE_COLORS[prog.stage],
-                      border: `1px solid ${STAGE_COLORS[prog.stage]}40`, borderRadius: 6,
-                      padding: '2px 8px', fontSize: 11, fontWeight: 700
-                    }}>
-                      {STAGE_LABELS[prog.stage]}
-                    </span>
-                  </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 900, color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Layers size={20} color="#d97706" /> Programas — Site Público
+              </h2>
+              <p style={{ fontSize: 12, color: '#6b7280', margin: '3px 0 0 0' }}>
+                Gerencie os programas exibidos na seção &quot;Projetos em Campo&quot; do site institucional (coleção: <code style={{ background: '#f3f4f6', padding: '1px 5px', borderRadius: 4 }}>programs</code>)
+              </p>
+              {progLastSync && (
+                <p style={{ fontSize: 10, color: '#9ca3af', margin: '2px 0 0 0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <RefreshCw size={9} />
+                  Sincronizado com o site: {progLastSync.toLocaleTimeString('pt-BR')}
+                </p>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {progEditMode !== 'list' && (
+                <button onClick={() => { setProgEditMode('list'); setProgDraft({}); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  ← Voltar
+                </button>
+              )}
+              {progEditMode === 'list' && (
+                <button onClick={handleProgNew}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#16a34a', color: 'white', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  <Plus size={14} /> Novo Programa
+                </button>
+              )}
+              {progEditMode !== 'list' && (
+                <button onClick={handleProgSave} disabled={progSaving}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: progSaved ? '#16a34a' : '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: progSaving ? 'not-allowed' : 'pointer', opacity: progSaving ? 0.7 : 1 }}>
+                  {progSaving ? 'Salvando...' : progSaved ? '✓ Salvo' : 'Salvar Programa'}
+                </button>
+              )}
+            </div>
+          </div>
 
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#111827', margin: '0 0 6px 0' }}>{prog.title}</h3>
-                  <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5, margin: '0 0 16px 0' }}>{prog.summary}</p>
-
-                  {/* ODS Badges */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                    {prog.ods?.map(o => (
-                      <span key={o} style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
-                        {o}
-                      </span>
-                    ))}
-                  </div>
+          {progEditMode === 'list' && (
+            <div style={{ display: 'grid', gap: 16 }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+                  <Search size={14} color="#9ca3af" style={{ position: 'absolute', left: 10, top: 10 }} />
+                  <input type="text" value={progSearch} onChange={e => setProgSearch(e.target.value)}
+                    placeholder="Buscar por título, slug, categoria, área temática..."
+                    style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, boxSizing: 'border-box' }} />
                 </div>
+                <select value={progStatusFilter} onChange={e => setProgStatusFilter(e.target.value as any)}
+                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                  <option value="ALL">Todos os status</option>
+                  <option value="PUBLISHED">🟢 Publicados</option>
+                  <option value="DRAFT">🟡 Rascunhos</option>
+                  <option value="ARCHIVED">⚪ Arquivados</option>
+                </select>
+                <select value={progCategoryFilter} onChange={e => setProgCategoryFilter(e.target.value)}
+                  style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, background: 'white' }}>
+                  <option value="ALL">Todas as categorias</option>
+                  {uniqueCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <span style={{ fontSize: 12, color: '#6b7280', alignSelf: 'center' }}>
+                  {filteredPrograms.length} de {publicPrograms.length} programas
+                </span>
+              </div>
 
-                <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 11, color: '#9ca3af' }}>
-                    SROI: <strong style={{ color: '#16a34a' }}>{prog.sroiRatio ? `${prog.sroiRatio}x` : '4.5x'}</strong>
+              {filteredPrograms.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af' }}>
+                  Nenhum programa encontrado. <button onClick={handleProgNew} style={{ color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>Criar o primeiro?</button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  {filteredPrograms.map((prog, idx) => {
+                    const realIdx = publicPrograms.indexOf(prog);
+                    const isDragOver = progDragOver === realIdx;
+                    const statusColor = prog.status === 'PUBLISHED' ? '#16a34a' : prog.status === 'ARCHIVED' ? '#9ca3af' : '#d97706';
+                    const statusBg = prog.status === 'PUBLISHED' ? '#f0fdf4' : prog.status === 'ARCHIVED' ? '#f9fafb' : '#fffbeb';
+                    return (
+                      <div
+                        key={prog.id || idx}
+                        draggable
+                        onDragStart={() => handleProgDragStart(realIdx)}
+                        onDragOver={e => handleProgDragOver(e, realIdx)}
+                        onDrop={e => handleProgDrop(e, realIdx)}
+                        onDragEnd={handleProgDragEnd}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          background: isDragOver ? '#eff6ff' : statusBg,
+                          border: `2px solid ${isDragOver ? '#2563eb' : statusColor}`,
+                          borderRadius: 12, padding: '12px 16px', transition: 'all 0.15s',
+                        }}
+                      >
+                        <span style={{ cursor: 'grab', color: '#9ca3af', flexShrink: 0 }}><GripVertical size={16} /></span>
+                        {prog.imageUrl ? (
+                          <img src={prog.imageUrl} alt={prog.title} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: 40, height: 40, borderRadius: 8, border: '1px solid #e5e7eb', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                            {prog.iconEmoji || '🎯'}
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {prog.isFeatured && <Star size={12} color="#d97706" style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} />}
+                            {prog.title}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                            #{prog.order} • {prog.slug} {prog.category && `• ${prog.category}`} {prog.isFeatured ? '• ★ Destaque' : ''}
+                          </div>
+                        </div>
+                        <select
+                          value={prog.status || 'DRAFT'}
+                          onChange={e => prog.id && handleProgStatus(prog.id, e.target.value as ProgramPublicationStatus)}
+                          style={{
+                            padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 800, border: 'none', cursor: 'pointer',
+                            background: prog.status === 'PUBLISHED' ? '#dcfce7' : prog.status === 'ARCHIVED' ? '#f3f4f6' : '#fef3c7',
+                            color: prog.status === 'PUBLISHED' ? '#15803d' : prog.status === 'ARCHIVED' ? '#4b5563' : '#b45309',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <option value="PUBLISHED">🟢 PUBLICADO</option>
+                          <option value="DRAFT">🟡 RASCUNHO</option>
+                          <option value="ARCHIVED">⚪ ARQUIVADO</option>
+                        </select>
+                        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                          <button onClick={() => handleProgEdit(prog)} title="Editar"
+                            style={{ padding: '5px 8px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer' }}>
+                            <FileEdit size={13} color="#2563eb" />
+                          </button>
+                          <button onClick={() => prog.id && handleProgDuplicate(prog.id)} title="Duplicar"
+                            style={{ padding: '5px 8px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 6, cursor: 'pointer' }}>
+                            <Copy size={13} color="#b45309" />
+                          </button>
+                          <button onClick={() => prog.id && handleProgDelete(prog.id, prog.title)} title="Excluir"
+                            style={{ padding: '5px 8px', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 6, cursor: 'pointer' }}>
+                            <Trash2 size={13} color="#ef4444" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {(progEditMode === 'edit' || progEditMode === 'create') && (
+            <div style={{ display: 'grid', gridTemplateColumns: progShowPreview ? '1fr 340px' : '1fr', gap: 20, alignItems: 'start' }}>
+              <div style={{ display: 'grid', gap: 16 }}>
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>1. Identificação</legend>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Título do Programa *</label>
+                      <input type="text" value={progDraft.title || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, title: e.target.value }))}
+                        placeholder="Nome completo do programa"
+                        style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 14, fontWeight: 700, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Subtítulo</label>
+                      <input type="text" value={progDraft.subtitle || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, subtitle: e.target.value }))}
+                        placeholder="Subtítulo curto"
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Slug (URL) *</label>
+                      <input type="text" value={progDraft.slug || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') }))}
+                        placeholder="slug-do-programa"
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, fontFamily: 'monospace', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Categoria</label>
+                      <select value={progDraft.category || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, category: e.target.value }))}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, background: 'white', boxSizing: 'border-box' }}>
+                        <option value="">Selecionar...</option>
+                        <option value="Educacao">Educação</option>
+                        <option value="MeioAmbiente">Meio Ambiente</option>
+                        <option value="Cultura">Cultura</option>
+                        <option value="Emancipacao">Emancipação</option>
+                        <option value="DireitosHumanos">Direitos Humanos</option>
+                        <option value="Saude">Saúde</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Área Temática</label>
+                      <input type="text" value={progDraft.thematicArea || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, thematicArea: e.target.value }))}
+                        placeholder="ex: Educação Integral & Inovação"
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Emoji / Ícone</label>
+                      <input type="text" value={progDraft.iconEmoji || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, iconEmoji: e.target.value }))}
+                        placeholder="🎯"
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 20, textAlign: 'center', boxSizing: 'border-box' }} />
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11, color: '#9ca3af' }}>
-                    Orçamento: <strong style={{ color: '#111827' }}>R$ {(prog.totalBudget / 1000).toFixed(0)}k</strong>
+                </fieldset>
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>2. Status & Configuração de Exibição</legend>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Status *</label>
+                      <select value={progDraft.status || 'DRAFT'}
+                        onChange={e => setProgDraft(d => ({ ...d, status: e.target.value as ProgramPublicationStatus, isPublished: e.target.value === 'PUBLISHED' }))}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, background: 'white', boxSizing: 'border-box', fontWeight: 700 }}>
+                        <option value="DRAFT">🟡 Rascunho</option>
+                        <option value="PUBLISHED">🟢 Publicado</option>
+                        <option value="ARCHIVED">⚪ Arquivado</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Ordem de Exibição</label>
+                      <input type="number" min={1} value={progDraft.order || 1}
+                        onChange={e => setProgDraft(d => ({ ...d, order: Number(e.target.value) }))}
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 18 }}>
+                      <input type="checkbox" id="prog-featured" checked={Boolean(progDraft.isFeatured)}
+                        onChange={e => setProgDraft(d => ({ ...d, isFeatured: e.target.checked }))}
+                        style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                      <label htmlFor="prog-featured" style={{ fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+                        ★ Programa em Destaque
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 18 }}>
+                      <input type="checkbox" id="prog-landing" checked={progDraft.showOnLandingPage !== false}
+                        onChange={e => setProgDraft(d => ({ ...d, showOnLandingPage: e.target.checked }))}
+                        style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                      <label htmlFor="prog-landing" style={{ fontSize: 12, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
+                        Exibir na Landing Page
+                      </label>
+                    </div>
                   </div>
+                </fieldset>
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>3. Conteúdo</legend>
+                  <div style={{ display: 'grid', gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Resumo Curto (exibido no card) *</label>
+                      <textarea rows={3} value={progDraft.description || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, description: e.target.value }))}
+                        placeholder="Breve descrição do programa para o card..."
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Descrição Completa</label>
+                      <textarea rows={5} value={progDraft.longDescription || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, longDescription: e.target.value }))}
+                        placeholder="Descrição detalhada do programa (aparece ao expandir o card)..."
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Objetivos</label>
+                        <textarea rows={3} value={progDraft.objectives || ''}
+                          onChange={e => setProgDraft(d => ({ ...d, objectives: e.target.value }))}
+                          placeholder="Objetivos do programa..."
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Metodologia</label>
+                        <textarea rows={3} value={progDraft.methodology || ''}
+                          onChange={e => setProgDraft(d => ({ ...d, methodology: e.target.value }))}
+                          placeholder="Metodologia aplicada..."
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Público-Alvo</label>
+                        <textarea rows={2} value={progDraft.targetAudience || ''}
+                          onChange={e => setProgDraft(d => ({ ...d, targetAudience: e.target.value }))}
+                          placeholder="A quem o programa atende..."
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Resultados Esperados</label>
+                        <textarea rows={2} value={progDraft.expectedResults || ''}
+                          onChange={e => setProgDraft(d => ({ ...d, expectedResults: e.target.value }))}
+                          placeholder="Resultados esperados..."
+                          style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>4. Pilares & Linhas de Atuação</legend>
+                  <div style={{ display: 'grid', gap: 16 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Título dos Pilares</label>
+                      <input type="text" value={progDraft.pillarsTitle || 'Nossos pilares'}
+                        onChange={e => setProgDraft(d => ({ ...d, pillarsTitle: e.target.value }))}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                        Pilares <span style={{ color: '#9ca3af', fontWeight: 400, textTransform: 'none' }}>(um por linha)</span>
+                      </label>
+                      <textarea rows={5} value={(progDraft.pillars || []).join('\n')}
+                        onChange={e => setProgDraft(d => ({ ...d, pillars: e.target.value.split('\n').filter(Boolean) }))}
+                        placeholder="Pilar 1\nPilar 2\nPilar 3"
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Título das Linhas de Atuação</label>
+                      <input type="text" value={progDraft.actionLinesTitle || 'Linhas de atuação'}
+                        onChange={e => setProgDraft(d => ({ ...d, actionLinesTitle: e.target.value }))}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Subtítulo das Linhas</label>
+                      <input type="text" value={progDraft.actionLinesSub || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, actionLinesSub: e.target.value }))}
+                        placeholder="Subtítulo explicativo opcional"
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                        Linhas de Atuação <span style={{ color: '#9ca3af', fontWeight: 400, textTransform: 'none' }}>(uma por linha)</span>
+                      </label>
+                      <textarea rows={5} value={(progDraft.actionLines || []).join('\n')}
+                        onChange={e => setProgDraft(d => ({ ...d, actionLines: e.target.value.split('\n').filter(Boolean) }))}
+                        placeholder="Linha 1\nLinha 2\nLinha 3"
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                    </div>
+                  </div>
+                </fieldset>
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>5. Nosso Compromisso</legend>
+                  <div style={{ display: 'grid', gap: 10 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Título do Compromisso</label>
+                      <input type="text" value={progDraft.commitmentTitle || 'Nosso compromisso'}
+                        onChange={e => setProgDraft(d => ({ ...d, commitmentTitle: e.target.value }))}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Texto do Compromisso</label>
+                      <textarea rows={4} value={progDraft.commitment || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, commitment: e.target.value }))}
+                        placeholder="Compromisso institucional do programa..."
+                        style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                    </div>
+                  </div>
+                </fieldset>
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>6. Indicadores de Impacto</legend>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Métrica</label>
+                      <input type="text" value={progDraft.impactMetric || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, impactMetric: e.target.value }))}
+                        placeholder="ex: Jovens Capacitados"
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Valor do Impacto</label>
+                      <input type="text" value={progDraft.impactValue || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, impactValue: e.target.value }))}
+                        placeholder="ex: 50.000+"
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Tags <span style={{ color: '#9ca3af', fontWeight: 400, textTransform: 'none' }}>(separadas por vírgula)</span></label>
+                      <input type="text" value={(progDraft.tags || []).join(', ')}
+                        onChange={e => setProgDraft(d => ({ ...d, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) }))}
+                        placeholder="Educação, ODS 4, Jovens"
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                  </div>
+                </fieldset>
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>7. Imagens</legend>
+                  <div style={{ display: 'grid', gap: 16 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Imagem Principal</label>
+                      <ImageUploadInput
+                        value={progDraft.imageUrl || ''}
+                        onChange={url => setProgDraft(d => ({ ...d, imageUrl: url }))}
+                        label="Imagem Principal"
+                        hint="Recomendado: 800x600px, WEBP ou JPG. Máx: 10 MB"
+                        folder="programs/main"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Texto Alternativo (ALT) da Imagem Principal</label>
+                      <input type="text" value={progDraft.imageAlt || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, imageAlt: e.target.value }))}
+                        placeholder="Descrição da imagem para acessibilidade"
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: `1px solid ${progDraft.imageUrl && !progDraft.imageAlt ? '#fca5a5' : '#e5e7eb'}`, fontSize: 12, boxSizing: 'border-box' }} />
+                      {progDraft.imageUrl && !progDraft.imageAlt && (
+                        <p style={{ fontSize: 10, color: '#dc2626', margin: '2px 0 0 0' }}>ALT é obrigatório para acessibilidade (WCAG 2.1 AA)</p>
+                      )}
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Banner Institucional (opcional)</label>
+                      <ImageUploadInput
+                        value={progDraft.bannerUrl || ''}
+                        onChange={url => setProgDraft(d => ({ ...d, bannerUrl: url }))}
+                        label="Banner"
+                        hint="Recomendado: 1920x600px. Máx: 10 MB"
+                        folder="programs/banners"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Galeria de Imagens</label>
+                      <ProgramGalleryEditor
+                        images={(progDraft.gallery || []) as GalleryImage[]}
+                        onChange={imgs => setProgDraft(d => ({ ...d, gallery: imgs }))}
+                        folder="programs/gallery"
+                      />
+                    </div>
+                  </div>
+                </fieldset>
+                <ProgramLinkFields
+                  links={{
+                    websiteUrl: progDraft.websiteUrl,
+                    institutionalPageUrl: progDraft.institutionalPageUrl,
+                    auraProjectUrl: progDraft.auraProjectUrl,
+                    documentsUrl: progDraft.documentsUrl,
+                    reportsUrl: progDraft.reportsUrl,
+                    participationFormUrl: progDraft.participationFormUrl,
+                  }}
+                  onChange={links => setProgDraft(d => ({ ...d, ...links }))}
+                />
+                <fieldset style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, margin: 0 }}>
+                  <legend style={{ fontSize: 11, fontWeight: 800, color: '#374151', textTransform: 'uppercase', padding: '0 6px' }}>9. SEO</legend>
+                  <div style={{ display: 'grid', gap: 10 }}>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Título SEO</label>
+                      <input type="text" value={progDraft.seoTitle || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, seoTitle: e.target.value }))}
+                        placeholder="Título para mecanismos de busca (máx 60 caracteres)"
+                        maxLength={60}
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                      <span style={{ fontSize: 10, color: '#9ca3af' }}>{(progDraft.seoTitle || '').length}/60</span>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Meta Descrição</label>
+                      <textarea rows={2} value={progDraft.metaDescription || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, metaDescription: e.target.value.slice(0, 160) }))}
+                        maxLength={160}
+                        placeholder="Descrição para mecanismos de busca (máx 160 caracteres)"
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, resize: 'vertical', boxSizing: 'border-box' }} />
+                      <span style={{ fontSize: 10, color: '#9ca3af' }}>{(progDraft.metaDescription || '').length}/160</span>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Palavras-chave</label>
+                      <input type="text" value={progDraft.keywords || ''}
+                        onChange={e => setProgDraft(d => ({ ...d, keywords: e.target.value }))}
+                        placeholder="educação, jovens, ODS 4 (separadas por vírgula)"
+                        style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12, boxSizing: 'border-box' }} />
+                    </div>
+                  </div>
+                </fieldset>
+                {/* Histórico de Versões — colapsável */}
+                {progEditMode === 'edit' && selectedProgId && (
+                  <CMSVersionHistory
+                    moduleId="programs"
+                    onRestore={(content) => {
+                      const restored = content as Partial<ProgramDataAdmin>;
+                      setProgDraft(prev => ({ ...prev, ...restored }));
+                    }}
+                  />
+                )}
+
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => setProgShowPreview(!progShowPreview)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'white', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    <Eye size={14} /> {progShowPreview ? 'Ocultar Preview' : 'Ver Preview do Card'}
+                  </button>
+                  <button
+                    onClick={() => { setProgEditMode('list'); setProgDraft({}); setProgShowVersions(false); }}
+                    style={{ background: '#f3f4f6', color: '#374151', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleProgSave}
+                    disabled={progSaving}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: progSaved ? '#16a34a' : '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: progSaving ? 'not-allowed' : 'pointer', opacity: progSaving ? 0.7 : 1 }}>
+                    {progSaving ? 'Salvando...' : progSaved ? '✓ Salvo com Sucesso' : 'Salvar Programa'}
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+              {progShowPreview && (
+                <div style={{ position: 'sticky', top: 20 }}>
+                  <ProgramCardPreview data={{
+                    title: progDraft.title || 'Título do Programa',
+                    description: progDraft.description,
+                    imageUrl: progDraft.imageUrl,
+                    imageAlt: progDraft.imageAlt,
+                    iconEmoji: progDraft.iconEmoji,
+                    isFeatured: progDraft.isFeatured,
+                    thematicArea: progDraft.thematicArea,
+                    category: progDraft.category,
+                    auraProjectUrl: progDraft.auraProjectUrl,
+                    ctaLabel: progDraft.ctaLabel,
+                    ctaUrl: progDraft.ctaUrl,
+                  }} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Tab: Parcerias & Seja Parceiro */}
       {activeTab === 'parcerias' && (
         <div style={{ display: 'grid', gap: 24 }}>
-
-          {/* Seção 1: Configuração da Seção "Seja Parceiro" */}
           <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 14, padding: 24 }}>
             <h3 style={{ fontSize: 16, fontWeight: 800, color: '#111827', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Handshake size={20} color="#d97706" /> Configuração da Seção &quot;Seja Parceiro&quot; (Frontend)
             </h3>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16, marginBottom: 16 }}>
               <div>
                 <label style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Badge / Tag da Seção</label>
@@ -447,15 +1042,12 @@ export const ServicesPage: React.FC = () => {
                   placeholder="ex: Construa o Futuro Conosco" />
               </div>
             </div>
-
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>Subtítulo / Texto Introdutório</label>
               <textarea value={partnerSubtitle} onChange={e => setPartnerSubtitle(e.target.value)} rows={2}
                 style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 13, resize: 'vertical' }}
                 placeholder="Descrição introdutória da parceria..." />
             </div>
-
-            {/* Selos de Confiança */}
             <div>
               <label style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Selos de Confiança (Trust Badges)</label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -476,8 +1068,6 @@ export const ServicesPage: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Seção 2: Cards de Benefícios */}
           <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 14, padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
