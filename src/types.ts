@@ -159,7 +159,6 @@ export interface FinancialEntry {
 // --- NEW TYPES FOR FORMS ---
 
 // 6. Collection Type: partner-application
-export type PartnerType = 'Corporativo' | 'Empresarial' | 'Institucional/ONG' | 'Pesquisa/Academia' | 'Individual';
 export type PartnerStatus = 'Novo' | 'Em Análise' | 'Contato Inicial' | 'Rejeitado' | 'Parceria Formalizada';
 
 export interface PartnerApplicationPayload {

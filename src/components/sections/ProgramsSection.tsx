@@ -6,8 +6,30 @@ import { ProgramData } from '../../types';
 interface Props {
   programs: ProgramData[];
   servicesPage?: Record<string, any> | null;
+  isLoading?: boolean;
 }
 
+
+// ── Skeleton de carregamento ────────────────────────────────────────────────
+const ProgramCardSkeleton: React.FC<{ index: number }> = ({ index }) => (
+  <div
+    className="bg-slate-50 rounded-3xl border border-gray-100 overflow-hidden shadow-sm flex flex-col h-full animate-pulse"
+    style={{ animationDelay: `${index * 0.1}s` }}
+    aria-hidden="true"
+  >
+    <div className="h-52 bg-slate-200" />
+    <div className="p-6 md:p-8 flex flex-col flex-grow gap-4">
+      <div className="h-6 bg-slate-200 rounded-lg w-3/4" />
+      <div className="h-4 bg-slate-100 rounded-lg w-full" />
+      <div className="h-4 bg-slate-100 rounded-lg w-5/6" />
+      <div className="mt-auto flex gap-2">
+        <div className="flex-1 h-10 bg-slate-200 rounded-xl" />
+      </div>
+    </div>
+  </div>
+);
+
+// ── Card do Programa ────────────────────────────────────────────────────────
 const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView: boolean }> = ({
   program: p,
   index,
@@ -237,7 +259,7 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
   );
 };
 
-export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage }) => {
+export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage, isLoading = false }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
   const sectionBadge = servicesPage?.sectionBadge || 'O Que Fazemos';
@@ -251,7 +273,8 @@ export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage }
     .filter(p => p && p.isPublished)
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  if (publishedPrograms.length === 0) return null;
+  // Enquanto carrega, mostra skeleton; se vazio e já carregou, oculta a seção
+  if (!isLoading && publishedPrograms.length === 0) return null;
 
   return (
     <section id="programs" className="py-24 bg-white section-pattern">
@@ -276,14 +299,18 @@ export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage }
           </p>
         </motion.div>
 
-        {/* Programs Grid */}
+        {/* Programs Grid — Skeleton durante carregamento, cards reais quando prontos */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto items-start">
-          {publishedPrograms.map((p, index) => (
-            <ProgramCardItem key={p.id} program={p} index={index} isInView={isInView} />
-          ))}
+          {isLoading && publishedPrograms.length === 0
+            ? Array.from({ length: 3 }).map((_, i) => <ProgramCardSkeleton key={i} index={i} />)
+            : publishedPrograms.map((p, index) => (
+                <ProgramCardItem key={p.id} program={p} index={index} isInView={isInView} />
+              ))
+          }
         </div>
       </div>
     </section>
   );
 };
+
 
