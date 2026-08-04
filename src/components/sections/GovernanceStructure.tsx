@@ -40,7 +40,7 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
   });
 
   return (
-    <section id="governance" className="bg-slate-50 py-24 sm:py-32 section-pattern overflow-hidden">
+    <section id="governance" className="bg-slate-50 py-12 md:py-16 section-pattern overflow-hidden">
       <div className="container mx-auto px-4 md:px-6">
 
         {/* Header */}
@@ -49,7 +49,7 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
           initial={{ opacity: 0, y: 24 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7 }}
-          className="text-center max-w-3xl mx-auto mb-16"
+          className="text-center max-w-3xl mx-auto mb-10"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-100 text-brand-800 text-xs font-bold uppercase tracking-widest rounded-full mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />
