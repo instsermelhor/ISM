@@ -36,23 +36,28 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
     Icon: STAT_ICON_MAP[s.icon] || STAT_ICON_MAP[s.iconKey] || Leaf,
   }));
 
-  const bgImage = data?.heroImage || 'https://picsum.photos/1920/1080?grayscale';
+  // Aceita string vazia como "sem imagem" — sem fallback para URL externa
+  const bgImage = data?.heroImage || heroSection?.backgroundImage || '';
   const motto = data?.motto || 'Sapere Aude';
   const mottoExplanation = data?.mottoExplanation || 'Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual.';
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-secondary-950 flex flex-col">
 
-      {/* Background Image */}
+      {/* Background Image — renderiza apenas se houver URL válida */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={bgImage}
-          alt="Hero Background"
-          className="h-full w-full object-cover opacity-30 animate-slow-zoom"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://picsum.photos/1920/1080?grayscale';
-          }}
-        />
+        {bgImage && (
+          <img
+            src={bgImage}
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover opacity-30 animate-slow-zoom"
+            onError={(e) => {
+              // Oculta a tag em vez de carregar placeholder externo
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-secondary-950/70 via-secondary-900/60 to-secondary-950" />
         <div className="absolute inset-0 bg-gradient-to-r from-secondary-950/40 via-transparent to-secondary-950/20" />
       </div>
