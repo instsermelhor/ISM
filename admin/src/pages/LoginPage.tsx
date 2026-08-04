@@ -392,7 +392,7 @@ export const LoginPage: React.FC = () => {
               </span>
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 15, lineHeight: 1.7, marginBottom: 48 }}>
-              Gerencie todo o conteúdo do site, acompanhe métricas de impacto e mantenha a transparência quântica do Instituto.
+              Gerencie todo o conteúdo do site, acompanhe métricas de impacto e mantenha a integridade e a transparência institucional do Instituto.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
