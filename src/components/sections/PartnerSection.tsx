@@ -250,7 +250,7 @@ export const PartnerSection: React.FC<PartnerSectionProps> = ({
       )}
 
       {/* ── Seção de Parceria (CTA + formulário) ────────────────────────── */}
-      <section id="partner" className="py-24 bg-white section-pattern overflow-hidden">
+      <section id="partner" className="py-12 md:py-16 bg-white section-pattern overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row gap-16 xl:gap-24 items-start">
 
