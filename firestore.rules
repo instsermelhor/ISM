@@ -360,5 +360,7 @@ function isValidBlogPost(data) {
 function isValidPartner(data) {
   return data.keys().hasAll(['name', 'isPublished'])
     && data.name is string && data.name.size() > 0 && data.name.size() <= 200
-    && data.isPublished is bool;
+    && data.isPublished is bool
+    && (!('websiteUrl' in data) || data.websiteUrl == null || data.websiteUrl == '' || (data.websiteUrl is string && data.websiteUrl.matches('^https://.*')))
+    && (!('order' in data) || data.order is int || data.order is number);
 }
