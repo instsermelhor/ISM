@@ -16,7 +16,7 @@ export const ValuesSection: React.FC<Props> = ({ values = [] }) => {
   if (safeValues.length === 0) return null;
 
   return (
-    <section id="values" className="py-24 bg-slate-50 section-pattern">
+    <section id="values" className="py-12 md:py-16 bg-slate-50 section-pattern">
       <div className="container mx-auto px-4 md:px-6">
         <motion.div
           ref={ref}
