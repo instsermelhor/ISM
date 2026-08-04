@@ -278,10 +278,10 @@ export const InstitutionalFirestoreService = {
    * Salva a coleção de programas e serviços (lida pelo site principal).
    * Coleção: services_page (doc "main" com metadados) + programs (subcoleção).
    */
-  async saveServicesPage(data: {
-    sectionBadge: string;
-    sectionTitle: string;
-    sectionSubtitle: string;
+   async saveServicesPage(data: {
+    sectionBadge?: string;
+    sectionTitle?: string;
+    sectionSubtitle?: string;
     transparencyIntro?: string;
     transparencyDocuments?: any[];
     financialSlices?: any[];
@@ -290,9 +290,15 @@ export const InstitutionalFirestoreService = {
     partnerBadge?: string;
     partnerTitle?: string;
     partnerSubtitle?: string;
+    partnerDescription?: string;
     partnerBenefits?: any[];
     trustBadges?: string[];
-    programs: Array<{
+    partnerBannerUrl?: string;
+    partnerVideoUrl?: string;
+    partnerCtaLabel?: string;
+    partnerCtaUrl?: string;
+    partnerCtaTarget?: string;
+    programs?: Array<{
       id: string; order: number; title: string; slug: string;
       description: string; longDescription: string; iconEmoji: string;
       imageUrl: string; isPublished: boolean; targetAudience: string;
@@ -301,31 +307,40 @@ export const InstitutionalFirestoreService = {
       linkUrl?: string; linkLabel?: string;
     }>;
   }): Promise<void> {
-    // Salva metadados da seção no documento principal
+    const payload: Record<string, unknown> = {
+      updatedAt: serverTimestamp()
+    };
+    if (data.sectionBadge !== undefined) payload.sectionBadge = data.sectionBadge;
+    if (data.sectionTitle !== undefined) payload.sectionTitle = data.sectionTitle;
+    if (data.sectionSubtitle !== undefined) payload.sectionSubtitle = data.sectionSubtitle;
+    if (data.transparencyIntro !== undefined) payload.transparencyIntro = data.transparencyIntro;
+    if (data.transparencyDocuments !== undefined) payload.transparencyDocuments = data.transparencyDocuments;
+    if (data.financialSlices !== undefined) payload.financialSlices = data.financialSlices;
+    if (data.efficiencyPct !== undefined) payload.efficiencyPct = data.efficiencyPct;
+    if (data.integrityPillars !== undefined) payload.integrityPillars = data.integrityPillars;
+    if (data.partnerBadge !== undefined) payload.partnerBadge = data.partnerBadge;
+    if (data.partnerTitle !== undefined) payload.partnerTitle = data.partnerTitle;
+    if (data.partnerSubtitle !== undefined) payload.partnerSubtitle = data.partnerSubtitle;
+    if (data.partnerDescription !== undefined) payload.partnerDescription = data.partnerDescription;
+    if (data.partnerBenefits !== undefined) payload.partnerBenefits = data.partnerBenefits;
+    if (data.trustBadges !== undefined) payload.trustBadges = data.trustBadges;
+    if (data.partnerBannerUrl !== undefined) payload.partnerBannerUrl = data.partnerBannerUrl;
+    if (data.partnerVideoUrl !== undefined) payload.partnerVideoUrl = data.partnerVideoUrl;
+    if (data.partnerCtaLabel !== undefined) payload.partnerCtaLabel = data.partnerCtaLabel;
+    if (data.partnerCtaUrl !== undefined) payload.partnerCtaUrl = data.partnerCtaUrl;
+    if (data.partnerCtaTarget !== undefined) payload.partnerCtaTarget = data.partnerCtaTarget;
+
     await setDoc(
       doc(db, 'services_page', 'main'),
-      {
-        sectionBadge: data.sectionBadge,
-        sectionTitle: data.sectionTitle,
-        sectionSubtitle: data.sectionSubtitle,
-        transparencyIntro: data.transparencyIntro || '',
-        transparencyDocuments: data.transparencyDocuments || [],
-        financialSlices: data.financialSlices || [],
-        efficiencyPct: data.efficiencyPct !== undefined ? data.efficiencyPct : 90,
-        integrityPillars: data.integrityPillars || [],
-        partnerBadge: data.partnerBadge || '',
-        partnerTitle: data.partnerTitle || '',
-        partnerSubtitle: data.partnerSubtitle || '',
-        partnerBenefits: data.partnerBenefits || [],
-        trustBadges: data.trustBadges || [],
-        updatedAt: serverTimestamp()
-      },
+      payload,
       { merge: true }
     );
-    // Upsert de cada programa individualmente (preserva os que não foram alterados)
-    for (const p of data.programs) {
-      const { id, ...rest } = p;
-      await setDoc(doc(db, 'programs', id), { ...rest, updatedAt: serverTimestamp() }, { merge: true });
+
+    if (data.programs && data.programs.length > 0) {
+      for (const p of data.programs) {
+        const { id, ...rest } = p;
+        await setDoc(doc(db, 'programs', id), { ...rest, updatedAt: serverTimestamp() }, { merge: true });
+      }
     }
   },
 
