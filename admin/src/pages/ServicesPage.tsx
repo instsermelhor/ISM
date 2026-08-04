@@ -3,7 +3,7 @@ import {
   FolderKanban, Plus, Trash2, Copy, Search,
   BarChart2, Target, DollarSign, Activity, Handshake,
   ArrowUp, ArrowDown, Globe, Eye, EyeOff,
-  Image as ImageIcon, Instagram, Facebook, Linkedin, Youtube, Twitter,
+  Image as ImageIcon, Share2,
   Link2, Star, ChevronDown, ChevronUp, X, GripVertical
 } from 'lucide-react';
 import { SaveBar } from '../components/ui/SaveBar';
@@ -790,11 +790,11 @@ export const ServicesPage: React.FC = () => {
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
                             {[
                               { key: 'websiteUrl' as const, label: 'Site Oficial *', icon: <Globe size={13} />, placeholder: 'https://site.com.br', required: true },
-                              { key: 'instagramUrl' as const, label: 'Instagram', icon: <Instagram size={13} />, placeholder: 'https://instagram.com/parceiro' },
-                              { key: 'facebookUrl' as const, label: 'Facebook', icon: <Facebook size={13} />, placeholder: 'https://facebook.com/parceiro' },
-                              { key: 'linkedinUrl' as const, label: 'LinkedIn', icon: <Linkedin size={13} />, placeholder: 'https://linkedin.com/company/parceiro' },
-                              { key: 'youtubeUrl' as const, label: 'YouTube', icon: <Youtube size={13} />, placeholder: 'https://youtube.com/@parceiro' },
-                              { key: 'twitterUrl' as const, label: 'X (Twitter)', icon: <Twitter size={13} />, placeholder: 'https://x.com/parceiro' },
+                              { key: 'instagramUrl' as const, label: 'Instagram', icon: <Share2 size={13} />, placeholder: 'https://instagram.com/parceiro' },
+                              { key: 'facebookUrl' as const, label: 'Facebook', icon: <Share2 size={13} />, placeholder: 'https://facebook.com/parceiro' },
+                              { key: 'linkedinUrl' as const, label: 'LinkedIn', icon: <Link2 size={13} />, placeholder: 'https://linkedin.com/company/parceiro' },
+                              { key: 'youtubeUrl' as const, label: 'YouTube', icon: <Share2 size={13} />, placeholder: 'https://youtube.com/@parceiro' },
+                              { key: 'twitterUrl' as const, label: 'X (Twitter)', icon: <Share2 size={13} />, placeholder: 'https://x.com/parceiro' },
                             ].map(field => (
                               <div key={field.key}>
                                 <label style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
