@@ -19,11 +19,11 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
   const badge = donationData?.badge || 'Apoie Agora';
-  const subtitle = donationData?.subtitle || 'Sua doação não é apenas um ato de caridade; é um investimento direto na transformação sistêmica.';
+  const subtitle = donationData?.subtitle || 'Sua doação fortalece diretamente programas de transformação social, educacional e ambiental com impacto mensurável.';
   const benefits = donationData?.benefits?.length ? donationData.benefits : [
-    'Financiamento de bolsas para jovens líderes climáticos.',
-    'Proteção de biomas através de tecnologia de monitoramento via satélite.',
-    'Independência total de verbas governamentais.'
+    'Financiamento de bolsas e programas educacionais para jovens em vulnerabilidade.',
+    'Proteção e restauração de biomas com envolvimento comunitário e apoio técnico.',
+    'Sustentabilidade financeira e gestão transparente de recursos.'
   ];
 
   const renderTitle = () => {
