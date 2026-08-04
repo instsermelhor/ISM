@@ -85,24 +85,6 @@ export const PartnersPage: React.FC = () => {
       for (const part of partners) {
         await PartnersEnterpriseService.savePartner(part);
       }
-      // Sincroniza parceiros ativos com a coleção `partners` lida pelo site público
-      const { PublishedPartnersService } = await import('../services/publishedPartnersService');
-      const publishedList = partners.filter(p => p.status === 'ATIVO');
-      if (publishedList.length > 0) {
-        for (let i = 0; i < publishedList.length; i++) {
-          const p = publishedList[i];
-          await PublishedPartnersService.create({
-            order: i + 1,
-            name: p.companyName,
-            category: 'ESTRATEGICO',
-            logoUrl: p.logoUrl || 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=300&q=80',
-            websiteUrl: p.websiteUrl || '#',
-            description: p.notes || '',
-            isPublished: true,
-            tier: 'TIER_1',
-          });
-        }
-      }
       await CMSVersionService.saveDraft('partners', { partners } as unknown as Record<string, unknown>, 'admin', 'Atualização Módulo de Parceiros');
       autosave.clearSaved();
       setSaved(true);
