@@ -13,21 +13,21 @@ interface Props {
 const networkCards = [
   {
     Icon: Globe,
-    title: 'Parcerias Nível Tier 1',
+    title: 'Parcerias Acadêmicas e Multilaterais',
     description:
-      'Trabalhamos com universidades de pesquisa de ponta, think tanks globais e agências multilaterais para co-desenvolver e validar a Metodologia M-IS.',
+      'Colaboramos com universidades de pesquisa, centros de excelência e agências multilaterais para desenvolver e validar metodologias de impacto social baseadas em evidências.',
   },
   {
     Icon: Building,
-    title: 'Apoio Corporativo Estratégico',
+    title: 'Parcerias Corporativas com Alinhamento ESG',
     description:
-      'Alianças baseadas na excelência ESG. Exigimos que nossos parceiros demonstrem liderança na neutralidade de carbono e na inclusão social.',
+      'Priorizamos parceiros corporativos que demonstrem compromisso com práticas ESG, inclusão social e responsabilidade socioambiental em suas operações.',
   },
   {
     Icon: ArrowRightLeft,
-    title: 'Intercâmbio de Conhecimento',
+    title: 'Intercâmbio com Organizações de Referência',
     description:
-      'Programas de intercâmbio com as melhores ONGs do mundo, garantindo práticas na fronteira do conhecimento e eficácia operacional.',
+      'Programas de cooperação com organizações da sociedade civil nacionais e internacionais para compartilhar conhecimento, boas práticas e metodologias de inovação social.',
   },
 ];
 
@@ -67,10 +67,10 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
             </div>
             <h2 className="text-4xl md:text-5xl font-black mb-5 leading-tight">
               Rede de Colaboração{' '}
-              <span className="text-gradient-brand">de Elite</span>
+              <span className="text-gradient-brand">Estratégica</span>
             </h2>
             <p className="text-secondary-300 text-lg leading-relaxed max-w-2xl mx-auto">
-              {pageData?.networkIntro || 'O Instituto Ser Melhor reconhece que a excelência não é alcançada no isolamento. Nossa Rede de Colaboração é um ecossistema seletivo de stakeholders globais.'}
+              {pageData?.networkIntro || 'O Instituto Ser Melhor reconhece que o impacto sustentável se constrói em parceria. Nosso Ecossistema Colaborativo Estratégico reúne organizações nacionais e internacionais comprometidas com o desenvolvimento sustentável e a inovação social.'}
             </p>
           </motion.div>
 
@@ -221,7 +221,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
                 </div>
                 <p className="text-sm text-secondary-300 italic mb-2">"Ousa Saber" ou "Ousa ser sábio".</p>
                 <p className="text-xs text-secondary-400 leading-relaxed">
-                  Reflete nosso Valor de Excelência Inflexível e a importância da Educação Transformadora. O lema posiciona o Instituto como promotor da autossuficiência intelectual e moral.
+                  Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.
                 </p>
               </div>
             </div>
