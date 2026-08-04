@@ -198,6 +198,17 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // 7a. REDES SOCIAIS — Colecção dinâmica ilimitada
+    // ─────────────────────────────────────────────────────────────────────────
+
+    match /social_networks/{docId} {
+      // Leitura pública somente das redes activas; editor lê todas
+      allow read: if resource.data.isActive == true || isEditor();
+      allow create, update: if isEditor() && isValidSocialNetwork(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // 8. SISTEMA — CMS Versions, Audit Logs, Beneficiários, etc.
     //    Acesso interno somente
     // ─────────────────────────────────────────────────────────────────────────
@@ -363,4 +374,15 @@ function isValidPartner(data) {
     && data.isPublished is bool
     && (!('websiteUrl' in data) || data.websiteUrl == null || data.websiteUrl == '' || (data.websiteUrl is string && data.websiteUrl.matches('^https://.*')))
     && (!('order' in data) || data.order is int || data.order is number);
+}
+
+// ── Redes Sociais ────────────────────────────────────────────────────────────
+
+function isValidSocialNetwork(data) {
+  return data.keys().hasAll(['platform', 'name', 'url', 'order', 'isActive'])
+    && data.platform is string && data.platform.size() > 0 && data.platform.size() <= 50
+    && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+    && data.url is string && data.url.size() > 0 && data.url.size() <= 500
+    && data.order is number && data.order >= 0
+    && data.isActive is bool;
 }
