@@ -347,6 +347,10 @@ function App() {
   // Coleções — usa realtime quando disponível, cai no mock/fallback do data.ts
   const activeMetrics   = realtimeMetrics.length     > 0 ? realtimeMetrics   : [];
   const activePillars   = realtimePillars.length     > 0 ? realtimePillars   : [];
+
+  // ── NOTE: métricas e pilares usam apenas realtime (Firestore onSnapshot).
+  // O fallback definitivo fica nos DEFAULT_METRICS / DEFAULT_PILLARS dentro dos próprios componentes.
+  // Para ambientes sem Firebase, os componentes exibem seus dados hardcoded internos.
   const activeValues    = realtimeValueBlocks.length  > 0 ? realtimeValueBlocks  : (data?.valueBlocks ?? []);
   const activeGovInst   = realtimeGovInstances.length > 0 ? realtimeGovInstances : (data?.governanceInstances ?? []);
   const activeGovMem    = realtimeGovMembers.length   > 0 ? realtimeGovMembers   : (data?.governanceMembers ?? []);
