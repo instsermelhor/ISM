@@ -65,7 +65,7 @@ const mockPageResponse: StrapiSingleResponse<InstitutionalPageAttributes> = {
       governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle, deliberação e prestação de contas, estruturada para garantir a perpetuidade da missão institucional, a transparência, a integridade, a conformidade e a máxima eficiência na gestão e na alocação dos recursos.",
       transparencyIntro: "Garantimos acesso público e auditado às nossas demonstrações financeiras e relatórios de impacto. Operamos com padrões de transparência institucional compatíveis com as exigências legais e as melhores práticas internacionais de prestação de contas.",
       logoImage: "/logo-ism.png",
-      heroImage: "https://picsum.photos/1920/1080?grayscale",
+      heroImage: "",  // sem fallback externo — Firestore é a fonte de verdade
       logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso compromisso com o Desenvolvimento Sustentável Integral. O arco exterior amarelo simboliza o ciclo da prosperidade e a natureza regenerativa de nosso trabalho.",
       motto: "Sapere Aude",
       mottoExplanation: "Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.",
@@ -171,12 +171,10 @@ const mockTimelineMilestonesResponse: StrapiCollectionResponse<TimelineMilestone
   meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 8 } }
 };
 
+// membros são gerenciados exclusivamente pelo Firestore (governance_members)
 const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> = {
-  data: [
-    { id: 1, attributes: { name: "Rikardo Ribeiro", role: "Presidente do CD", type: "board", bio: "Especialista em Governança Corporativa, ESG e Compliance. Atua na liderança do Conselho Deliberativo, orientando a supervisão estratégica, a gestão de riscos e a garantia da integridade ética da Entidade.", imageUrl: "https://picsum.photos/200/200?random=1" } },
-    { id: 2, attributes: { name: "Rikardo Ribeiro", role: "CEO", type: "executive", bio: "Idealizador do Instituto Ser Melhor. Conduz a visão estratégica e a expansão global da organização, integrando inovação educacional, justiça socioambiental e soluções sistêmicas de alto impacto", imageUrl: "https://picsum.photos/200/200?random=3" } },
-  ],
-  meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 2 } }
+  data: [],
+  meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 0 } }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
