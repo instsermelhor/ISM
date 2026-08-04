@@ -78,7 +78,7 @@ export interface GovernanceMemberData {
   id?: string;
   name: string;
   role: string;
-  type: 'board' | 'executive' | 'advisory';
+  type: 'board' | 'executive' | 'advisory' | 'fiscal';
   bio: string;
   imageUrl: string;
 }
