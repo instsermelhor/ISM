@@ -43,7 +43,7 @@ const DEFAULT_INTEGRITY_PILLARS = [
   {
     Icon: Megaphone,
     title: 'Canal de Integridade',
-    body: 'Canal de Denúncias operado por empresa terceirizada independente. Garantia absoluta de anonimato e imparcialidade na apuração de desvios do Código de Conduta.',
+    body: 'Canal de Denúncias operado por empresa terceirizada independente. Garantia de sigilo, anonimato e imparcialidade na apuração de desvios do Código de Conduta.',
     cta: { label: 'Acessar Ouvidoria', href: 'mailto:ouvidoria@institutosermelhor.org' },
   },
   {
@@ -149,7 +149,7 @@ export const TransparencyReport: React.FC<Props> = ({
           </div>
           <div className="flex flex-col gap-2.5 shrink-0">
             {[
-              { Icon: Lock,  label: 'Auditoria: Tier 1 (Big Four)' },
+              { Icon: Lock,  label: 'Auditoria: Independente (Big Four)' },
               { Icon: Scale, label: 'Normas: IFRS / CPC' },
             ].map(({ Icon, label }) => (
               <div key={label} className="glass-dark flex items-center gap-2.5 px-4 py-2.5 rounded-xl">
