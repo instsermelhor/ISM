@@ -255,8 +255,14 @@ export const InstitutionalFirestoreService = {
   // ── Governance Members ─────────────────────────────────────────────────
 
   async getGovernanceMembers(): Promise<GovernanceMemberData[]> {
-    const snap = await getDocs(collection(db, 'governance_members'));
-    return mapDocs<GovernanceMemberData>(snap);
+    try {
+      const q = query(collection(db, 'governance_members'), orderBy('order'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as GovernanceMemberData));
+    } catch {
+      const snap = await getDocs(collection(db, 'governance_members'));
+      return mapDocs<GovernanceMemberData>(snap);
+    }
   },
 
   async saveGovernanceMember(data: GovernanceMemberData): Promise<string> {
