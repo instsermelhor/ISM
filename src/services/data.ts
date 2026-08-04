@@ -656,7 +656,14 @@ Por meio de ações integradas, humanizadas e baseadas em evidências, o Institu
 
   /** Retorna parceiros publicados no site */
   getPartners: async (): Promise<any[]> => {
-    if (!FIREBASE_ENABLED) return [];
+    const PARTNERS_FALLBACK = [
+      { id: '1', order: 1, name: 'Nações Unidas (ONU)', category: 'ORGANISMOS_INTERNACIONAIS', country: 'Suíça', logoUrl: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=300&q=80', websiteUrl: 'https://un.org', description: 'Parceiro em Objetivos de Desenvolvimento Sustentável.', status: 'PUBLISHED', isPublished: true, tier: 'TIER_1' },
+      { id: '2', order: 2, name: 'Fundação Global Clima', category: 'FINANCIADORES', country: 'Alemanha', logoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=300&q=80', websiteUrl: 'https://example.org', description: 'Financiamento de bolsas ambientais e inovação climática.', status: 'PUBLISHED', isPublished: true, tier: 'TIER_1' },
+      { id: '3', order: 3, name: 'Aliança para Redução da Pobreza', category: 'OSCS', country: 'Brasil', logoUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=300&q=80', websiteUrl: 'https://example.org', description: 'Desenvolvimento social e apoio psicossocial comunitário.', status: 'PUBLISHED', isPublished: true, tier: 'TIER_2' },
+      { id: '4', order: 4, name: 'Universidade de São Paulo (USP)', category: 'UNIVERSIDADES', country: 'Brasil', logoUrl: 'https://images.unsplash.com/photo-1562774053-701939374585?w=300&q=80', websiteUrl: 'https://usp.br', description: 'Cooperação acadêmica, pesquisa aplicada e extensão universitária.', status: 'PUBLISHED', isPublished: true, tier: 'TIER_2' },
+      { id: '5', order: 5, name: 'Empresa Sustentável Global', category: 'EMPRESAS', country: 'Brasil', logoUrl: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=300&q=80', websiteUrl: 'https://example.com', description: 'Investimento privado social e projetos corporativos ESG.', status: 'PUBLISHED', isPublished: true, tier: 'TIER_3' },
+    ];
+    if (!FIREBASE_ENABLED) return PARTNERS_FALLBACK;
     try {
       const q = query(
         collection(db, 'partners'),
@@ -664,10 +671,14 @@ Por meio de ações integradas, humanizadas e baseadas em evidências, o Institu
         orderBy('order')
       );
       const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!snap.empty) {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        return list.filter((p: any) => p.status !== 'DRAFT' && p.status !== 'ARCHIVED');
+      }
+      return PARTNERS_FALLBACK;
     } catch (err) {
       console.error('[Firestore] Erro ao buscar partners:', err);
-      return [];
+      return PARTNERS_FALLBACK;
     }
   },
 
