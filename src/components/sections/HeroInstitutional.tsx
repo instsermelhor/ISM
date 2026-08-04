@@ -20,7 +20,7 @@ const STAT_ICON_MAP: Record<string, React.ElementType> = {
 export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} as InstitutionalPageAttributes, heroSection }) => {
   const eyebrowText = heroSection?.eyebrowText || (data as any)?.eyebrowText || 'Desde 2007 · Transformação Social';
   const heroTitle = heroSection?.title || data?.title || 'Instituto Ser Melhor — Sapere Aude';
-  const heroSubtitle = heroSection?.subtitle || data?.introduction || 'Organização não governamental brasileira, atuamos como catalisadores de transformações sociais, ambientais e educacionais. Reorganizamos práticas e redefinimos o conceito de impacto sistêmico a cada projeto.';
+  const heroSubtitle = heroSection?.subtitle || data?.introduction || 'Somos uma organização não governamental brasileira dedicada a impulsionar transformações educacionais, sociais e ambientais. Nossa trajetória é movida pela busca contínua por redefinir as fronteiras do impacto sistêmico.';
 
   const rawStats = heroSection?.stats && heroSection.stats.length > 0
     ? heroSection.stats
