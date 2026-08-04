@@ -158,7 +158,8 @@ service cloud.firestore {
     }
 
     match /governance_members/{docId} {
-      allow read: if true;
+      // Leitura pública apenas de membros publicados; admin/editor lê todos
+      allow read: if resource.data.isPublished == true || isEditor();
       allow create, update: if isEditor() && isValidGovernanceMember(request.resource.data);
       allow delete: if isAdmin();
     }
