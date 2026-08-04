@@ -33,10 +33,10 @@ interface HeroData {
 const DEFAULT_DATA: HeroData = {
   eyebrowText: 'Desde 2007 · Transformação Social',
   title: 'Instituto Ser Melhor',
-  subtitle: 'Somos uma organização da sociedade civil brasileira que atua como catalisadora de transformações sociais, ambientais, educacionais e culturais, comprometida com a garantia de direitos e o protagonismo das comunidades.',
+  subtitle: 'Organização não governamental brasileira, atuamos como catalisadores de transformações sociais, ambientais e educacionais. Reorganizamos práticas e redefinimos o conceito de impacto sistêmico a cada projeto.',
   heroImageUrl: 'https://picsum.photos/1920/1080?grayscale',
   motto: 'Sapere Aude',
-  mottoExplanation: 'Significa \'Ouse Saber\'. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.',
+  mottoExplanation: 'Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.',
   stats: [
     { id: '1', value: '15+', label: 'Anos de Impacto', icon: '🌿' },
     { id: '2', value: '1M+', label: 'Vidas Impactadas', icon: '👥' },
