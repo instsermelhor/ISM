@@ -151,28 +151,17 @@ export const NavigationEditorPage: React.FC = () => {
             />
           </div>
 
-          <h3 style={{ fontSize: 14, fontWeight: 800, margin: '24px 0 12px 0' }}>Redes Sociais</h3>
-          {footer.socialLinks.map((link, idx) => (
-            <div key={link.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={link.label}
-                disabled
-                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db', background: '#f9fafb' }}
-              />
-              <input
-                type="url"
-                value={link.url}
-                onChange={e => {
-                  const copy = [...footer.socialLinks];
-                  copy[idx].url = e.target.value;
-                  setFooter({ ...footer, socialLinks: copy });
-                }}
-                placeholder="https://..."
-                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db' }}
-              />
-            </div>
-          ))}
+          <div style={{ marginTop: 24, padding: 16, background: '#f0fdf4', borderRadius: 12, border: '1px solid #bbf7d0' }}>
+            <p style={{ fontSize: 13, color: '#15803d', fontWeight: 700, margin: 0 }}>
+              🌐 Gerenciamento Dinâmico de Redes Sociais
+            </p>
+            <p style={{ fontSize: 12, color: '#166534', margin: '4px 0 0 0' }}>
+              As redes sociais (quantidade ilimitada, ordenação, visibilidade no Header/Footer) agora são gerenciadas centralmente em{' '}
+              <a href="/configuracoes?tab=social" style={{ fontWeight: 800, textDecoration: 'underline', color: '#15803d' }}>
+                Configurações do Site → Redes Sociais
+              </a>.
+            </p>
+          </div>
         </div>
       )}
     </div>
