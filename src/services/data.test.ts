@@ -7,14 +7,14 @@ describe('InstitutionalService Unit & Integration Tests', () => {
     expect(pageResponse).toBeDefined();
     expect(pageResponse.data).toBeDefined();
     expect(pageResponse.data.attributes.title).toBe('Instituto Ser Melhor');
-    expect(pageResponse.data.attributes.missionStatement).toContain('Promover a completa emancipação humana');
+    expect(pageResponse.data.attributes.missionStatement).toContain('Promover a emancipação humana');
   });
 
   it('deve listar os blocos de valores/pilares da instituição', async () => {
     const valueBlocks = await InstitutionalService.getValueBlocks();
     expect(valueBlocks).toBeDefined();
     expect(valueBlocks.data.length).toBeGreaterThan(0);
-    expect(valueBlocks.data[0].attributes.name).toBe('Excelência Inflexível');
+    expect(valueBlocks.data[0].attributes.name).toBe('Excelência com Integridade');
   });
 
   it('deve carregar a lista de programas públicos publicados', async () => {
