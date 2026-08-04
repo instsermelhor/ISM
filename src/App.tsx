@@ -115,6 +115,16 @@ function applySeoSettings(seo: Record<string, any>) {
   const ldScript = document.createElement('script');
   ldScript.id = 'schema-org-organization';
   ldScript.type = 'application/ld+json';
+  // sameAs: usa socialLinks do seo_settings/main se disponíveis, caso contrário URLs canônicas do Instituto
+  const sameAsLinks: string[] = (seo.socialLinks && Array.isArray(seo.socialLinks) && seo.socialLinks.length > 0)
+    ? seo.socialLinks.filter((s: any) => s?.url?.startsWith('https://')).map((s: any) => s.url)
+    : [
+        'https://www.instagram.com/instsermelhor',
+        'https://www.facebook.com/institutosermelhor',
+        'https://www.linkedin.com/company/institutosermelhor',
+        'https://x.com/instsermelhor',
+      ];
+
   ldScript.textContent = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'NGO',
@@ -123,13 +133,9 @@ function applySeoSettings(seo: Record<string, any>) {
     url: seo.canonicalUrl || 'https://institutosermelhor.org',
     logo: seo.logoUrl || '/logo-ism.png',
     description: seo.siteDescription || '',
-    foundingDate: '2022',
+    foundingDate: seo.foundingDate || '2007',
     email: seo.contactEmail || 'contato@institutosermelhor.org',
-    sameAs: [
-      'https://instagram.com/institutosermelhor',
-      'https://facebook.com/institutosermelhor',
-      'https://linkedin.com/company/institutosermelhor',
-    ],
+    sameAs: sameAsLinks,
     areaServed: 'BR',
     nonprofitStatus: 'Nonprofit501c3',
   });
@@ -331,7 +337,8 @@ function App() {
     governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle, deliberação e prestação de contas, estruturada para garantir a perpetuidade da missão institucional, a transparência, a integridade, a conformidade e a máxima eficiência na gestão e na alocação dos recursos.",
     transparencyIntro: "Garantimos acesso público e auditado às nossas demonstrações financeiras e relatórios de impacto.",
     logoImage: "/logo-ism.png",
-    heroImage: "https://picsum.photos/1920/1080?grayscale",
+    // heroImage sem fallback externo — o componente trata graciosamente a ausência de imagem
+    heroImage: "",
     motto: "Sapere Aude",
     mottoExplanation: "Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.",
     networkIntro: "O Instituto Ser Melhor reconhece que o impacto sustentável se constrói em parceria. Nosso Ecossistema Colaborativo Estratégico reúne organizações comprometidas com o desenvolvimento sustentável.",
