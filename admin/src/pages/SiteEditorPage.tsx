@@ -163,14 +163,15 @@ export const SiteEditorPage: React.FC = () => {
 
   // Seções primárias (site público)
   const primarySections = [
-    { id: 'hero' as CMSModuleId, title: 'Hero / Home', desc: 'Primeira seção da página. Título, subtítulo, botões de CTA e imagens iniciais.', icon: <Zap size={20} color="#16a34a" />, path: '/site/hero', accentColor: '#16a34a' },
+    { id: 'hero' as CMSModuleId, title: 'Hero / Home', desc: 'Primeira seção da página. Título, subtítulo, botões de CTA e imagens iniciais.', icon: <Zap size={20} color="#16a34a" />, path: '/configuracoes?tab=hero', accentColor: '#16a34a' },
     { id: 'about' as CMSModuleId, title: 'Sobre / Equipe', desc: 'Valores institucionais, linha do tempo, equipe e membros de governança.', icon: <Users size={20} color="#2563eb" />, path: '/site/institucional', accentColor: '#2563eb' },
     { id: 'programs' as CMSModuleId, title: 'Projetos & Programas', desc: 'Programas sociais, estatísticas de impacto e apresentação de projetos.', icon: <Layers size={20} color="#d97706" />, path: '/site/projetos', accentColor: '#d97706' },
     { id: 'donation' as CMSModuleId, title: 'Seção de Doação', desc: 'Metas de doação, chaves Pix, informações bancárias e benefícios.', icon: <Heart size={20} color="#dc2626" />, path: '/site/doacoes', accentColor: '#dc2626' },
-    { id: 'seo' as CMSModuleId, title: 'Site & SEO', desc: 'Título do site, metatags, OpenGraph, JSON-LD e Google Analytics.', icon: <Globe size={20} color="#7c3aed" />, path: '/site/seo', accentColor: '#7c3aed' },
+    { id: 'seo' as CMSModuleId, title: 'Site & SEO', desc: 'Título do site, metatags, OpenGraph, JSON-LD e Google Analytics.', icon: <Globe size={20} color="#7c3aed" />, path: '/configuracoes?tab=seo', accentColor: '#7c3aed' },
     { id: 'hero' as CMSModuleId, title: 'Métricas de Impacto', desc: 'Contadores animados com indicadores de pessoas atendidas e transparência.', icon: <Zap size={20} color="#059669" />, path: '/site/metricas', accentColor: '#059669' },
     { id: 'about' as CMSModuleId, title: 'Pilares Institucionais', desc: 'Educação, Social, Meio Ambiente e Cultura com KPIs e programas.', icon: <Layers size={20} color="#2563eb" />, path: '/site/pilares', accentColor: '#2563eb' },
-    { id: 'seo' as CMSModuleId, title: 'Navegação & Rodapé', desc: 'Menus superiores do Header, links do Footer, telefone e redes sociais.', icon: <Globe size={20} color="#0284c7" />, path: '/site/navegacao', accentColor: '#0284c7' },
+    { id: 'seo' as CMSModuleId, title: 'Navegação & Rodapé', desc: 'Menus superiores do Header, links do Footer e contatos do rodapé.', icon: <Globe size={20} color="#0284c7" />, path: '/site/navegacao', accentColor: '#0284c7' },
+    { id: 'seo' as CMSModuleId, title: 'Configurações Gerais', desc: 'Branding, redes sociais dinâmicas, lema, favicons e conformidade LGPD.', icon: <Settings2 size={20} color="#6366f1" />, path: '/configuracoes', accentColor: '#6366f1' },
   ];
 
   // Contagem de módulos publicados
