@@ -52,7 +52,7 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
   };
 
   return (
-    <section id="donate" className="pt-12 pb-24 relative overflow-hidden">
+    <section id="donate" className="py-12 md:py-16 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-secondary-950 via-secondary-900 to-brand-950" />
       <div className="absolute inset-0 pointer-events-none">
@@ -68,7 +68,7 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
           initial={{ opacity: 0, y: 24 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7 }}
-          className="flex flex-col items-center text-center mb-14"
+          className="flex flex-col items-center text-center mb-10"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-brand-500/15 border border-brand-500/30 rounded-full text-brand-300 font-bold text-xs uppercase tracking-widest mb-5">
             <Heart size={13} fill="currentColor" />
