@@ -11,6 +11,14 @@ interface DonationSectionProps {
     pixKey?: string;
     bankName?: string;
     benefits?: string[];
+    /** Valor total arrecadado (ex: "R$ 12,4M") — configurável no CMS */
+    raisedAmount?: string;
+    /** Meta total (ex: "R$ 16M") — configurável no CMS */
+    goalAmount?: string;
+    /** Ano da meta (ex: 2025) — configurável no CMS */
+    goalYear?: number | string;
+    /** Percentual de progresso em relação à meta (0-100) — configurável no CMS */
+    progressPct?: number;
   } | null;
 }
 
@@ -112,18 +120,30 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
                 <p className="text-xs font-bold font-mono select-all break-all">{donationData.pixKey}</p>
                 {donationData.bankName && <p className="text-[10px] text-secondary-500 mt-1">{donationData.bankName}</p>}
               </div>
-            ) : (
+            ) : donationData?.raisedAmount ? (
+              /* Bloco de progresso — só renderiza quando os dados vierem do CMS */
               <div className="relative z-10 mt-8">
                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
-                  <p className="text-xs text-secondary-400 uppercase font-bold tracking-widest mb-1">Total Arrecadado (2025)</p>
-                  <p className="text-3xl font-black text-brand-400 mb-3">R$ 12,4M</p>
-                  <div className="w-full bg-secondary-800 h-2 rounded-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-brand-500 to-brand-400 h-full rounded-full" style={{ width: '75%' }} />
-                  </div>
-                  <p className="text-xs text-secondary-500 mt-2">75% da meta 2025</p>
+                  <p className="text-xs text-secondary-400 uppercase font-bold tracking-widest mb-1">
+                    Total Arrecadado{donationData.goalYear ? ` (${donationData.goalYear})` : ''}
+                  </p>
+                  <p className="text-3xl font-black text-brand-400 mb-3">{donationData.raisedAmount}</p>
+                  {donationData.goalAmount && (
+                    <>
+                      <div className="w-full bg-secondary-800 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-brand-500 to-brand-400 h-full rounded-full"
+                          style={{ width: `${Math.min(100, donationData.progressPct ?? 75)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-secondary-500 mt-2">
+                        {donationData.progressPct ?? 75}% da meta {donationData.goalYear ?? ''}
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
-            )}
+            ) : null /* sem dados de arrecadação configuráveis — oculta o bloco */}
           </div>
 
           {/* Right Panel: Form */}
