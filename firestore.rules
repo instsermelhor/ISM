@@ -342,10 +342,9 @@ function isValidTimelineMilestone(data) {
 }
 
 function isValidGovernanceMember(data) {
-  return data.keys().hasAll(['name', 'role', 'type'])
+  return data.keys().hasAll(['name', 'role'])
     && data.name is string && data.name.size() > 0 && data.name.size() <= 200
-    && data.role is string && data.role.size() > 0 && data.role.size() <= 200
-    && data.type is string && (data.type == 'board' || data.type == 'executive' || data.type == 'advisory');
+    && data.role is string && data.role.size() > 0 && data.role.size() <= 200;
 }
 
 // ── Blog & Parceiros ─────────────────────────────────────────────────────────
