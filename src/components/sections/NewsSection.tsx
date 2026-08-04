@@ -190,7 +190,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ posts = [] }) => {
       <section
         id="blog"
         aria-label="Notícias e Artigos do Instituto Ser Melhor"
-        className="py-24 bg-secondary-950 relative overflow-hidden"
+        className="py-12 md:py-16 bg-secondary-950 relative overflow-hidden"
       >
         {/* Background pattern */}
         <div className="absolute inset-0 pointer-events-none opacity-20" aria-hidden="true">
@@ -205,7 +205,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ posts = [] }) => {
             initial={{ opacity: 0, y: 24 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7 }}
-            className="text-center mb-16"
+            className="text-center mb-10"
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-500/30 bg-brand-500/10 mb-5 text-xs font-bold uppercase tracking-widest text-brand-300">
               <Newspaper size={14} />
