@@ -140,9 +140,33 @@ export const useRealtimeGovernanceMembers = <T>() =>
 export const useRealtimeTimeline = <T>() =>
   useRealtimeCollection<T>('timeline_milestones', 'year');
 
-/** programs — Programas publicados (ordenado por 'order') */
-export const useRealtimePrograms = <T>() =>
-  useRealtimeCollection<T>('programs', 'order');
+/** programs — Programas publicados em tempo real (filtro server-side por isPublished)
+ * Requer índice composto: programs [isPublished ASC, order ASC]
+ */
+export function useRealtimePrograms<T>(): T[] {
+  const [items, setItems] = useState<T[]>([]);
+
+  useEffect(() => {
+    if (!FIREBASE_ENABLED) return;
+    try {
+      const q = query(
+        collection(db, 'programs'),
+        where('isPublished', '==', true),
+        orderBy('order'),
+      );
+      const unsub = onSnapshot(
+        q,
+        (snap) => setItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as T))),
+        (err) => console.error('[RealtimePrograms]:', err),
+      );
+      return () => unsub();
+    } catch (err) {
+      console.error('[RealtimePrograms] setup error:', err);
+    }
+  }, []);
+
+  return items;
+}
 
 /**
  * blog_posts — Posts publicados em tempo real
