@@ -126,7 +126,7 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
               <div className="absolute -bottom-6 -right-6 w-36 h-36 border border-secondary-100 rounded-full z-0 pointer-events-none" />
 
               <img
-                src="https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?w=800&q=80"
+                src="/images/impacto-global.jpg"
                 alt="Instituto Ser Melhor em ação"
                 className="relative z-10 w-full h-[400px] md:h-[480px] object-cover rounded-3xl shadow-2xl"
                 onError={(e) => {
@@ -149,7 +149,7 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
               {/* Badge superior direito — ajustado para não vazar */}
               <div className="absolute top-5 right-4 z-20 bg-secondary-900 text-white px-4 py-2.5 rounded-xl shadow-xl hidden sm:block">
                 <p className="text-xs font-bold uppercase tracking-widest text-brand-400">Impacto Global</p>
-                <p className="text-xl font-black">1M+ vidas</p>
+                <p className="text-xl font-black">500K+ Vidas Diretas e Indiretas</p>
               </div>
             </div>
 
