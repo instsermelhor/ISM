@@ -113,6 +113,143 @@ export interface PartnerApplicationPayload {
   status: PartnerStatus;
 }
 
+// ── Tipos para Seção Seja Parceiro & Parceiros Publicados ──────────────────────
+export type PartnerPublicationStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export type PartnerCategoryType =
+  | 'GLOBAL'
+  | 'ESTRATEGICO'
+  | 'INSTITUCIONAL'
+  | 'TECNICO'
+  | 'UNIVERSIDADES'
+  | 'EMPRESAS'
+  | 'ORGANISMOS_INTERNACIONAIS'
+  | 'FINANCIADORES'
+  | 'OSCS'
+  | string;
+
+export type PartnerType =
+  | 'CORPORATIVO'
+  | 'ACADEMICO'
+  | 'GOVERNAMENTAL'
+  | 'OSC_ONG'
+  | 'ORGANISMO_INTERNACIONAL'
+  | 'INDIVIDUAL'
+  | string;
+
+/**
+ * Modelo unificado de parceiro — utilizado pelo Site Institucional e pelo Painel Administrativo.
+ * Todos os campos de exibição, identidade visual, links e auditoria estão consolidados aqui.
+ */
+export interface PublishedPartner {
+  // ── Identificação ─────────────────────────────────────────────────────────
+  id?: string;
+  /** Nome oficial / razão social */
+  name: string;
+  /** Nome fantasia (opcional) */
+  fantasyName?: string;
+  /** Categoria da parceria */
+  category: PartnerCategoryType;
+  /** Tipo de parceiro */
+  partnerType?: PartnerType;
+  /** Área de atuação */
+  area?: string;
+
+  // ── Informações Institucionais ────────────────────────────────────────────
+  /** Descrição resumida (até 250 caracteres) */
+  description?: string;
+  /** Descrição completa */
+  fullDescription?: string;
+  /** Missão da parceria (opcional) */
+  missionStatement?: string;
+  /** País de origem */
+  country?: string;
+  /** Estado */
+  state?: string;
+  /** Cidade */
+  city?: string;
+
+  // ── Identidade Visual ─────────────────────────────────────────────────────
+  /** URL da logomarca (PNG/JPG/WEBP) */
+  logoUrl?: string;
+  /** Texto alternativo da logomarca (obrigatório para WCAG 2.1 AA) */
+  logoAlt?: string;
+  /** URL do logotipo vetorial (SVG) */
+  logoSvgUrl?: string;
+  /** URL da imagem institucional */
+  institutionalImageUrl?: string;
+
+  // ── Links ─────────────────────────────────────────────────────────────────
+  /** Site oficial (obrigatoriamente https://) */
+  websiteUrl?: string;
+  /** Instagram */
+  instagramUrl?: string;
+  /** Facebook */
+  facebookUrl?: string;
+  /** LinkedIn */
+  linkedinUrl?: string;
+  /** YouTube */
+  youtubeUrl?: string;
+  /** X (antigo Twitter) */
+  twitterUrl?: string;
+
+  // ── Informações da Parceria ───────────────────────────────────────────────
+  /** Data de início da parceria (YYYY-MM-DD) */
+  partnershipStartDate?: string;
+  /** Objetivos da parceria */
+  objectives?: string;
+  /** Resultados esperados */
+  expectedResults?: string;
+  /** IDs dos projetos vinculados */
+  linkedProjectIds?: string[];
+
+  // ── Configuração de Exibição ──────────────────────────────────────────────
+  /** Ordem de exibição */
+  order: number;
+  /** Parceiro em destaque */
+  isFeatured?: boolean;
+  /** Exibir na Landing Page */
+  showOnLandingPage?: boolean;
+  /** Exibir na página institucional */
+  showInstitutionalPage?: boolean;
+  /** Status de publicação */
+  status?: PartnerPublicationStatus;
+  /** Flag de publicação (derivado de status) */
+  isPublished?: boolean;
+  /** Nível/tier do parceiro */
+  tier?: 'TIER_1' | 'TIER_2' | 'TIER_3' | string;
+
+  // ── Auditoria ─────────────────────────────────────────────────────────────
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+export interface PartnerBenefit {
+  id: string;
+  order: number;
+  title: string;
+  description: string;
+  icon?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface ServicesPageData {
+  partnerBadge?: string;
+  partnerTitle?: string;
+  partnerSubtitle?: string;
+  partnerDescription?: string;
+  partnerBenefits?: PartnerBenefit[];
+  trustBadges?: string[];
+  partnerBannerUrl?: string;
+  partnerVideoUrl?: string;
+  partnerCtaLabel?: string;
+  partnerCtaUrl?: string;
+  partnerCtaTarget?: '_blank' | '_self';
+  updatedAt?: unknown;
+}
+
 
 // 7. Collection Type: donation-record
 export type DonationType = 'Única' | 'Mensal' | 'Anual';
