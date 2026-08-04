@@ -132,9 +132,36 @@ export const useRealtimeValueBlocks = <T>() =>
 export const useRealtimeGovernanceInstances = <T>() =>
   useRealtimeCollection<T>('governance_instances', 'order');
 
-/** governance_members — Membros dos conselhos (ordenado por 'order') */
-export const useRealtimeGovernanceMembers = <T>() =>
-  useRealtimeCollection<T>('governance_members', 'order');
+/**
+ * governance_members — Membros publicados em tempo real
+ * Filtra por isPublished == true e ordena por order asc (server-side).
+ * Requer índice composto no Firestore: governance_members [isPublished ASC, order ASC]
+ * (índice já presente em firestore.indexes.json)
+ */
+export function useRealtimeGovernanceMembers<T>(): T[] {
+  const [items, setItems] = useState<T[]>([]);
+
+  useEffect(() => {
+    if (!FIREBASE_ENABLED) return;
+    try {
+      const q = query(
+        collection(db, 'governance_members'),
+        where('isPublished', '==', true),
+        orderBy('order'),
+      );
+      const unsub = onSnapshot(
+        q,
+        (snap) => setItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as T))),
+        (err) => console.error('[RealtimeGovernanceMembers]:', err),
+      );
+      return () => unsub();
+    } catch (err) {
+      console.error('[RealtimeGovernanceMembers] setup error:', err);
+    }
+  }, []);
+
+  return items;
+}
 
 /** timeline_milestones — Marcos históricos (ordenado por 'year') */
 export const useRealtimeTimeline = <T>() =>
