@@ -64,7 +64,7 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
   ];
 
   return (
-    <section id="mission" className="py-24 bg-white section-pattern overflow-hidden" ref={sectionRef}>
+    <section id="mission" className="py-12 md:py-16 bg-white section-pattern overflow-hidden" ref={sectionRef}>
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex flex-col lg:flex-row items-center gap-16 xl:gap-24">
 
