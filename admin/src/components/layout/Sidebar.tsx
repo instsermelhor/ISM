@@ -6,7 +6,7 @@ import {
   Mail, Kanban, BarChart2, Activity, HeartPulse,
   Users, Globe, ChevronDown, LogOut, Menu, X, Zap,
   DollarSign, CreditCard, Landmark, Target, UserCheck,
-  Heart, Monitor
+  Heart, Monitor, Settings
 } from 'lucide-react';
 
 interface NavGroup {
@@ -33,6 +33,7 @@ const NAV: NavGroup[] = [
     label: 'Editor do Site',
     items: [
       { to: '/site', label: 'Visão Geral', Icon: Monitor, roles: ['ADMIN', 'EDITOR'] },
+      { to: '/configuracoes', label: 'Configurações do Site', Icon: Settings, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/hero', label: 'Hero / Home', Icon: Zap, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/institucional', label: 'Sobre / Equipe', Icon: Users, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/projetos', label: 'Projetos & Programas', Icon: Layers, roles: ['ADMIN', 'EDITOR'] },
