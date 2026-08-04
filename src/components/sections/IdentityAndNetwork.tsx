@@ -45,7 +45,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
     <section id="identity" className="bg-white">
 
       {/* ── 1. Rede de Colaboração ── */}
-      <div className="relative bg-secondary-950 text-white py-24 overflow-hidden">
+      <div className="relative bg-secondary-950 text-white py-12 md:py-16 overflow-hidden">
         {/* Background decorations */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-900/15 to-transparent" />
@@ -99,7 +99,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
       </div>
 
       {/* ── 2. Símbolo Institucional ── */}
-      <div className="py-24 container mx-auto px-4 md:px-6" ref={symbolRef}>
+      <div className="py-12 md:py-16 container mx-auto px-4 md:px-6" ref={symbolRef}>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={symbolInView ? { opacity: 1, y: 0 } : {}}
