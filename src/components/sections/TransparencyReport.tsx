@@ -36,8 +36,8 @@ interface Props {
 const DEFAULT_INTEGRITY_PILLARS = [
   {
     Icon: UserCheck,
-    title: 'Estrutura Remuneratória',
-    body: 'Membros da Assembleia e dos Conselhos atuam em caráter estritamente voluntário. A remuneração da Diretoria-Executiva segue critérios de mercado e metas de impacto.',
+    title: 'Política de Remuneração e Voluntariado',
+    body: 'Os membros dos Conselhos Estatutários exercem suas funções de forma estritamente voluntária, dedicando sua expertise ao fortalecimento da missão institucional. A remuneração da equipe executiva e técnica segue rigorosos parâmetros do mercado, observando critérios de governança, transparência e desempenho, estando vinculada ao cumprimento de metas de impacto socioambiental.',
     cta: null,
   },
   {
