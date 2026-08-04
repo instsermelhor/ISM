@@ -247,7 +247,7 @@ export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage }
   if (publishedPrograms.length === 0) return null;
 
   return (
-    <section id="programs" className="py-24 bg-white section-pattern">
+    <section id="programs" className="py-12 md:py-16 bg-white section-pattern">
       <div className="container mx-auto px-4 md:px-6">
         {/* Section Header */}
         <motion.div
