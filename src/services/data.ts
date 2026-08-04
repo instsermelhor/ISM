@@ -502,6 +502,7 @@ Por meio de ações integradas, humanizadas e baseadas em evidências, o Institu
         linkLabel: '',
       },
     ];
+    // FALLBACK OFFLINE — utilizado estritamente em ambiente dev sem Firebase
     if (!FIREBASE_ENABLED) return mockPrograms;
     try {
       const q = query(collection(db, 'programs'), orderBy('order'));
@@ -509,10 +510,11 @@ Por meio de ações integradas, humanizadas e baseadas em evidências, o Institu
       if (!snap.empty) {
         return snap.docs.map(d => ({ id: d.id, ...d.data() } as ProgramData));
       }
-      return mockPrograms;
+      // Se Firebase estiver ativo mas a coleção estiver vazia, retorna array vazio (gerenciado via Admin)
+      return [];
     } catch (err) {
       console.error('[Firestore] Erro ao buscar programs:', err);
-      return mockPrograms;
+      return [];
     }
   },
 
