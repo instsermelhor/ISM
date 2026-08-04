@@ -130,7 +130,7 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ pillars: customP
     <section
       id="pillars"
       aria-label="Os 4 Pilares do Instituto Ser Melhor"
-      className="py-24 bg-secondary-950 relative overflow-hidden"
+      className="py-12 md:py-16 bg-secondary-950 relative overflow-hidden"
     >
       {/* Ambient light from active pillar */}
       <div
