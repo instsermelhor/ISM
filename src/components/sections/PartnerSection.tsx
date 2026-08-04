@@ -38,7 +38,7 @@ const DEFAULT_BENEFITS = [
   {
     Icon: Globe,
     title: 'Alcance Global',
-    description: 'Integração à nossa Rede de Colaboração de Elite com parceiros em mais de 20 países.',
+    description: 'Integração ao nosso Ecossistema Colaborativo Estratégico com parceiros em mais de 20 países.',
   },
   {
     Icon: TrendingUp,
@@ -198,7 +198,7 @@ export const PartnerSection: React.FC<PartnerSectionProps> = ({
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-bold uppercase tracking-widest rounded-full mb-4">
                 <Globe size={12} />
-                Rede de Colaboração de Elite
+                Rede de Colaboração Estratégica
               </div>
               <h2 className="text-3xl md:text-4xl font-black text-secondary-900 mb-3 leading-tight">
                 Nossos <span className="text-gradient-brand">Parceiros</span>
@@ -273,7 +273,7 @@ export const PartnerSection: React.FC<PartnerSectionProps> = ({
                 }
               </h2>
               <p className="text-lg text-secondary-500 mb-10 leading-relaxed">
-                {subtitle || 'Buscamos alianças estratégicas com organizações e líderes que compartilham nossa visão de excelência. Junte-se à nossa Rede de Colaboração de Elite e amplifique seu impacto ESG.'}
+                {subtitle || 'Buscamos alianças estratégicas com organizações e líderes comprometidos com o desenvolvimento sustentável. Junte-se ao nosso Ecossistema Colaborativo e amplifique seu impacto ESG.'}
               </p>
 
               {/* Benefits Grid */}
