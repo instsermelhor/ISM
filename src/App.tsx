@@ -325,17 +325,17 @@ function App() {
   // Dados da página institucional — garante objeto plano nunca undefined
   const DEFAULT_PAGE_ATTRS = {
     title: "Instituto Ser Melhor",
-    introduction: "Somos uma organização não-governamental brasileira que atua como catalisadora de transformações sociais e ambientais.",
-    missionStatement: "Promover a completa emancipação humana e o desenvolvimento sustentável integral, atuando como catalisador de transformações sociais, ambientais, educacionais e culturais.",
-    visionStatement: "Ser o fator decisivo na construção de um mundo equitativo, próspero e regenerativo.",
-    governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle e deliberação desenhada para garantir a perpetuidade da Missão.",
-    transparencyIntro: "Garantimos acesso irrestrito e auditado à nossa saúde financeira.",
+    introduction: "Somos uma organização da sociedade civil brasileira que atua como catalisadora de transformações sociais, ambientais, educacionais e culturais, comprometida com a garantia de direitos e o protagonismo das comunidades.",
+    missionStatement: "Promover a emancipação humana e o desenvolvimento sustentável, atuando como catalisador de transformações sociais, ambientais, educacionais e culturais, com base em direitos, evidências e impacto mensurável.",
+    visionStatement: "Ser uma organização de referência na construção de um mundo equitativo, próspero e regenerativo.",
+    governanceIntro: "A Governança do Instituto Ser Melhor é estruturada para assegurar a perpetuidade da missão institucional, a transparência plena na gestão de recursos e a conformidade com os princípios do MROSC.",
+    transparencyIntro: "Garantimos acesso público e auditado às nossas demonstrações financeiras e relatórios de impacto.",
     logoImage: "/logo-ism.png",
     heroImage: "https://picsum.photos/1920/1080?grayscale",
     motto: "Sapere Aude",
-    mottoExplanation: "Significa 'Ouse Saber'. Reflete nosso valor de excelência inflexível e educação transformadora.",
-    networkIntro: "O Instituto Ser Melhor reconhece que a excelência não é alcançada no isolamento.",
-    logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso foco no Desenvolvimento Sustentável Integral.",
+    mottoExplanation: "Significa 'Ouse Saber'. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.",
+    networkIntro: "O Instituto Ser Melhor reconhece que o impacto sustentável se constrói em parceria. Nosso Ecossistema Colaborativo Estratégico reúne organizações comprometidas com o desenvolvimento sustentável.",
+    logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso compromisso com o Desenvolvimento Sustentável Integral.",
   };
 
   const activePageAttrs = {
