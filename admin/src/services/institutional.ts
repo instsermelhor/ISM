@@ -150,7 +150,7 @@ const SEED_TIMELINE: Omit<TimelineMilestoneData, 'id'>[] = [
 ];
 
 const SEED_MEMBERS: Omit<GovernanceMemberData, 'id'>[] = [
-  { name: 'Rikardo Ribeiro', role: 'Presidente do CDE', type: 'board', bio: 'Referência global em conservação.', imageUrl: 'https://picsum.photos/200/200?random=1' },
+  { name: 'Rikardo Ribeiro', role: 'Presidente do CD', type: 'board', bio: 'Especialista em Governança Corporativa, ESG e Compliance. Atua na liderança do Conselho Deliberativo, orientando a supervisão estratégica, a gestão de riscos e a garantia da integridade ética da Entidade.', imageUrl: 'https://picsum.photos/200/200?random=1' },
   { name: 'Rikardo Ribeiro', role: 'CEO', type: 'executive', bio: 'Executivo premiado por inovação.', imageUrl: 'https://picsum.photos/200/200?random=3' },
 ];
 

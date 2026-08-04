@@ -173,7 +173,7 @@ const mockTimelineMilestonesResponse: StrapiCollectionResponse<TimelineMilestone
 
 const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> = {
   data: [
-    { id: 1, attributes: { name: "Rikardo Ribeiro", role: "Presidente do CDE", type: "board", bio: "Referência global em conservação.", imageUrl: "https://picsum.photos/200/200?random=1" } },
+    { id: 1, attributes: { name: "Rikardo Ribeiro", role: "Presidente do CD", type: "board", bio: "Especialista em Governança Corporativa, ESG e Compliance. Atua na liderança do Conselho Deliberativo, orientando a supervisão estratégica, a gestão de riscos e a garantia da integridade ética da Entidade.", imageUrl: "https://picsum.photos/200/200?random=1" } },
     { id: 2, attributes: { name: "Rikardo Ribeiro", role: "CEO", type: "executive", bio: "Executivo premiado por inovação.", imageUrl: "https://picsum.photos/200/200?random=3" } },
   ],
   meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 2 } }
