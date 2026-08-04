@@ -59,7 +59,7 @@ const mockPageResponse: StrapiSingleResponse<InstitutionalPageAttributes> = {
     id: 1,
     attributes: {
       title: "Instituto Ser Melhor",
-      introduction: "Organização não governamental brasileira, atuamos como catalisadores de transformações sociais, ambientais e educacionais. Reorganizamos práticas e redefinimos o conceito de impacto sistêmico a cada projeto.",
+      introduction: "Somos uma organização não governamental brasileira dedicada a impulsionar transformações educacionais, sociais e ambientais. Nossa trajetória é movida pela busca contínua por redefinir as fronteiras do impacto sistêmico.",
       missionStatement: "Promover a emancipação humana e o desenvolvimento sustentável, atuando como catalisador de transformações sociais, ambientais, educacionais e culturais, com base em direitos, evidências e impacto mensurável.",
       visionStatement: "Ser uma organização de referência na construção de um mundo equitativo, próspero e regenerativo, onde o fortalecimento de capacidades e a garantia de direitos reduzam estruturalmente as situações de vulnerabilidade social.",
       governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle, deliberação e prestação de contas, estruturada para garantir a perpetuidade da missão institucional, a transparência, a integridade, a conformidade e a máxima eficiência na gestão e na alocação dos recursos.",
