@@ -47,6 +47,7 @@ import {
   useRealtimePrograms,
   useRealtimeBlogPosts,
   useRealtimePublishedPartners,
+  useRealtimeSocialNetworks,
 } from './hooks/useRealtimeContent';
 
 // ── SEO Helpers ────────────────────────────────────────────────────────────────
@@ -69,7 +70,7 @@ function setMeta(selector: string, attribute: string, content: string) {
 /**
  * Atualiza todos os metadados SEO (title, description, OG, Twitter, Schema.org).
  */
-function applySeoSettings(seo: Record<string, any>) {
+function applySeoSettings(seo: Record<string, any>, socialNetworks?: any[]) {
   if (!seo) return;
 
   // Title
@@ -115,8 +116,10 @@ function applySeoSettings(seo: Record<string, any>) {
   const ldScript = document.createElement('script');
   ldScript.id = 'schema-org-organization';
   ldScript.type = 'application/ld+json';
-  // sameAs: usa socialLinks do seo_settings/main se disponíveis, caso contrário URLs canônicas do Instituto
-  const sameAsLinks: string[] = (seo.socialLinks && Array.isArray(seo.socialLinks) && seo.socialLinks.length > 0)
+  // sameAs: usa social_networks se disponíveis, caso contrário seo.socialLinks ou URLs canônicas
+  const sameAsLinks: string[] = (socialNetworks && socialNetworks.length > 0)
+    ? socialNetworks.map((s: any) => s.url)
+    : (seo.socialLinks && Array.isArray(seo.socialLinks) && seo.socialLinks.length > 0)
     ? seo.socialLinks.filter((s: any) => s?.url?.startsWith('https://')).map((s: any) => s.url)
     : [
         'https://www.instagram.com/instsermelhor',
@@ -234,11 +237,12 @@ function App() {
   const realtimePrograms         = useRealtimePrograms<any>();
   const realtimeBlogPosts        = useRealtimeBlogPosts<any>();
   const realtimePartners         = useRealtimePublishedPartners<any>();
+  const realtimeSocials          = useRealtimeSocialNetworks();
 
-  // ── SEO — aplica em tempo real sempre que seo_settings mudar ────────────
+  // ── SEO — aplica em tempo real sempre que seo_settings ou social_networks mudar ────────────
   useEffect(() => {
-    if (realtimeSeo) applySeoSettings(realtimeSeo);
-  }, [realtimeSeo]);
+    if (realtimeSeo) applySeoSettings(realtimeSeo, realtimeSocials);
+  }, [realtimeSeo, realtimeSocials]);
 
   // ── Carga inicial (fallback para dados existentes no Firestore) ──────────
   // ── Carga inicial (resiliente com fallback para dados institucionais) ──────────
