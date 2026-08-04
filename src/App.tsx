@@ -325,15 +325,15 @@ function App() {
   // Dados da página institucional — garante objeto plano nunca undefined
   const DEFAULT_PAGE_ATTRS = {
     title: "Instituto Ser Melhor",
-    introduction: "Somos uma organização da sociedade civil brasileira que atua como catalisadora de transformações sociais, ambientais, educacionais e culturais, comprometida com a garantia de direitos e o protagonismo das comunidades.",
+    introduction: "Organização não governamental brasileira, atuamos como catalisadores de transformações sociais, ambientais e educacionais. Reorganizamos práticas e redefinimos o conceito de impacto sistêmico a cada projeto.",
     missionStatement: "Promover a emancipação humana e o desenvolvimento sustentável, atuando como catalisador de transformações sociais, ambientais, educacionais e culturais, com base em direitos, evidências e impacto mensurável.",
     visionStatement: "Ser uma organização de referência na construção de um mundo equitativo, próspero e regenerativo.",
-    governanceIntro: "A Governança do Instituto Ser Melhor é estruturada para assegurar a perpetuidade da missão institucional, a transparência plena na gestão de recursos e a conformidade com os princípios do MROSC.",
+    governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle, deliberação e prestação de contas, estruturada para garantir a perpetuidade da missão institucional, a transparência, a integridade, a conformidade e a máxima eficiência na gestão e na alocação dos recursos.",
     transparencyIntro: "Garantimos acesso público e auditado às nossas demonstrações financeiras e relatórios de impacto.",
     logoImage: "/logo-ism.png",
     heroImage: "https://picsum.photos/1920/1080?grayscale",
     motto: "Sapere Aude",
-    mottoExplanation: "Significa 'Ouse Saber'. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.",
+    mottoExplanation: "Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.",
     networkIntro: "O Instituto Ser Melhor reconhece que o impacto sustentável se constrói em parceria. Nosso Ecossistema Colaborativo Estratégico reúne organizações comprometidas com o desenvolvimento sustentável.",
     logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso compromisso com o Desenvolvimento Sustentável Integral.",
   };
