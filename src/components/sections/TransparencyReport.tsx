@@ -119,7 +119,7 @@ export const TransparencyReport: React.FC<Props> = ({
   const handleFilterChange = () => setVisibleCount(PAGE_SIZE); // reset page on filter change
 
   return (
-    <section id="transparency" className="py-24 bg-secondary-950 text-white relative overflow-hidden" aria-label="Portal de Transparência">
+    <section id="transparency" className="py-12 md:py-16 bg-secondary-950 text-white relative overflow-hidden" aria-label="Portal de Transparência">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-secondary-900/60 to-transparent" />
