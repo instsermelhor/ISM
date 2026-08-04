@@ -130,7 +130,8 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
                 alt="Instituto Ser Melhor em ação"
                 className="relative z-10 w-full h-[400px] md:h-[480px] object-cover rounded-3xl shadow-2xl"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://picsum.photos/800/600?grayscale';
+                  // Oculta img com erro em vez de carregar placeholder externo
+                  (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
 
