@@ -237,12 +237,28 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
 
                     {/* Foto Oficial com Lazy Loading & ALT Obrigatório */}
                     <div className="relative mb-4 mt-2">
-                      <img
-                        className="h-28 w-28 rounded-2xl object-cover shadow-md border-2 border-slate-100 group-hover:scale-105 transition-transform duration-300"
-                        src={member.imageUrl || 'https://picsum.photos/300/300'}
-                        alt={member.imageAlt || mName}
-                        loading="lazy"
-                      />
+                      {member.imageUrl ? (
+                        <img
+                          className="h-28 w-28 rounded-2xl object-cover shadow-md border-2 border-slate-100 group-hover:scale-105 transition-transform duration-300"
+                          src={member.imageUrl}
+                          alt={member.imageAlt || mName}
+                          loading="lazy"
+                          onError={(e) => {
+                            // Oculta a img com erro; o avatar de inicial fica visível abaixo
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        /* Avatar de inicial — sem dependência externa */
+                        <div
+                          className="h-28 w-28 rounded-2xl shadow-md border-2 border-slate-100 bg-secondary-900 flex items-center justify-center group-hover:scale-105 transition-transform duration-300"
+                          aria-label={`Foto de ${mName} não disponível`}
+                        >
+                          <span className="text-4xl font-black text-white select-none">
+                            {mName.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-brand-600 rounded-md flex items-center justify-center shadow-sm">
                         <CheckCircle size={12} className="text-white" />
                       </div>
