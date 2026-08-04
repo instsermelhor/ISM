@@ -1,19 +1,49 @@
 import React from 'react';
-import { Mail, MapPin, Phone, Instagram, Facebook, Linkedin, Heart, Lock } from 'lucide-react';
+import { Mail, MapPin, Phone, Instagram, Facebook, Linkedin, Youtube, Github, Heart, Lock, Globe } from 'lucide-react';
+import { useRealtimeSocialNetworks, type SocialNetworkItem } from '../../hooks/useRealtimeSocialNetworks';
 
-// Ícone oficial do X (antigo Twitter) — SVG inline, pois lucide-react não possui o logotipo atual do X
+// Ícones SVGs inline para redes sem ícone direto no lucide-react
 const XIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className={className}
-    aria-hidden="true"
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.259 5.626L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
   </svg>
 );
+
+const TikTokIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 1 1-5.2-1.74 2.89 2.89 0 0 1 2.31-1.42V8.9a6.34 6.34 0 0 0-5.11 6.18 6.34 6.34 0 1 0 11.45-3.69v-4.9a8.2 8.2 0 0 0 3.77 1.09V6.69z" />
+  </svg>
+);
+
+const WhatsAppIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c0-5.445 4.43-9.874 9.877-9.874 2.637 0 5.116 1.028 6.98 2.893A9.8 9.8 0 0 1 21.88 12c0 5.447-4.429 9.875-9.829 9.875" />
+  </svg>
+);
+
+const BlueskyIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className }) => (
+  <svg width={size} height={size} viewBox="0 0 568 501" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M123.121 33.664C187.943 82.26 256.757 182.88 284 234.316c27.243-51.436 96.057-152.056 160.879-200.652C491.56 2.308 554.496-13.8 566.246 38.647c12.25 54.676-3.037 137.288-66.223 189.65-88.75 73.548-185.342 79.467-216.023 74.372 30.681 5.095 127.273-.824 216.023-74.372 63.186-52.362 78.473-134.974 66.223-189.65C554.496-13.8 491.56 2.308 444.879 33.664 380.057 82.26 311.243 182.88 284 234.316" />
+  </svg>
+);
+
+/** Mapeamento dinâmico de ícones por chave de plataforma */
+function renderSocialIcon(platform: string, size = 16) {
+  const p = platform.toLowerCase().trim();
+  switch (p) {
+    case 'instagram': return <Instagram size={size} />;
+    case 'facebook': return <Facebook size={size} />;
+    case 'linkedin': return <Linkedin size={size} />;
+    case 'x':
+    case 'twitter': return <XIcon size={size} />;
+    case 'youtube': return <Youtube size={size} />;
+    case 'tiktok': return <TikTokIcon size={size} />;
+    case 'whatsapp': return <WhatsAppIcon size={size} />;
+    case 'bluesky': return <BlueskyIcon size={size} />;
+    case 'github': return <Github size={size} />;
+    default: return <Globe size={size} />;
+  }
+}
 
 // Detecta ambiente: produção → domínio real, dev → localhost
 const ADMIN_URL =
@@ -28,26 +58,33 @@ interface Props {
 }
 
 const defaultSocialLinks = [
-  { Icon: Instagram, label: 'Instagram — @instsermelhor', url: 'https://www.instagram.com/instsermelhor' },
-  { Icon: Facebook, label: 'Facebook — Instituto Ser Melhor', url: 'https://www.facebook.com/institutosermelhor' },
-  { Icon: Linkedin, label: 'LinkedIn — Instituto Ser Melhor', url: 'https://www.linkedin.com/company/institutosermelhor' },
-  { Icon: XIcon,    label: 'X (antigo Twitter) — @instsermelhor', url: 'https://x.com/instsermelhor' },
+  { platform: 'instagram', label: 'Instagram — @instsermelhor', url: 'https://www.instagram.com/instsermelhor', openInNewTab: true },
+  { platform: 'facebook', label: 'Facebook — Instituto Ser Melhor', url: 'https://www.facebook.com/institutosermelhor', openInNewTab: true },
+  { platform: 'linkedin', label: 'LinkedIn — Instituto Ser Melhor', url: 'https://www.linkedin.com/company/institutosermelhor', openInNewTab: true },
+  { platform: 'x', label: 'X (antigo Twitter) — @instsermelhor', url: 'https://x.com/instsermelhor', openInNewTab: true },
 ];
 
 export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, footerData }) => {
+  const realtimeSocials = useRealtimeSocialNetworks({ showInFooter: true });
   const tagline = footerData?.tagline || 'Trabalhando desde 2007 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.';
-  const activeSocials = footerData?.socialLinks && footerData.socialLinks.length > 0
+
+  // Prioridade: 1. Firestore `social_networks` tempo real, 2. `footerData.socialLinks`, 3. `defaultSocialLinks`
+  const activeSocials = realtimeSocials.length > 0
+    ? realtimeSocials.map(s => ({
+        platform: s.platform,
+        label: s.name || s.platform,
+        url: s.url,
+        openInNewTab: s.openInNewTab,
+      }))
+    : footerData?.socialLinks && footerData.socialLinks.length > 0
     ? footerData.socialLinks.map((s: any) => ({
-        Icon:
-          s.platform === 'facebook'  ? Facebook :
-          s.platform === 'linkedin'  ? Linkedin :
-          s.platform === 'x'         ? XIcon :
-          s.platform === 'twitter'   ? XIcon :
-          Instagram,
+        platform: s.platform || 'globe',
         label: s.label || s.platform,
         url: s.url || '#',
+        openInNewTab: true,
       }))
     : defaultSocialLinks;
+
   return (
     <footer className="relative bg-secondary-950 text-white overflow-hidden">
       {/* Decorative gradient top border */}
@@ -87,17 +124,17 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, footerData
               {tagline}
             </p>
             {/* Social Icons */}
-            <div className="flex gap-3 pt-1">
-              {activeSocials.map(({ Icon, label, url }: any) => (
+            <div className="flex gap-3 pt-1 flex-wrap">
+              {activeSocials.map((s: any, idx: number) => (
                 <a
-                  key={label}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
+                  key={s.id || s.url || idx}
+                  href={s.url}
+                  target={s.openInNewTab ? "_blank" : "_self"}
+                  rel={s.openInNewTab ? "noopener noreferrer" : undefined}
+                  aria-label={s.label}
                   className="w-9 h-9 rounded-lg bg-secondary-800 flex items-center justify-center text-secondary-400 hover:bg-brand-600 hover:text-white transition-all duration-200 hover:scale-110"
                 >
-                  <Icon size={16} />
+                  {renderSocialIcon(s.platform, 16)}
                 </a>
               ))}
             </div>
