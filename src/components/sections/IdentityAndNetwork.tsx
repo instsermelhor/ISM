@@ -219,7 +219,7 @@ export const IdentityAndNetwork: React.FC<Props> = ({ pageData, networkCards: dy
                   <Quote size={18} />
                   <span className="font-serif italic text-lg font-bold">{motto}</span>
                 </div>
-                <p className="text-sm text-secondary-300 italic mb-2">"Ousa Saber" ou "Ousa ser sábio".</p>
+                <p className="text-sm text-secondary-300 font-semibold mb-2">Sapere Aude — Ouse Saber</p>
                 <p className="text-xs text-secondary-400 leading-relaxed">
                   Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.
                 </p>
