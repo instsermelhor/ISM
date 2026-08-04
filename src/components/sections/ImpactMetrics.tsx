@@ -141,7 +141,7 @@ export const ImpactMetrics: React.FC<ImpactMetricsProps> = ({ items }) => {
     <section
       id="impact"
       aria-label="Métricas de Impacto Social do Instituto Ser Melhor"
-      className="py-24 bg-secondary-900 relative overflow-hidden"
+      className="py-12 md:py-16 bg-secondary-900 relative overflow-hidden"
     >
       {/* Background pattern */}
       <div className="absolute inset-0 pointer-events-none section-pattern" aria-hidden="true" />
