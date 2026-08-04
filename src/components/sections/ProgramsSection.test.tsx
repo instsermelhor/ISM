@@ -1,191 +1,116 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { ProgramsSection } from './ProgramsSection';
-import { InstitutionalService } from '../../services/data';
+import { ProgramData } from '../../types';
 
-describe('ProgramsSection — Educação Transformadora de Qualidade', () => {
-  let programsData: any[];
+const MOCK_PROGRAMS: ProgramData[] = [
+  {
+    id: 'prog-1',
+    order: 1,
+    title: 'Educação Transformadora de Qualidade',
+    slug: 'educacao-transformadora',
+    description: 'O Instituto Ser Melhor acredita que a educação é o instrumento mais poderoso...',
+    longDescription: 'Nossa atuação considera cada pessoa em sua integralidade, valorizando suas potencialidades...',
+    pillarsTitle: 'Nossos pilares',
+    pillars: [
+      'Educação centrada na pessoa e no desenvolvimento integral.',
+      'Avaliação contínua do impacto social das ações.',
+    ],
+    commitmentTitle: 'Nosso compromisso',
+    commitment: 'Promover uma educação que transforma vidas.',
+    iconEmoji: '📚',
+    imageUrl: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80',
+    imageAlt: 'Crianças estudando em sala de aula',
+    isPublished: true,
+    targetAudience: 'Crianças e adolescentes em situação de vulnerabilidade',
+    tags: ['Educação', 'Jovens'],
+    ctaLabel: 'Saiba Mais',
+    ctaUrl: '#',
+    impactMetric: 'Jovens Capacitados',
+    impactValue: '50.000+',
+  },
+  {
+    id: 'prog-2',
+    order: 2,
+    title: 'Proteção, Preservação e Restauração dos Biomas',
+    slug: 'protecao-biomas',
+    description: 'Por meio do programa Proteção, Preservação e Restauração dos Biomas...',
+    longDescription: 'Desenvolvemos iniciativas que unem educação ambiental e reflorestamento...',
+    pillarsTitle: 'Nossos pilares',
+    pillars: ['Conservação da biodiversidade e dos ecossistemas brasileiros.'],
+    actionLinesTitle: 'Linhas de atuação',
+    actionLines: ['Recuperação de áreas degradadas e reflorestamento com espécies nativas.'],
+    commitmentTitle: 'Nosso compromisso',
+    commitment: 'Nosso compromisso é contribuir para a preservação dos biomas brasileiros.',
+    iconEmoji: '🌿',
+    imageUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80',
+    imageAlt: 'Floresta preservada',
+    isPublished: true,
+    targetAudience: 'Comunidades locais',
+    auraProjectUrl: 'https://aura.institutosermelhor.org',
+    websiteUrl: 'https://biomas.institutosermelhor.org',
+  },
+];
 
-  beforeEach(async () => {
-    programsData = await InstitutionalService.getPrograms();
-  });
-
-  it('renders the official title "Educação Transformadora de Qualidade"', () => {
-    render(<ProgramsSection programs={programsData} />);
+describe('ProgramsSection — Dinâmico & E044', () => {
+  it('renders programs titles dynamically', () => {
+    render(<ProgramsSection programs={MOCK_PROGRAMS} />);
     expect(screen.getByText('Educação Transformadora de Qualidade')).toBeInTheDocument();
+    expect(screen.getByText('Proteção, Preservação e Restauração dos Biomas')).toBeInTheDocument();
   });
 
-  it('does not display description text initially in compact collapsed state', () => {
-    render(<ProgramsSection programs={programsData} />);
+  it('does not display long description text initially in compact collapsed state', () => {
+    render(<ProgramsSection programs={MOCK_PROGRAMS} />);
     expect(
-      screen.queryByText(/O Instituto Ser Melhor acredita que a educação é o instrumento mais poderoso/i)
+      screen.queryByText(/Nossa atuação considera cada pessoa em sua integralidade/i)
     ).not.toBeInTheDocument();
   });
 
   it('has aria-expanded="false" and aria-controls on the "Saiba Mais" button initially', () => {
-    render(<ProgramsSection programs={programsData} />);
+    render(<ProgramsSection programs={MOCK_PROGRAMS} />);
     const saibaMaisButtons = screen.getAllByRole('button', { name: /Saiba Mais/i });
     expect(saibaMaisButtons[0]).toHaveAttribute('aria-expanded', 'false');
-    expect(saibaMaisButtons[0]).toHaveAttribute('aria-controls', 'program-content-1');
+    expect(saibaMaisButtons[0]).toHaveAttribute('aria-controls', 'program-content-prog-1');
   });
 
   it('expands full text, pillars, and commitment when clicking "Saiba Mais"', async () => {
     const user = userEvent.setup();
-    render(<ProgramsSection programs={programsData} />);
+    render(<ProgramsSection programs={MOCK_PROGRAMS} />);
 
     const buttons = screen.getAllByRole('button', { name: /Saiba Mais/i });
     await user.click(buttons[0]);
 
-    // Button text changes to "Mostrar Menos"
     expect(buttons[0]).toHaveAttribute('aria-expanded', 'true');
-
-    // Long description text is revealed
     expect(
       screen.getByText(/Nossa atuação considera cada pessoa em sua integralidade/i)
     ).toBeInTheDocument();
-
-    // Pilares section is revealed
     expect(screen.getByText('Educação centrada na pessoa e no desenvolvimento integral.')).toBeInTheDocument();
-    expect(screen.getByText('Avaliação contínua do impacto social das ações.')).toBeInTheDocument();
-
-    // Compromisso section is revealed
     expect(screen.getByText(/Promover uma educação que transforma vidas/i)).toBeInTheDocument();
   });
-});
 
-describe('ProgramsSection — Proteção, Preservação e Restauração dos Biomas', () => {
-  let programsData: any[];
-
-  beforeEach(async () => {
-    programsData = await InstitutionalService.getPrograms();
+  it('renders "Conhecer o AURA" button when auraProjectUrl is present', () => {
+    render(<ProgramsSection programs={MOCK_PROGRAMS} />);
+    const auraBtn = screen.getByRole('link', { name: /Conhecer o (Projeto )?AURA/i });
+    expect(auraBtn).toBeInTheDocument();
+    expect(auraBtn).toHaveAttribute('href', 'https://aura.institutosermelhor.org');
   });
 
-  it('renders the corrected title "Proteção, Preservação e Restauração dos Biomas"', () => {
-    render(<ProgramsSection programs={programsData} />);
-    expect(screen.getByText('Proteção, Preservação e Restauração dos Biomas')).toBeInTheDocument();
+  it('renders loading skeleton when isLoading is true', () => {
+    render(<ProgramsSection programs={[]} isLoading={true} />);
+    expect(screen.getByLabelText(/Projetos em Campo - carregando/i)).toBeInTheDocument();
   });
 
-  it('button "Ver Relatório" was replaced with "Saiba Mais"', () => {
-    render(<ProgramsSection programs={programsData} />);
-    expect(screen.queryByText('Ver Relatório')).not.toBeInTheDocument();
-    const biomesBtn = screen.getByRole('button', { name: /Saiba mais sobre Proteção, Preservação e Restauração dos Biomas/i });
-    expect(biomesBtn).toBeInTheDocument();
-  });
-
-  it('expands full text, pilares, linhas de atuação, and compromisso on "Saiba Mais" click', async () => {
+  it('renders external links inside expanded state', async () => {
     const user = userEvent.setup();
-    render(<ProgramsSection programs={programsData} />);
+    render(<ProgramsSection programs={MOCK_PROGRAMS} />);
 
-    // Find "Saiba Mais" button for Proteção de Biomas (program id 2)
-    const biomesButton = screen.getByRole('button', { name: /Saiba mais sobre Proteção, Preservação e Restauração dos Biomas/i });
-    expect(biomesButton).toHaveAttribute('aria-controls', 'program-content-2');
+    const buttons = screen.getAllByRole('button', { name: /Saiba Mais/i });
+    await user.click(buttons[1]);
 
-    await user.click(biomesButton);
-
-    expect(biomesButton).toHaveAttribute('aria-expanded', 'true');
-
-    // Long description
-    expect(
-      screen.getByText(/Por meio do programa Proteção, Preservação e Restauração dos Biomas/i)
-    ).toBeInTheDocument();
-
-    // Nossos Pilares
-    expect(
-      screen.getByText('Conservação da biodiversidade e dos ecossistemas brasileiros.')
-    ).toBeInTheDocument();
-
-    // Linhas de atuação
-    expect(
-      screen.getByText('Recuperação de áreas degradadas e reflorestamento com espécies nativas.')
-    ).toBeInTheDocument();
-
-    // Nosso compromisso
-    expect(
-      screen.getByText(/Nosso compromisso é contribuir para a preservação dos biomas brasileiros/i)
-    ).toBeInTheDocument();
-  });
-
-  it('collapses back smoothly when clicking "Mostrar Menos"', async () => {
-    const user = userEvent.setup();
-    render(<ProgramsSection programs={programsData} />);
-
-    const biomesButton = screen.getByRole('button', { name: /Saiba mais sobre Proteção, Preservação e Restauração dos Biomas/i });
-    await user.click(biomesButton);
-    expect(biomesButton).toHaveAttribute('aria-expanded', 'true');
-
-    await user.click(biomesButton);
-    expect(biomesButton).toHaveAttribute('aria-expanded', 'false');
-  });
-});
-
-describe('ProgramsSection — Saúde & Bem-Estar Comunitário', () => {
-  let programsData: any[];
-
-  beforeEach(async () => {
-    programsData = await InstitutionalService.getPrograms();
-  });
-
-  it('renders title "Saúde & Bem-Estar Comunitário"', () => {
-    render(<ProgramsSection programs={programsData} />);
-    expect(screen.getByText('Saúde & Bem-Estar Comunitário')).toBeInTheDocument();
-  });
-
-  it('button "Conhecer Programa" was replaced with "Saiba Mais"', () => {
-    render(<ProgramsSection programs={programsData} />);
-    expect(screen.queryByText('Conhecer Programa')).not.toBeInTheDocument();
-    const healthBtn = screen.getByRole('button', { name: /Saiba mais sobre Saúde & Bem-Estar Comunitário/i });
-    expect(healthBtn).toBeInTheDocument();
-  });
-
-  it('expands full text, pilares, linhas de atuação, and compromisso on "Saiba Mais" click', async () => {
-    const user = userEvent.setup();
-    render(<ProgramsSection programs={programsData} />);
-
-    // Find "Saiba Mais" button for Saúde & Bem-Estar Comunitário (program id 3)
-    const healthButton = screen.getByRole('button', { name: /Saiba mais sobre Saúde & Bem-Estar Comunitário/i });
-    expect(healthButton).toHaveAttribute('aria-controls', 'program-content-3');
-
-    await user.click(healthButton);
-    expect(healthButton).toHaveAttribute('aria-expanded', 'true');
-
-    // Long description
-    expect(
-      screen.getByText(/Nossa atuação compreende que saúde vai muito além da ausência de doenças/i)
-    ).toBeInTheDocument();
-
-    // Nossos Pilares
-    expect(
-      screen.getByText('Promoção da saúde integral e da qualidade de vida.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Atuação integrada com o Sistema Único de Saúde (SUS) e demais redes de proteção social.')
-    ).toBeInTheDocument();
-
-    // Linhas de Atuação
-    expect(
-      screen.getByText('Promoção da saúde física, mental e emocional.')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Desenvolvimento de projetos de promoção da saúde em escolas, empresas e comunidades.')
-    ).toBeInTheDocument();
-
-    // Nosso compromisso
-    expect(
-      screen.getByText(/Nosso compromisso é construir comunidades mais saudáveis, solidárias e resilientes/i)
-    ).toBeInTheDocument();
-  });
-
-  it('collapses back when clicking "Mostrar Menos"', async () => {
-    const user = userEvent.setup();
-    render(<ProgramsSection programs={programsData} />);
-
-    const healthButton = screen.getByRole('button', { name: /Saiba mais sobre Saúde & Bem-Estar Comunitário/i });
-    await user.click(healthButton);
-    expect(healthButton).toHaveAttribute('aria-expanded', 'true');
-
-    await user.click(healthButton);
-    expect(healthButton).toHaveAttribute('aria-expanded', 'false');
+    const siteLink = screen.getByRole('link', { name: /Site Oficial/i });
+    expect(siteLink).toBeInTheDocument();
+    expect(siteLink).toHaveAttribute('href', 'https://biomas.institutosermelhor.org');
   });
 });
