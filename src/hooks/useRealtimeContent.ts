@@ -254,3 +254,5 @@ export function useRealtimePublishedPartners<T>(): T[] {
 
   return items;
 }
+
+export { useRealtimeSocialNetworks, type SocialNetworkItem, type SocialNetworkFilter } from './useRealtimeSocialNetworks';
