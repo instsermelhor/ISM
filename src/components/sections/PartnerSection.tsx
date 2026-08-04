@@ -3,23 +3,12 @@ import { Building2, Handshake, Globe, TrendingUp, ExternalLink, Award } from 'lu
 import { PartnerApplicationForm } from '../forms/PartnerApplicationForm';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 
-// ── Tipos ──────────────────────────────────────────────────────────────────────
-
-export interface PublishedPartner {
-  id?: string;
-  order?: number;
-  name: string;
-  category?: 'GLOBAL' | 'ESTRATEGICO' | 'INSTITUCIONAL' | 'TECNICO' | string;
-  logoUrl?: string;
-  websiteUrl?: string;
-  description?: string;
-  isPublished?: boolean;
-  tier?: 'TIER_1' | 'TIER_2' | 'TIER_3' | string;
-}
+import { PublishedPartner } from '../../types';
 
 export interface PartnerSectionProps {
   servicesPage?: Record<string, any> | null;
   partners?: PublishedPartner[];
+  isLandingPage?: boolean;
 }
 
 // ── Benefícios padrão (fallback quando admin não configurou) ─────────────────
@@ -52,17 +41,27 @@ const DEFAULT_BADGES = ['ISO 9001', 'ODS ONU', 'LGPD Compliant'];
 // ── Cores de categoria ─────────────────────────────────────────────────────────
 
 const CATEGORY_COLOR: Record<string, string> = {
-  GLOBAL:       '#1E3A8A',
-  ESTRATEGICO:  '#15803D',
-  INSTITUCIONAL:'#C2410C',
-  TECNICO:      '#7C3AED',
+  GLOBAL:                   '#1E3A8A',
+  ESTRATEGICO:              '#15803D',
+  INSTITUCIONAL:            '#C2410C',
+  TECNICO:                  '#7C3AED',
+  UNIVERSIDADES:            '#2563EB',
+  EMPRESAS:                 '#059669',
+  ORGANISMOS_INTERNACIONAIS:'#7C3AED',
+  FINANCIADORES:            '#D97706',
+  OSCS:                     '#DB2777',
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
-  GLOBAL:       'Global',
-  ESTRATEGICO:  'Estratégico',
-  INSTITUCIONAL:'Institucional',
-  TECNICO:      'Técnico',
+  GLOBAL:                   'Global',
+  ESTRATEGICO:              'Estratégico',
+  INSTITUCIONAL:            'Institucional',
+  TECNICO:                  'Técnico',
+  UNIVERSIDADES:            'Universidade',
+  EMPRESAS:                 'Empresa',
+  ORGANISMOS_INTERNACIONAIS:'Organismo Int.',
+  FINANCIADORES:            'Financiador',
+  OSCS:                     'OSC / ONG',
 };
 
 const TIER_LABEL: Record<string, string> = {
@@ -79,22 +78,31 @@ const PartnerCard: React.FC<{ partner: PublishedPartner; index: number; isInView
   isInView,
 }) => {
   const catColor = CATEGORY_COLOR[partner.category ?? ''] ?? '#64748b';
-  const tierLabel = TIER_LABEL[partner.tier ?? ''] ?? '';
   const categoryLabel = CATEGORY_LABEL[partner.category ?? ''] ?? partner.category ?? '';
+  const validWebsiteUrl = partner.websiteUrl && partner.websiteUrl.startsWith('https://') ? partner.websiteUrl : undefined;
 
   return (
     <motion.a
-      href={partner.websiteUrl || '#'}
-      target={partner.websiteUrl && partner.websiteUrl !== '#' ? '_blank' : undefined}
-      rel="noopener noreferrer"
+      href={validWebsiteUrl || '#'}
+      target={validWebsiteUrl ? '_blank' : undefined}
+      rel={validWebsiteUrl ? 'noopener noreferrer' : undefined}
+      onClick={(e) => { if (!validWebsiteUrl) e.preventDefault(); }}
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay: 0.05 * index }}
       className="group relative flex flex-col items-center gap-3 p-5 rounded-2xl border border-slate-100 bg-white hover:border-brand-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-      aria-label={`Parceiro: ${partner.name}${partner.websiteUrl ? ' — visitar site' : ''}`}
+      aria-label={`Parceiro: ${partner.name}${partner.country ? ` (${partner.country})` : ''}${validWebsiteUrl ? ' — visitar site' : ''}`}
     >
-      {/* Tier badge */}
-      {partner.tier === 'TIER_1' && (
+      {/* Featured / Tier badge */}
+      {partner.isFeatured ? (
+        <span
+          className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
+          style={{ background: '#FEF3C7', color: '#B45309' }}
+        >
+          <Award size={10} />
+          Destaque
+        </span>
+      ) : partner.tier === 'TIER_1' ? (
         <span
           className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold"
           style={{ background: `${catColor}15`, color: catColor }}
@@ -102,14 +110,15 @@ const PartnerCard: React.FC<{ partner: PublishedPartner; index: number; isInView
           <Award size={10} />
           Premier
         </span>
-      )}
+      ) : null}
 
       {/* Logo / Placeholder */}
       <div className="w-16 h-16 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden group-hover:border-brand-200 transition-colors">
         {partner.logoUrl ? (
           <img
             src={partner.logoUrl}
-            alt={`Logo ${partner.name}`}
+            alt={partner.logoAlt || `Logo ${partner.name}`}
+            loading="lazy"
             className="w-full h-full object-contain p-1"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = 'none';
@@ -124,23 +133,30 @@ const PartnerCard: React.FC<{ partner: PublishedPartner; index: number; isInView
         )}
       </div>
 
-      {/* Name */}
+      {/* Name & Meta */}
       <div className="text-center">
         <p className="text-sm font-bold text-secondary-800 group-hover:text-brand-700 transition-colors line-clamp-2">
           {partner.name}
         </p>
-        {categoryLabel && (
-          <span
-            className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
-            style={{ background: `${catColor}12`, color: catColor }}
-          >
-            {categoryLabel}
-          </span>
-        )}
+        <div className="flex items-center justify-center gap-1.5 flex-wrap mt-1">
+          {categoryLabel && (
+            <span
+              className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+              style={{ background: `${catColor}12`, color: catColor }}
+            >
+              {categoryLabel}
+            </span>
+          )}
+          {partner.country && (
+            <span className="text-[10px] font-semibold text-slate-400">
+              📍 {partner.country}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* External link indicator */}
-      {partner.websiteUrl && partner.websiteUrl !== '#' && (
+      {validWebsiteUrl && (
         <ExternalLink
           size={12}
           className="absolute bottom-3 right-3 text-slate-300 group-hover:text-brand-400 transition-colors"
@@ -171,13 +187,18 @@ export const PartnerSection: React.FC<PartnerSectionProps> = ({
   const subtitle = servicesPage?.partnerSubtitle || null;
   const badge    = servicesPage?.partnerBadge    || 'Seja Parceiro';
 
-  // Separar parceiros por tier para exibição hierárquica
-  const tier1 = partners.filter(p => p.tier === 'TIER_1');
-  const tier2 = partners.filter(p => p.tier === 'TIER_2');
-  const tier3 = partners.filter(p => p.tier === 'TIER_3');
-  const noTier = partners.filter(p => !p.tier);
+  // Filtrar apenas parceiros com status de publicação ativo
+  const publishedPartners = partners.filter(
+    p => p.isPublished !== false && p.status !== 'DRAFT' && p.status !== 'ARCHIVED'
+  );
 
-  const hasPartners = partners.length > 0;
+  // Separar parceiros por tier para exibição hierárquica
+  const tier1 = publishedPartners.filter(p => p.tier === 'TIER_1');
+  const tier2 = publishedPartners.filter(p => p.tier === 'TIER_2');
+  const tier3 = publishedPartners.filter(p => p.tier === 'TIER_3');
+  const noTier = publishedPartners.filter(p => !p.tier || (p.tier !== 'TIER_1' && p.tier !== 'TIER_2' && p.tier !== 'TIER_3'));
+
+  const hasPartners = publishedPartners.length > 0;
 
   return (
     <>
