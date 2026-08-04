@@ -1,5 +1,19 @@
 import React from 'react';
-import { Mail, MapPin, Phone, Instagram, Facebook, Linkedin, Twitter, Heart, Lock } from 'lucide-react';
+import { Mail, MapPin, Phone, Instagram, Facebook, Linkedin, Heart, Lock } from 'lucide-react';
+
+// Ícone oficial do X (antigo Twitter) — SVG inline, pois lucide-react não possui o logotipo atual do X
+const XIcon: React.FC<{ size?: number; className?: string }> = ({ size = 16, className }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.259 5.626L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+  </svg>
+);
 
 // Detecta ambiente: produção → domínio real, dev → localhost
 const ADMIN_URL =
@@ -14,17 +28,22 @@ interface Props {
 }
 
 const defaultSocialLinks = [
-  { Icon: Instagram, label: 'Instagram', url: 'https://instagram.com/institutosermelhor' },
-  { Icon: Facebook, label: 'Facebook', url: 'https://facebook.com/institutosermelhor' },
-  { Icon: Linkedin, label: 'LinkedIn', url: 'https://linkedin.com/company/institutosermelhor' },
-  { Icon: Twitter, label: 'Twitter / X', url: 'https://twitter.com/instsermelhor' },
+  { Icon: Instagram, label: 'Instagram — @instsermelhor', url: 'https://www.instagram.com/instsermelhor' },
+  { Icon: Facebook, label: 'Facebook — Instituto Ser Melhor', url: 'https://www.facebook.com/institutosermelhor' },
+  { Icon: Linkedin, label: 'LinkedIn — Instituto Ser Melhor', url: 'https://www.linkedin.com/company/institutosermelhor' },
+  { Icon: XIcon,    label: 'X (antigo Twitter) — @instsermelhor', url: 'https://x.com/instsermelhor' },
 ];
 
 export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, footerData }) => {
   const tagline = footerData?.tagline || 'Trabalhando desde 2007 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.';
   const activeSocials = footerData?.socialLinks && footerData.socialLinks.length > 0
     ? footerData.socialLinks.map((s: any) => ({
-        Icon: s.platform === 'facebook' ? Facebook : s.platform === 'linkedin' ? Linkedin : s.platform === 'twitter' ? Twitter : Instagram,
+        Icon:
+          s.platform === 'facebook'  ? Facebook :
+          s.platform === 'linkedin'  ? Linkedin :
+          s.platform === 'x'         ? XIcon :
+          s.platform === 'twitter'   ? XIcon :
+          Instagram,
         label: s.label || s.platform,
         url: s.url || '#',
       }))
