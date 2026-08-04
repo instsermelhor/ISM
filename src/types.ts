@@ -294,29 +294,122 @@ export interface AppData {
 }
 
 // ── Programas & Serviços (publicados pelo Admin Panel) ─────────────────────
-export interface ProgramData {
+
+export type ProgramPublicationStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
+export interface ProgramGalleryImage {
   id: string;
+  url: string;
+  caption?: string;
+  alt?: string;
   order: number;
+}
+
+export interface ProgramData {
+  // ── Identificação ─────────────────────────────────────────────────────────
+  id: string;
+  code?: string;
+  /** Ordem de exibição */
+  order: number;
+  /** Título do programa */
   title: string;
+  /** Subtítulo */
+  subtitle?: string;
+  /** Slug para URL amigável */
   slug: string;
+  /** Categoria temática */
+  category?: 'Educacao' | 'MeioAmbiente' | 'Cultura' | 'Emancipacao' | 'DireitosHumanos' | string;
+  /** Área temática */
+  thematicArea?: string;
+  /** Estágio do ciclo de vida */
+  stage?: string;
+
+  // ── Conteúdo & Metodologia ─────────────────────────────────────────────────
+  /** Resumo curto (exibido no card compacto da Landing Page) */
   description: string;
-  longDescription: string;
-  iconEmoji: string;
-  imageUrl: string;
-  isPublished: boolean;
-  targetAudience: string;
-  tags: string[];
-  ctaLabel: string;
-  ctaUrl: string;
-  impactMetric: string;
-  impactValue: string;
-  linkUrl: string;
-  linkLabel: string;
+  /** Descrição detalhada / completa */
+  longDescription?: string;
+  /** Objetivos do programa */
+  objectives?: string;
+  /** Público-alvo */
+  targetAudience?: string;
+  /** Metodologia aplicada */
+  methodology?: string;
+  /** Título dos pilares */
   pillarsTitle?: string;
+  /** Lista de pilares */
   pillars?: string[];
+  /** Título das linhas de atuação */
   actionLinesTitle?: string;
+  /** Subtítulo das linhas de atuação */
   actionLinesSub?: string;
+  /** Lista de linhas de atuação */
   actionLines?: string[];
+  /** Resultados esperados */
+  expectedResults?: string;
+  /** Título do compromisso */
   commitmentTitle?: string;
+  /** Compromisso institucional */
   commitment?: string;
+
+  // ── Indicadores & Tags ────────────────────────────────────────────────────
+  /** Métrica de impacto */
+  impactMetric?: string;
+  /** Valor numérico ou resumido do impacto */
+  impactValue?: string;
+  /** Tags temáticas */
+  tags?: string[];
+  /** Emoji representativo */
+  iconEmoji?: string;
+
+  // ── Imagens & Galeria ──────────────────────────────────────────────────────
+  /** URL da imagem principal */
+  imageUrl?: string;
+  /** Texto alternativo da imagem principal (WCAG 2.1 AA) */
+  imageAlt?: string;
+  /** URL da imagem banner institucional */
+  bannerUrl?: string;
+  /** Galeria de imagens */
+  gallery?: ProgramGalleryImage[];
+
+  // ── Links Externos Validados ──────────────────────────────────────────────
+  /** Site oficial do programa (obrigatoriamente https://) */
+  websiteUrl?: string;
+  /** Página institucional interna */
+  institutionalPageUrl?: string;
+  /** Link do Projeto AURA (ex: https://...) */
+  auraProjectUrl?: string;
+  /** Link para documentos oficiais */
+  documentsUrl?: string;
+  /** Link para relatórios de impacto */
+  reportsUrl?: string;
+  /** Link para formulário de participação */
+  participationFormUrl?: string;
+
+  // CTA legado para compatibilidade
+  ctaLabel?: string;
+  ctaUrl?: string;
+  linkUrl?: string;
+  linkLabel?: string;
+
+  // ── Configuração de Exibição & Status ─────────────────────────────────────
+  /** Programa em destaque */
+  isFeatured?: boolean;
+  /** Exibir na Landing Page */
+  showOnLandingPage?: boolean;
+  /** Status de publicação */
+  status?: ProgramPublicationStatus;
+  /** Flag de publicação (sincronizada com status) */
+  isPublished: boolean;
+  /** Data de publicação */
+  publishedAt?: unknown;
+  /** Data de última atualização */
+  updatedAt?: unknown;
+
+  // ── SEO & Auditoria ───────────────────────────────────────────────────────
+  seoTitle?: string;
+  metaDescription?: string;
+  keywords?: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
