@@ -112,10 +112,12 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const DEFAULT_METRICS: MetricItem[] = [
-  { id: '1', value: 15000, suffix: '+', prefix: '', label: 'Vidas Impactadas', sublabel: 'Atendimentos diretos em programas sociais', Icon: Users, color: '#4ade80', decimals: 0 },
-  { id: '2', value: 42, suffix: '', prefix: '', label: 'Comunidades Atendidas', sublabel: 'Territórios em estado de vulnerabilidade', Icon: MapPin, color: '#60a5fa', decimals: 0 },
-  { id: '3', value: 128, suffix: '', prefix: '', label: 'Parcerias Ativas', sublabel: 'Organizações, empresas e institutos', Icon: Handshake, color: '#f59e0b', decimals: 0 },
-  { id: '4', value: 4.83, suffix: '', prefix: '1:', label: 'Retorno Social (SROI)', sublabel: 'Índice de retorno por real investido', Icon: TrendingUp, color: '#34d399', decimals: 2 },
+  { id: 'm1', value: 32000, suffix: '+', prefix: '', label: 'Beneficiários Diretos', sublabel: 'Famílias e indivíduos assistidos anualmente', Icon: Users, color: '#1E3A8A', decimals: 0 },
+  { id: 'm2', value: 78,    suffix: '',  prefix: '', label: 'Municípios',            sublabel: 'Presença em todo o território nacional',   Icon: MapPin, color: '#D97706', decimals: 0 },
+  { id: 'm3', value: 50,    suffix: '+', prefix: '', label: 'Parceiros Globais',     sublabel: 'Organizações, empresas e governos',         Icon: Handshake, color: '#15803D', decimals: 0 },
+  { id: 'm4', value: 15,    suffix: '+', prefix: '', label: 'Anos de Impacto',       sublabel: 'Construindo futuro desde 2007',             Icon: Calendar, color: '#C2410C', decimals: 0 },
+  { id: 'm5', value: 4.85,  suffix: '',  prefix: 'R$', label: 'SROI por Real Investido', sublabel: 'Retorno social comprovado por metodologia SROI', Icon: TrendingUp, color: '#16a34a', decimals: 2 },
+  { id: 'm6', value: 100,   suffix: '%', prefix: '', label: 'Transparência',         sublabel: 'Todas as contas auditadas e publicadas',    Icon: FileText, color: '#6366f1', decimals: 0 },
 ];
 
 export const ImpactMetrics: React.FC<ImpactMetricsProps> = ({ items }) => {
