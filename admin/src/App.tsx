@@ -13,6 +13,7 @@ const PipelinePage = lazy(() => import('./pages/PipelinePage').then(m => ({ defa
 const AuditPage = lazy(() => import('./pages/AuditPage').then(m => ({ default: m.AuditPage })));
 const HealthPage = lazy(() => import('./pages/HealthPage').then(m => ({ default: m.HealthPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const SiteConfigPage = lazy(() => import('./pages/SiteConfigPage').then(m => ({ default: m.SiteConfigPage })));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 const FinancialPage = lazy(() => import('./pages/FinancialPage').then(m => ({ default: m.FinancialPage })));
 const HeroHomePage = lazy(() => import('./pages/HeroHomePage').then(m => ({ default: m.HeroHomePage })));
@@ -142,6 +143,7 @@ function App() {
               <Route path="site/metricas" element={<ImpactMetricsPage />} />
               <Route path="site/pilares" element={<PillarsEditorPage />} />
               <Route path="site/navegacao" element={<NavigationEditorPage />} />
+              <Route path="configuracoes" element={<SiteConfigPage />} />
 
               {/* Gestão da Instituição */}
               <Route path="blog" element={<BlogPage />} />
