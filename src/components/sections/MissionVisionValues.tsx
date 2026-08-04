@@ -83,7 +83,7 @@ export const MissionVisionValues: React.FC<Props> = ({ data }) => {
                 Quem <span className="text-gradient-brand">Somos</span>
               </h2>
               <p className="text-secondary-500 text-lg leading-relaxed">
-                Uma organização que acredita no poder transformador da educação, da sustentabilidade e do engajamento coletivo.
+                {data?.introduction || 'Somos uma organização não governamental brasileira dedicada a impulsionar transformações educacionais, sociais e ambientais. Nossa trajetória é movida pela busca contínua por redefinir as fronteiras do impacto sistêmico.'}
               </p>
             </motion.div>
 
