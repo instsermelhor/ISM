@@ -124,6 +124,9 @@ export const ImpactMetrics: React.FC<ImpactMetricsProps> = ({ items }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-80px' });
 
+  // Nota de rodapé dinâmica — usa prop `footerNote` quando presente
+  const footerNote = (items as any)?.[0]?.__sectionMeta?.footerNote ?? null;
+
   // Mapeia dados do Firestore (any[]) para MetricItem tipado ou usa os padrões canônicos
   const activeMetrics: MetricItem[] = (items && items.length > 0)
     ? items.map(m => ({
@@ -190,15 +193,17 @@ export const ImpactMetrics: React.FC<ImpactMetricsProps> = ({ items }) => {
           ))}
         </div>
 
-        {/* Source note */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.7, delay: 0.8 }}
-          className="text-center text-secondary-600 text-xs mt-10"
-        >
-          * Dados referentes ao exercício 2024. Metodologia SROI certificada por auditoria independente (Big Four).
-        </motion.p>
+        {/* Nota de rodapé — exibida apenas quando configurada no CMS */}
+        {footerNote && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.7, delay: 0.8 }}
+            className="text-center text-secondary-600 text-xs mt-10"
+          >
+            {footerNote}
+          </motion.p>
+        )}
       </div>
     </section>
   );
