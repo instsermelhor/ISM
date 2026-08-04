@@ -52,7 +52,7 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
   };
 
   return (
-    <section id="donate" className="py-24 relative overflow-hidden">
+    <section id="donate" className="pt-12 pb-24 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-secondary-950 via-secondary-900 to-brand-950" />
       <div className="absolute inset-0 pointer-events-none">
