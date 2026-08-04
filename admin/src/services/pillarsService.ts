@@ -51,7 +51,7 @@ export const PILLARS_SEED: Omit<PillarData, 'id'>[] = [
     color: '#1E3A8A',
     colorLight: '#dbeafe',
     kpis: [
-      { value: '18.400+', label: 'Estudantes atendidos' },
+      { value: '6.5k+', label: 'Estudantes atendidos' },
       { value: '142', label: 'Escolas parceiras' },
       { value: '94%', label: 'Aprovação ensino médio' },
     ],
@@ -69,7 +69,7 @@ export const PILLARS_SEED: Omit<PillarData, 'id'>[] = [
     color: '#C2410C',
     colorLight: '#ffedd5',
     kpis: [
-      { value: '12.800+', label: 'Famílias atendidas' },
+      { value: '5k+', label: 'Famílias atendidas' },
       { value: '97%', label: 'Índice de satisfação' },
       { value: '3,2x', label: 'Retorno social (SROI)' },
     ],
@@ -88,7 +88,7 @@ export const PILLARS_SEED: Omit<PillarData, 'id'>[] = [
     colorLight: '#dcfce7',
     kpis: [
       { value: '120k', label: 'Hectares recuperados' },
-      { value: '850k', label: 'Árvores plantadas' },
+      { value: '250k+', label: 'Árvores plantadas' },
       { value: '5', label: 'Biomas protegidos' },
     ],
     programs: ['Reflorestamento', 'Educação Ambiental', 'Monitoramento por Satélite', 'Comunidades Sustentáveis'],
