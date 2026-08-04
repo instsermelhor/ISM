@@ -50,13 +50,13 @@ interface AboutData {
 const DEFAULT: AboutData = {
   aboutBadgeText: 'Sobre Nós',
   aboutImage: 'https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?w=800&q=80',
-  missionStatement: 'Promover a completa emancipação humana e o desenvolvimento sustentável integral, atuando como catalisador inigualável de transformações sociais, ambientais, educacionais e culturais.',
-  visionStatement: 'Ser o fator decisivo na construção de um mundo equitativo, próspero e regenerativo, onde a necessidade da assistência social como a conhecemos tenha sido mitigada pela eficácia de nossas soluções.',
+  missionStatement: 'Promover a emancipação humana e o desenvolvimento sustentável, atuando como catalisador de transformações sociais, ambientais, educacionais e culturais, com base em direitos, evidências e impacto mensurável.',
+  visionStatement: 'Ser uma organização de referência na construção de um mundo equitativo, próspero e regenerativo, onde o fortalecimento de capacidades e a garantia de direitos reduzam estruturalmente as situações de vulnerabilidade social.',
   valueBlocks: [
-    { id: '1', name: 'Excelência Inflexível', iconIdentifier: 'star', description: 'Não buscamos apenas a melhoria; exigimos a perfeição. Nosso padrão de qualidade é o mais alto do mundo, sem margem para mediocridade.' },
-    { id: '2', name: 'Transparência Quântica', iconIdentifier: 'shield', description: 'Operamos com um nível de clareza que excede normas globais. Nossa integridade é a essência visível de todas as decisões.' },
-    { id: '3', name: 'Protagonismo Regenerativo', iconIdentifier: 'zap', description: 'Buscamos um impacto que não apenas restaure, mas aprimore e gere vitalidade nos sistemas sociais e ambientais.' },
-    { id: '4', name: 'Compromisso Perpétuo', iconIdentifier: 'infinity', description: 'Nossa dedicação é incondicional e atemporal. Nosso trabalho é um legado que transcende gerações.' },
+    { id: '1', name: 'Excelência com Integridade', iconIdentifier: 'star', description: 'Buscamos a melhoria contínua com rigor técnico, responsabilidade institucional e compromisso permanente com a qualidade de nossas ações e a dignidade das pessoas que atendemos.' },
+    { id: '2', name: 'Transparência e Prestação de Contas', iconIdentifier: 'shield', description: 'Operamos com abertura e clareza em todos os processos, tornando públicas nossas decisões, contas e resultados de forma acessível, compreensível e auditável.' },
+    { id: '3', name: 'Protagonismo Comunitário', iconIdentifier: 'zap', description: 'Reconhecemos as comunidades como protagonistas de seu próprio desenvolvimento, apoiando processos de fortalecimento de capacidades, autonomia e participação ativa na construção de soluções.' },
+    { id: '4', name: 'Compromisso de Longo Prazo', iconIdentifier: 'infinity', description: 'Nossa atuação é orientada para impactos duradouros e estruturais, construindo legados que fortalecem gerações presentes e futuras com base em desenvolvimento sustentável e justiça social.' },
   ],
   timelineMilestones: [
     { id: '1', year: 2007, title: 'Fundação Conceitual', impactDescription: 'Estabelecimento do Instituto a partir da fusão de três fundações líderes e criação da Metodologia M-IS.' },
@@ -64,21 +64,21 @@ const DEFAULT: AboutData = {
     { id: '3', year: 2015, title: 'Prêmio Global GEA', impactDescription: 'Recebimento do Global Excellence Award da ONU. A Metodologia M-IS torna-se benchmark global.' },
     { id: '4', year: 2025, title: 'Marco do Milhão', impactDescription: 'Aproximação da meta de impactar um milhão de vidas e lançamento da Agenda 2035.' },
   ],
-  networkIntro: 'O Instituto Ser Melhor reconhece que a excelência não é alcançada no isolamento. Nossa Rede de Colaboração de Elite (R-CE) é um ecossistema seletivo de stakeholders globais.',
+  networkIntro: 'O Instituto Ser Melhor reconhece que o impacto sustentável se constrói em parceria. Nosso Ecossistema Colaborativo Estratégico reúne organizações nacionais e internacionais comprometidas com o desenvolvimento sustentável e a inovação social.',
   networkCards: [
-    { id: '1', icon: '🌐', title: 'Parcerias Nível Tier 1', description: 'Trabalhamos com universidades de pesquisa de ponta, think tanks globais e agências multilaterais para co-desenvolver e validar a Metodologia M-IS.' },
-    { id: '2', icon: '🏢', title: 'Apoio Corporativo Estratégico', description: 'Alianças baseadas na excelência ESG. Exigimos que nossos parceiros demonstrem liderança na neutralidade de carbono e na inclusão social.' },
-    { id: '3', icon: '🔄', title: 'Intercâmbio de Conhecimento', description: 'Programas de intercâmbio com as melhores ONGs do mundo, garantindo práticas na fronteira do conhecimento e eficácia operacional.' },
+    { id: '1', icon: '🌐', title: 'Parcerias Acadêmicas e Multilaterais', description: 'Colaboramos com universidades de pesquisa, centros de excelência e agências multilaterais para desenvolver e validar metodologias de impacto social baseadas em evidências.' },
+    { id: '2', icon: '🏢', title: 'Parcerias Corporativas com Alinhamento ESG', description: 'Priorizamos parceiros corporativos que demonstrem compromisso com práticas ESG, inclusão social e responsabilidade socioambiental em suas operações.' },
+    { id: '3', icon: '🔄', title: 'Intercâmbio com Organizações de Referência', description: 'Programas de cooperação com organizações da sociedade civil nacionais e internacionais para compartilhar conhecimento, boas práticas e metodologias de inovação social.' },
   ],
   logoImage: '/logo-ism.png',
-  logoExplanation: 'O emblema circular com três figuras humanas estilizadas representa o nosso foco no Desenvolvimento Sustentável Integral. O arco exterior amarelo simboliza o Ciclo da Prosperidade e a natureza regenerativa de nosso trabalho.',
-  governanceIntro: 'A Governança do Instituto Ser Melhor é uma arquitetura de controle e deliberação desenhada para garantir a perpetuidade da Missão, a transparência quântica e a máxima eficiência na alocação de recursos.',
+  logoExplanation: 'O emblema circular com três figuras humanas estilizadas representa o nosso compromisso com o Desenvolvimento Sustentável Integral. O arco exterior amarelo simboliza o ciclo da prosperidade e a natureza regenerativa de nosso trabalho.',
+  governanceIntro: 'A Governança do Instituto Ser Melhor é estruturada para assegurar a perpetuidade da missão institucional, a transparência plena na gestão de recursos e a conformidade com os princípios do Marco Regulatório das Organizações da Sociedade Civil (MROSC) e boas práticas internacionais de compliance.',
   governanceInstances: [
-    { id: '1', order: 1, title: 'Assembleia Geral de Associados Estratégicos', summary: 'Órgão Máximo e Soberano composto exclusivamente por membros com histórico comprovado de liderança.', keyAttributes: [{ id: '1a', attributeText: 'Aprovar ou rejeita demonstrações financeiras anuais auditadas.' }, { id: '1b', attributeText: 'Elege e destitui membros dos Conselhos.' }, { id: '1c', attributeText: 'Exige Quórum Qualificado (2/3) para deliberações patrimoniais.' }] },
-    { id: '2', order: 2, title: 'Conselho Deliberativo de Excelência (CDE)', summary: 'Guardião da Integridade e Estratégia, responsável por supervisionar a Diretoria-Executiva.', keyAttributes: [{ id: '2a', attributeText: 'Independência Radical: Sem vínculos com a gestão executiva.' }, { id: '2b', attributeText: 'Aprova Políticas de Risco e Compliance.' }] },
+    { id: '1', order: 1, title: 'Assembleia Geral de Associados', summary: 'Órgão máximo de deliberação institucional, responsável pelas decisões estratégicas e pela eleição dos demais órgãos de governança, nos termos do Estatuto Social e do Código Civil Brasileiro.', keyAttributes: [{ id: '1a', attributeText: 'Aprova as demonstrações financeiras anuais auditadas por auditoria independente.' }, { id: '1b', attributeText: 'Elege e destitui membros dos Conselhos Deliberativo e Fiscal.' }, { id: '1c', attributeText: 'Delibera alterações estatutárias por quórum qualificado (2/3 dos associados).' }] },
+    { id: '2', order: 2, title: 'Conselho Deliberativo', summary: 'Órgão de supervisão e controle estratégico, responsável pela fiscalização da gestão executiva e pela aprovação de políticas institucionais de risco, compliance e integridade.', keyAttributes: [{ id: '2a', attributeText: 'Independência funcional: membros sem vínculos com a gestão executiva.' }, { id: '2b', attributeText: 'Aprova políticas de gestão de riscos e compliance.' }] },
   ],
   teamMembers: [
-    { id: '1', name: 'Rikardo Ribeiro', role: 'Presidente do CDE', type: 'board', bio: 'Referência global em conservação e desenvolvimento sustentável.', imageUrl: 'https://picsum.photos/200/200?random=1' },
+    { id: '1', name: 'Rikardo Ribeiro', role: 'Presidente do Conselho Deliberativo', type: 'board', bio: 'Referência em conservação e desenvolvimento sustentável.', imageUrl: 'https://picsum.photos/200/200?random=1' },
   ],
 };
 
