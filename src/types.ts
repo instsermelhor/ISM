@@ -77,13 +77,75 @@ export interface TimelineMilestoneAttributes {
   impactDescription: string;
 }
 
-// Governance Members
+// ── Tipos para Governança, Liderança & Equipe (E045) ────────────────────────
+export type MemberCategory =
+  | 'DIRETORIA_EXECUTIVA'
+  | 'CONSELHO_DELIBERATIVO'
+  | 'CONSELHO_FISCAL'
+  | 'CONSELHO_CONSULTIVO'
+  | 'COORDENACAO'
+  | 'EQUIPE_TECNICA'
+  | 'CONSULTOR'
+  | 'VOLUNTARIO'
+  | 'OUTRO'
+  | string;
+
+export type MemberPublicationStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
 export interface GovernanceMemberAttributes {
+  id?: string;
+  // ── Identificação ─────────────────────────────────────────────────────────
   name: string;
+  socialName?: string;
   role: string;
-  type: 'board' | 'executive' | 'advisory' | 'fiscal';
-  bio: string;
+  shortRole?: string;
+  area?: string;
+  category?: MemberCategory;
+  type?: 'board' | 'executive' | 'advisory' | 'fiscal' | 'coordination' | 'technical' | 'consultant' | 'volunteer' | 'other' | string;
+
+  // ── Perfil Institucional & Acadêmico ───────────────────────────────────────
+  bio: string; // biografia resumida
+  shortBio?: string;
+  fullBio?: string; // biografia completa para o modal
+  academicFormation?: string;
+  specializations?: string;
+  certifications?: string;
+  experience?: string;
+  expertise?: string[]; // tags de áreas de conhecimento
+
+  // ── Fotografia & Imagens ──────────────────────────────────────────────────
   imageUrl: string;
+  imageAlt?: string; // Texto alternativo (WCAG 2.1 AA)
+  highResImageUrl?: string;
+  thumbnailUrl?: string;
+
+  // ── Informações Institucionais & Exibição ────────────────────────────────
+  startDate?: string;
+  status?: MemberPublicationStatus;
+  isPublished?: boolean;
+  isFeatured?: boolean;
+  order: number;
+  email?: string;
+  phone?: string;
+  showPublicContact?: boolean; // Controle LGPD para exibir e-mail/telefone
+
+  // ── Redes Sociais & Links Validados (HTTPS apenas) ────────────────────────
+  linkedinUrl?: string;
+  instagramUrl?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  youtubeUrl?: string;
+  lattesUrl?: string;
+  orcidUrl?: string;
+  researchGateUrl?: string;
+  websiteUrl?: string;
+  resumeUrl?: string;
+
+  // ── Auditoria ─────────────────────────────────────────────────────────────
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 // Financial Entry
