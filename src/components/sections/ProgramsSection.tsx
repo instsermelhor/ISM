@@ -304,7 +304,7 @@ export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage, 
   if (!isLoading && publishedPrograms.length === 0) return null;
 
   return (
-    <section id="programs" className="py-24 bg-white section-pattern">
+    <section id="programs" aria-label={isLoading ? "Projetos em Campo - carregando" : "Projetos em Campo"} className="py-24 bg-white section-pattern">
       <div className="container mx-auto px-4 md:px-6">
         {/* Section Header */}
         <motion.div

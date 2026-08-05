@@ -109,7 +109,8 @@ describe('ProgramsSection — Dinâmico & E044', () => {
     const buttons = screen.getAllByRole('button', { name: /Saiba Mais/i });
     await user.click(buttons[1]);
 
-    const siteLink = screen.getByRole('link', { name: /Site Oficial/i });
+    // O componente usa linkLabel || 'Acessar Link Oficial' como fallback
+    const siteLink = screen.getByRole('link', { name: /Acessar Link Oficial/i });
     expect(siteLink).toBeInTheDocument();
     expect(siteLink).toHaveAttribute('href', 'https://biomas.institutosermelhor.org');
   });
