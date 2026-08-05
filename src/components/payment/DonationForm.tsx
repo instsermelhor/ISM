@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import { InstitutionalService } from '../../services/data';
 import type { DonationType, DonationPillar } from '../../types';
+import { PixGeneratorService } from '../../services/pixGeneratorService';
+import { ReceiptGeneratorService, type DonationReceiptData } from '../../services/receiptGeneratorService';
+import { DonationReceiptModal } from './DonationReceiptModal';
 
 /* ── PIX ISM ── */
 const ISM_PIX_CNPJ = '09.040.440/0001-47';
@@ -83,10 +86,21 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
   const [pixCopied, setPixCopied] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptData, setReceiptData] = useState<DonationReceiptData | null>(null);
+
+  // Payload PIX Copia e Cola Padrão EMV Bacen
+  const pixEmvPayload = PixGeneratorService.generatePayload({
+    chave: ISM_PIX_CNPJ,
+    nomeRecebedor: 'INSTITUTO SER MELHOR',
+    cidade: 'SAO PAULO',
+    valor: amount,
+    txid: transactionId || 'ISMDOACAO',
+  });
 
   const handleCopyPix = async () => {
     try {
-      await navigator.clipboard.writeText(ISM_PIX_CNPJ.replace(/\D/g, ''));
+      await navigator.clipboard.writeText(pixEmvPayload);
       setPixCopied(true);
       setTimeout(() => setPixCopied(false), 2500);
     } catch {
@@ -133,6 +147,18 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
         destinationPillar: selectedPillar,
       });
       setTransactionId(result.transactionId);
+
+      const rData = ReceiptGeneratorService.buildReceiptData({
+        transactionId: result.transactionId,
+        donorName: data.name,
+        donorEmail: data.email,
+        donorTaxId: data.taxId,
+        amount,
+        frequency,
+        pillar: selectedPillar,
+        paymentMethod: paymentMethod === 'PIX' ? 'PIX Instantâneo' : paymentMethod === 'CARTAO' ? 'Cartão de Crédito' : 'Boleto Bancário',
+      });
+      setReceiptData(rData);
       setStep('success');
     } catch {
       setSubmitError('Erro ao processar doação. Por favor, verifique os dados e tente novamente.');
@@ -148,6 +174,8 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
     setSubmitError(null);
     setPaymentMethod('PIX');
     setPixCopied(false);
+    setShowReceiptModal(false);
+    setReceiptData(null);
     reset();
   };
 
@@ -155,46 +183,65 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
   if (step === 'success') {
     const pillar = PILLAR_OPTIONS.find((p) => p.key === selectedPillar)!;
     return (
-      <div
-        className="bg-gradient-to-br from-brand-800 to-secondary-900 text-white p-8 rounded-3xl text-center h-full flex flex-col justify-center items-center animate-fade-in relative overflow-hidden shadow-2xl"
-        role="alert"
-        aria-live="polite"
-      >
-        <div className="relative z-10">
-          <div className="w-24 h-24 bg-brand-500 rounded-full flex items-center justify-center text-white mb-6 mx-auto shadow-[0_0_40px_rgba(34,197,94,0.5)] animate-bounce">
-            <Heart size={46} fill="currentColor" />
-          </div>
-          <h2 className="text-3xl font-black mb-1">Muito Obrigado!</h2>
-          <p className="text-brand-200 font-bold uppercase tracking-widest text-xs mb-6">Transação Aprovada</p>
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/10">
-            <p className="text-secondary-300 text-sm mb-1">Você doou</p>
-            <p className="text-4xl font-black text-white mb-2">
-              R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </p>
-            <div
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase mb-3"
-              style={{ background: pillar.color }}
+      <>
+        {showReceiptModal && receiptData && (
+          <DonationReceiptModal
+            receiptData={receiptData}
+            onClose={() => setShowReceiptModal(false)}
+          />
+        )}
+        <div
+          className="bg-gradient-to-br from-brand-800 to-secondary-900 text-white p-8 rounded-3xl text-center h-full flex flex-col justify-center items-center animate-fade-in relative overflow-hidden shadow-2xl"
+          role="alert"
+          aria-live="polite"
+        >
+          <div className="relative z-10">
+            <div className="w-24 h-24 bg-brand-500 rounded-full flex items-center justify-center text-white mb-6 mx-auto shadow-[0_0_40px_rgba(34,197,94,0.5)] animate-bounce">
+              <Heart size={46} fill="currentColor" />
+            </div>
+            <h2 className="text-3xl font-black mb-1">Muito Obrigado!</h2>
+            <p className="text-brand-200 font-bold uppercase tracking-widest text-xs mb-6">Transação Aprovada</p>
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-6 border border-white/10">
+              <p className="text-secondary-300 text-sm mb-1">Você doou</p>
+              <p className="text-4xl font-black text-white mb-2">
+                R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase mb-3"
+                style={{ background: pillar.color }}
+              >
+                <pillar.Icon size={11} />
+                Pilar: {pillar.label}
+              </div>
+              <div className="text-xs text-secondary-400 font-mono">ID: {transactionId}</div>
+            </div>
+
+            {/* Recibo Oficial Button */}
+            {receiptData && (
+              <button
+                onClick={() => setShowReceiptModal(true)}
+                className="w-full py-3 px-6 mb-4 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md transition-colors"
+              >
+                <FileText size={16} /> Baixar Recibo Oficial (PDF)
+              </button>
+            )}
+
+            {paymentMethod === 'PIX' && (
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 text-left">
+                <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Chave Pix para Confirmação</p>
+                <p className="text-xs font-bold font-mono select-all break-all text-white">{ISM_PIX_CNPJ}</p>
+                <p className="text-[10px] text-secondary-400 mt-1">{ISM_PIX_NAME} · {ISM_PIX_BANK}</p>
+              </div>
+            )}
+            <button
+              onClick={handleReset}
+              className="px-8 py-3 bg-white text-secondary-900 font-bold rounded-full hover:bg-brand-50 transition-colors shadow-lg"
             >
-              <pillar.Icon size={11} />
-              Pilar: {pillar.label}
-            </div>
-            <div className="text-xs text-secondary-400 font-mono">ID: {transactionId}</div>
+              Fazer Nova Doação
+            </button>
           </div>
-          {paymentMethod === 'PIX' && (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 text-left">
-              <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Chave Pix para Confirmação</p>
-              <p className="text-xs font-bold font-mono select-all break-all text-white">{ISM_PIX_CNPJ}</p>
-              <p className="text-[10px] text-secondary-400 mt-1">{ISM_PIX_NAME} · {ISM_PIX_BANK}</p>
-            </div>
-          )}
-          <button
-            onClick={handleReset}
-            className="px-8 py-3 bg-white text-secondary-900 font-bold rounded-full hover:bg-brand-50 transition-colors shadow-lg"
-          >
-            Fazer Nova Doação
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
