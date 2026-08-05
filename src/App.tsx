@@ -35,6 +35,7 @@ import { SEOService } from './services/seoService';
 import { PWARegisterService } from './services/pwaRegisterService';
 import { AnalyticsService } from './services/analyticsService';
 import { BeneficiaryPortalModal } from './components/beneficiary/BeneficiaryPortalModal';
+import { VolunteerPortalModal } from './components/volunteer/VolunteerPortalModal';
 
 // Data & Types
 import { InstitutionalService } from './services/data';
@@ -220,6 +221,7 @@ interface AppState {
   isPrivacyOpen: boolean;
   isTermsOpen: boolean;
   isBeneficiaryPortalOpen: boolean;
+  isVolunteerPortalOpen: boolean;
 }
 
 function App() {
@@ -230,6 +232,7 @@ function App() {
     isPrivacyOpen: false,
     isTermsOpen: false,
     isBeneficiaryPortalOpen: false,
+    isVolunteerPortalOpen: false,
   });
 
   // ── Realtime listeners — admin changes reflect in < 1s ───────────────────
@@ -526,34 +529,71 @@ function App() {
         onClose={() => setState(s => ({ ...s, isBeneficiaryPortalOpen: false }))}
       />
 
-      {/* Botão de Acesso Rápido ao Portal do Beneficiário */}
-      <button
-        onClick={() => setState(s => ({ ...s, isBeneficiaryPortalOpen: true }))}
+      {/* Portal de Voluntários & Registro de Horas — G003 */}
+      <VolunteerPortalModal
+        isOpen={state.isVolunteerPortalOpen}
+        onClose={() => setState(s => ({ ...s, isVolunteerPortalOpen: false }))}
+      />
+
+      {/* Botões de Acesso Rápido (Portal Família & Portal Voluntário) */}
+      <div
         style={{
           position: 'fixed',
           bottom: 74,
           right: 20,
           zIndex: 9970,
-          background: 'rgba(15, 23, 42, 0.9)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(34, 197, 94, 0.4)',
-          borderRadius: 20,
-          color: '#4ade80',
-          padding: '8px 14px',
-          fontSize: 12,
-          fontWeight: 700,
-          cursor: 'pointer',
-          boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
           display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontFamily: 'Inter, system-ui, sans-serif',
+          gap: 10,
         }}
-        title="Área Restrita do Beneficiário & Cadastro Familiar"
       >
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80' }} />
-        Portal Família Assistida
-      </button>
+        <button
+          onClick={() => setState(s => ({ ...s, isBeneficiaryPortalOpen: true }))}
+          style={{
+            background: 'rgba(15, 23, 42, 0.9)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(34, 197, 94, 0.4)',
+            borderRadius: 20,
+            color: '#4ade80',
+            padding: '8px 14px',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontFamily: 'Inter, system-ui, sans-serif',
+          }}
+          title="Área Restrita do Beneficiário & Cadastro Familiar"
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80' }} />
+          Portal Família
+        </button>
+
+        <button
+          onClick={() => setState(s => ({ ...s, isVolunteerPortalOpen: true }))}
+          style={{
+            background: 'rgba(15, 23, 42, 0.9)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(168, 85, 247, 0.4)',
+            borderRadius: 20,
+            color: '#c084fc',
+            padding: '8px 14px',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontFamily: 'Inter, system-ui, sans-serif',
+          }}
+          title="Programa de Voluntariado & Horas Registradas"
+        >
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#c084fc' }} />
+          Seja Voluntário
+        </button>
+      </div>
 
       {/* Agente IA de Atendimento Flutuante — D001 */}
       <AIAssistantWidget />
