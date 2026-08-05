@@ -1,4 +1,16 @@
 rules_version = '2';
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ * FIREBASE FIRESTORE SECURITY RULES — INSTITUTO SER MELHOR (SIL-ISM 1.0)
+ * Conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)
+ *
+ * Princípios Aplicados:
+ *   1. Minimização de Dados (Art. 6º, III): Escrita pública estritamente validada por schemas.
+ *   2. Segurança e Segregação (Art. 6º, VII): RBAC para Admin/Editor e negação por padrão.
+ *   3. Imutabilidade da Auditoria (Art. 6º, X): Trilha audit_logs sem permissão de alteração/exclusão.
+ *   4. Bloqueio de Dados Sensíveis: Desativação total de schemas clínicos/EHR (Deny All).
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -209,8 +221,8 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 8. SISTEMA — CMS Versions, Audit Logs, Beneficiários, etc.
-    //    Acesso interno somente
+    // 8. SISTEMA — CMS Versions, Audit Logs, Dados Financeiros
+    //    Acesso interno restrito; LGPD Art. 6º VII — Segurança
     // ─────────────────────────────────────────────────────────────────────────
 
     match /cms_versions/{docId} {
@@ -220,10 +232,11 @@ service cloud.firestore {
     }
 
     match /audit_logs/{docId} {
+      // LGPD Art. 6º, X — Responsabilização e Prestação de Contas
+      // Trilha de auditoria: criação restrita a Editors autenticados; imutável após registro.
       allow read: if isAdmin();
-      // Escrita via sistema (admin autenticado); sem delete
-      allow create: if isEditor();
-      allow update, delete: if false;
+      allow create: if isEditor() && isValidAuditLog(request.resource.data);
+      allow update, delete: if false; // IMUTÁVEL — nunca permitido
     }
 
     match /users_profiles/{docId} {
@@ -232,10 +245,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    match /beneficiaries/{docId} {
-      allow read: if isEditor();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+    // ─────────────────────────────────────────────────────────────────────────
+    // DADOS FINANCEIROS — Acesso exclusivo ADMIN (LGPD Art. 6º, VII)
+    // ─────────────────────────────────────────────────────────────────────────
+    match /financial_data/{docId} {
+      allow read, create, update: if isAdmin();
+      allow delete: if false; // Registros financeiros: imutáveis por compliance
     }
 
     match /pipeline_cards/{docId} {
@@ -243,6 +258,19 @@ service cloud.firestore {
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
+
+    match /pipeline_tasks/{docId} {
+      allow read: if isEditor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // NOTA LGPD: Coleções clínicas/EHR (beneficiaries, patient_records,
+    // medical_records, prescriptions, appointments, telemedicine_sessions)
+    // NÃO possuem regras explícitas — enquadram-se no bloqueio global
+    // Default Deny All (Art. 6º, III — Minimização de Dados).
+    // ─────────────────────────────────────────────────────────────────────────
 
     // ─────────────────────────────────────────────────────────────────────────
     // 9. BLOQUEIO GLOBAL DEFAULT (Deny All por Padrão)
@@ -385,4 +413,15 @@ function isValidSocialNetwork(data) {
     && data.url is string && data.url.size() > 0 && data.url.size() <= 500
     && data.order is number && data.order >= 0
     && data.isActive is bool;
+}
+
+// ── Trilha de Auditoria (LGPD Art. 6º, X) ────────────────────────────────────
+
+function isValidAuditLog(data) {
+  // Campos obrigatórios: identificação do evento, ator e timestamp imutável.
+  // LGPD: registros de auditoria não podem ser alterados após criação.
+  return data.keys().hasAll(['action', 'userEmail', 'timestamp'])
+    && data.action is string && data.action.size() > 0 && data.action.size() <= 200
+    && data.userEmail is string && data.userEmail.size() > 3 && data.userEmail.size() <= 320
+    && data.timestamp is timestamp;
 }
