@@ -15,6 +15,7 @@ import { TransparencyReport } from './components/sections/TransparencyReport';
 import { PartnerSection } from './components/sections/PartnerSection';
 import { PartnersESGSection } from './components/sections/PartnersESGSection';
 import { CampaignGoalsSection } from './components/sections/CampaignGoalsSection';
+import { AtuacaoMapSection } from './components/sections/AtuacaoMapSection';
 import { DonationSection } from './components/sections/DonationSection';
 import { ProgramsSection } from './components/sections/ProgramsSection';
 import { PillarsSection } from './components/sections/PillarsSection';
@@ -487,6 +488,9 @@ function App() {
 
           {/* Portal de Parceiros & Co-benefícios ESG — E002 */}
           <PartnersESGSection />
+
+          {/* Mapa Interativo de Atuação por Município e Pilar — G001 */}
+          <AtuacaoMapSection />
 
           {/* Painel Público de Metas e Termômetro de Captação em Tempo Real — E004 */}
           <CampaignGoalsSection />
