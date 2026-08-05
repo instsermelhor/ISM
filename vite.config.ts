@@ -36,5 +36,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    exclude: [
+      // Admin tests run in their own Vite context with separate React instance
+      'admin/**',
+      '**/node_modules/**',
+    ],
   },
 });
