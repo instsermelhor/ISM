@@ -38,6 +38,8 @@ vi.mock('./services/data', () => ({
     getPrograms: vi.fn().mockResolvedValue([]),
     getServicesPage: vi.fn().mockResolvedValue({}),
     getDonationSection: vi.fn().mockResolvedValue({}),
+    getPublishedPartners: vi.fn().mockResolvedValue([]),
+    submitPartnerApplication: vi.fn().mockResolvedValue({ success: true, id: 'mock-id' }),
     getSeoSettings: vi.fn().mockResolvedValue({ siteTitle: 'ISM Test' }),
     getMetrics: vi.fn().mockResolvedValue([]),
     getPillars: vi.fn().mockResolvedValue([]),

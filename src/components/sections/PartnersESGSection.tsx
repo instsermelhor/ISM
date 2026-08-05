@@ -48,17 +48,19 @@ export const PartnersESGSection: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    InstitutionalService.getPublishedPartners().then(res => {
-      if (res && res.length > 0) {
-        setPartners(res.map((p: any) => ({
-          id: p.id,
-          name: p.name || p.companyName,
-          tier: p.tier || 'PARCEIRO',
-          logo: p.logo || '🏢',
-          impact: p.impactDescription || 'Investidor Social ISM',
-        })));
-      }
-    });
+    if (typeof InstitutionalService.getPublishedPartners === 'function') {
+      InstitutionalService.getPublishedPartners().then(res => {
+        if (res && res.length > 0) {
+          setPartners(res.map((p: any) => ({
+            id: p.id,
+            name: p.name || p.companyName,
+            tier: p.tier || 'PARCEIRO',
+            logo: p.logo || '🏢',
+            impact: p.impactDescription || 'Investidor Social ISM',
+          })));
+        }
+      }).catch(() => {/* fallback mantido */});
+    }
   }, []);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<PartnerFormData>({
