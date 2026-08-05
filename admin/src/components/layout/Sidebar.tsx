@@ -6,7 +6,8 @@ import {
   Mail, Kanban, BarChart2, Activity, HeartPulse,
   Users, Globe, ChevronDown, LogOut, Menu, X, Zap,
   DollarSign, CreditCard, Landmark, Target, UserCheck,
-  Heart, Monitor, Settings, Star, Shield, Clock, FileText, TrendingUp, Bot
+  Heart, Monitor, Settings, Star, Shield, Clock, FileText, TrendingUp, Bot,
+  HeartHandshake, MapPin
 } from 'lucide-react';
 
 interface NavGroup {
@@ -68,6 +69,13 @@ const NAV: NavGroup[] = [
       { to: '/financeiro/doadores',  label: 'Doadores',         Icon: UserCheck,   roles: ['ADMIN'] },
       { to: '/financeiro/bancario',  label: 'APIs Bancárias',   Icon: Landmark,    roles: ['ADMIN'] },
       { to: '/financeiro/metas',     label: 'Metas',            Icon: Target,      roles: ['ADMIN'] },
+    ]
+  },
+  {
+    label: 'Gestão Comunitária',
+    items: [
+      { to: '/comunidade', label: 'Famílias & Voluntários', Icon: HeartHandshake, badge: 'G002·G003' },
+      { to: '/comunidade', label: 'Mapa de Atuação',        Icon: MapPin,         badge: 'G001' },
     ]
   },
   {
