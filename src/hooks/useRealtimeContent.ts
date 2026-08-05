@@ -116,6 +116,10 @@ export const useRealtimeServicesPage = <T>() =>
 export const useRealtimeDonationSection = <T>() =>
   useRealtimeDocument<T>('donation_section', 'main');
 
+/** sroi_config/main — Configuração SROI */
+export const useRealtimeSROI = <T>() =>
+  useRealtimeDocument<T>('sroi_config', 'main');
+
 /** impact_metrics — Métricas de impacto (ordenado por 'order') */
 export const useRealtimeMetrics = <T>() =>
   useRealtimeCollection<T>('impact_metrics', 'order');

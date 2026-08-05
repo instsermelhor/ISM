@@ -28,6 +28,7 @@ const ValuesEditorPage = lazy(() => import('./pages/ValuesEditorPage').then(m =>
 const GovernanceEditorPage = lazy(() => import('./pages/GovernanceEditorPage').then(m => ({ default: m.GovernanceEditorPage })));
 const TimelineEditorPage = lazy(() => import('./pages/TimelineEditorPage').then(m => ({ default: m.TimelineEditorPage })));
 const TransparencyEditorPage = lazy(() => import('./pages/TransparencyEditorPage').then(m => ({ default: m.TransparencyEditorPage })));
+const SROICalculatorPage = lazy(() => import('./pages/SROICalculatorPage').then(m => ({ default: m.SROICalculatorPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -62,6 +63,7 @@ function App() {
               <Route path="site/governanca" element={<GovernanceEditorPage />} />
               <Route path="site/timeline" element={<TimelineEditorPage />} />
               <Route path="site/transparencia" element={<TransparencyEditorPage />} />
+              <Route path="site/sroi" element={<SROICalculatorPage />} />
               <Route path="configuracoes" element={<SiteConfigPage />} />
 
               {/* Gestão da Instituição */}

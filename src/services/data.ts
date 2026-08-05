@@ -433,6 +433,18 @@ Por meio de ações integradas, humanizadas e baseadas em evidências, o Institu
     }
   },
 
+  /** Retorna a configuração da Calculadora SROI */
+  getSROI: async (): Promise<Record<string, any> | null> => {
+    if (!FIREBASE_ENABLED) return null;
+    try {
+      const snap = await getDoc(doc(db, 'sroi_config', 'main'));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      console.error('[Firestore] Erro ao buscar sroi_config:', err);
+      return null;
+    }
+  },
+
   /** Retorna as configurações de SEO */
   getSeoSettings: async (): Promise<Record<string, any> | null> => {
     if (!FIREBASE_ENABLED) return null;

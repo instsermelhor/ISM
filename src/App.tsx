@@ -17,6 +17,7 @@ import { DonationSection } from './components/sections/DonationSection';
 import { ProgramsSection } from './components/sections/ProgramsSection';
 import { PillarsSection } from './components/sections/PillarsSection';
 import { NewsSection } from './components/sections/NewsSection';
+import { SROICalculator } from './components/sections/SROICalculator';
 
 // UI & Legal
 import { Modal } from './components/ui/Modal';
@@ -38,6 +39,7 @@ import {
   useRealtimeInstitutionalPage,
   useRealtimeServicesPage,
   useRealtimeDonationSection,
+  useRealtimeSROI,
   useRealtimeMetrics,
   useRealtimePillars,
   useRealtimeValueBlocks,
@@ -226,6 +228,7 @@ function App() {
   const realtimeInstPage   = useRealtimeInstitutionalPage<any>();
   const realtimeServices   = useRealtimeServicesPage<any>();
   const realtimeDonation   = useRealtimeDonationSection<any>();
+  const realtimeSROI       = useRealtimeSROI<any>();
 
   // Coleções
   const realtimeMetrics          = useRealtimeMetrics<any>();
@@ -396,6 +399,9 @@ function App() {
 
           {/* Métricas de Impacto — lê de impact_metrics (realtime) */}
           <ImpactMetrics items={activeMetrics} />
+
+          {/* Calculadora SROI Automatizada — lê de sroi_config/main (realtime) */}
+          <SROICalculator sroiData={realtimeSROI} />
 
           {/* Missão / Visão / Valores — lê de institutional_page/main (realtime) */}
           <MissionVisionValues data={activePageAttrs as any} />
