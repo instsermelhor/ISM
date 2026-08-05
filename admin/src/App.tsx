@@ -33,6 +33,7 @@ const AIAgentManagerPage = lazy(() => import('./pages/AIAgentManagerPage').then(
 const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReportPage').then(m => ({ default: m.ExecutiveReportPage })));
 const BIAnalyticsDashboardPage = lazy(() => import('./pages/BIAnalyticsDashboardPage').then(m => ({ default: m.BIAnalyticsDashboardPage })));
 const GovernanceAuditPage = lazy(() => import('./pages/GovernanceAuditPage').then(m => ({ default: m.GovernanceAuditPage })));
+const CommunityExpansionPage = lazy(() => import('./pages/CommunityExpansionPage').then(m => ({ default: m.CommunityExpansionPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -92,6 +93,7 @@ function App() {
               <Route path="auditoria/lgpd" element={<GovernanceAuditPage />} />
               <Route path="health" element={<HealthPage />} />
               <Route path="usuarios" element={<UsersPage />} />
+              <Route path="comunidade" element={<CommunityExpansionPage />} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
