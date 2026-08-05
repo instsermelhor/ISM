@@ -370,19 +370,10 @@ function App() {
   const activeBlog      = realtimeBlogPosts.length    > 0 ? realtimeBlogPosts    : [];
   const activePartners  = realtimePartners;
 
-  // ── Normaliza coleções do Strapi para o formato plano ───────────────────
-  function flattenStrapi<T>(items: any[]): T[] {
-    if (!items || !Array.isArray(items) || items.length === 0) return [];
-    if (items[0]?.attributes !== undefined) {
-      return items.map((item: any) => (item ? { id: item.id, ...item.attributes } : {})) as T[];
-    }
-    return items as T[];
-  }
-
-  const flatValues    = flattenStrapi<any>(activeValues);
-  const flatGovInst   = flattenStrapi<any>(activeGovInst);
-  const flatGovMem    = flattenStrapi<any>(activeGovMem);
-  const flatTimeline  = flattenStrapi<any>(activeTimeline);
+  const flatValues    = activeValues;
+  const flatGovInst   = activeGovInst;
+  const flatGovMem    = activeGovMem;
+  const flatTimeline  = activeTimeline;
 
   // ── Render Guards ───────────────────────────────────────────────────────
   if (error) return <ErrorScreen onRetry={loadData} />;

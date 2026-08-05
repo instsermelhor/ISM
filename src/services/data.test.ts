@@ -3,18 +3,17 @@ import { InstitutionalService } from './data';
 
 describe('InstitutionalService Unit & Integration Tests', () => {
   it('deve carregar os dados institucionais padrão sem exceção', async () => {
-    const pageResponse = await InstitutionalService.getPage();
-    expect(pageResponse).toBeDefined();
-    expect(pageResponse.data).toBeDefined();
-    expect(pageResponse.data.attributes.title).toBe('Instituto Ser Melhor');
-    expect(pageResponse.data.attributes.missionStatement).toContain('Promover a emancipação humana');
+    const page = await InstitutionalService.getPage();
+    expect(page).toBeDefined();
+    expect(page.title).toBe('Instituto Ser Melhor');
+    expect(page.missionStatement).toContain('Promover a emancipação humana');
   });
 
   it('deve listar os blocos de valores/pilares da instituição', async () => {
     const valueBlocks = await InstitutionalService.getValueBlocks();
     expect(valueBlocks).toBeDefined();
-    expect(valueBlocks.data.length).toBeGreaterThan(0);
-    expect(valueBlocks.data[0].attributes.name).toBe('Excelência com Integridade');
+    expect(valueBlocks.length).toBeGreaterThan(0);
+    expect(valueBlocks[0].name).toBe('Excelência com Integridade');
   });
 
   it('deve carregar a lista de programas públicos publicados', async () => {

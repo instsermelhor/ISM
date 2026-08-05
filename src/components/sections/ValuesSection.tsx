@@ -1,11 +1,11 @@
 import React from 'react';
-import { StrapiItem, ValueBlockAttributes } from '../../types';
+import { ValueBlockAttributes } from '../../types';
 import { ValueBlock } from '../ui/ValueBlock';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 
 interface Props {
-  values: StrapiItem<ValueBlockAttributes>[];
+  values: ValueBlockAttributes[];
 }
 
 export const ValuesSection: React.FC<Props> = ({ values = [] }) => {
@@ -39,10 +39,9 @@ export const ValuesSection: React.FC<Props> = ({ values = [] }) => {
 
         {/* BUG FIX: grid 2x2 para 4 itens, sem card orfão desalinhado */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {safeValues.map((item, index) => {
-            const data = item?.attributes ? item.attributes : item;
-            return <ValueBlock key={item?.id || index} data={data as any} index={index} />;
-          })}
+          {safeValues.map((item, index) => (
+            <ValueBlock key={(item as any)?.id || index} data={item} index={index} />
+          ))}
         </div>
       </div>
     </section>

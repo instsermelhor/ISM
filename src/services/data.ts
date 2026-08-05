@@ -29,8 +29,6 @@
  */
 
 import {
-  StrapiSingleResponse,
-  StrapiCollectionResponse,
   InstitutionalPageAttributes,
   ValueBlockAttributes,
   GovernanceInstanceAttributes,
@@ -54,147 +52,85 @@ const FIREBASE_ENABLED = Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID);
 // MOCK DATA — Fallback para dev sem Firebase
 // ─────────────────────────────────────────────────────────────────────────────
 
-const mockPageResponse: StrapiSingleResponse<InstitutionalPageAttributes> = {
-  data: {
-    id: 1,
-    attributes: {
-      title: "Instituto Ser Melhor",
-      introduction: "Somos uma organização não governamental brasileira dedicada a impulsionar transformações educacionais, sociais e ambientais. Nossa trajetória é movida pela busca contínua por redefinir as fronteiras do impacto sistêmico.",
-      missionStatement: "Promover a emancipação humana e o desenvolvimento sustentável, atuando como catalisador de transformações sociais, ambientais, educacionais e culturais, com base em direitos, evidências e impacto mensurável.",
-      visionStatement: "Ser uma organização de referência na construção de um mundo equitativo, próspero e regenerativo, onde o fortalecimento de capacidades e a garantia de direitos reduzam estruturalmente as situações de vulnerabilidade social.",
-      governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle, deliberação e prestação de contas, estruturada para garantir a perpetuidade da missão institucional, a transparência, a integridade, a conformidade e a máxima eficiência na gestão e na alocação dos recursos.",
-      transparencyIntro: "Garantimos acesso público e auditado às nossas demonstrações financeiras e relatórios de impacto. Operamos com padrões de transparência institucional compatíveis com as exigências legais e as melhores práticas internacionais de prestação de contas.",
-      logoImage: "/logo-ism.png",
-      heroImage: "",  // sem fallback externo — Firestore é a fonte de verdade
-      logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso compromisso com o Desenvolvimento Sustentável Integral. O arco exterior amarelo simboliza o ciclo da prosperidade e a natureza regenerativa de nosso trabalho.",
-      motto: "Sapere Aude",
-      mottoExplanation: "Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.",
-      networkIntro: "O Instituto Ser Melhor reconhece que o impacto sustentável se constrói em parceria. Nosso Ecossistema Colaborativo Estratégico reúne organizações nacionais e internacionais comprometidas com o desenvolvimento sustentável e a inovação social.",
-      transparencyDocuments: [
-        { id: 1, documentName: "Demonstrações Financeiras 2024 (Auditado - Big 4)", documentType: "Financeiro", documentFile: "#", publicationDate: "2024-03-30", fileSize: "4.2 MB" },
-        { id: 2, documentName: "Relatório Anual de Impacto e Atividades", documentType: "Impacto", documentFile: "#", publicationDate: "2024-03-15", fileSize: "15.4 MB" },
-        { id: 3, documentName: "Código de Conduta Ética", documentType: "Código de Conduta", documentFile: "#", publicationDate: "2023-01-10", fileSize: "1.5 MB" },
-      ]
-    }
+const mockPageAttributes: InstitutionalPageAttributes = {
+  title: "Instituto Ser Melhor",
+  introduction: "Somos uma organização não governamental brasileira dedicada a impulsionar transformações educacionais, sociais e ambientais. Nossa trajetória é movida pela busca contínua por redefinir as fronteiras do impacto sistêmico.",
+  missionStatement: "Promover a emancipação humana e o desenvolvimento sustentável, atuando como catalisador de transformações sociais, ambientais, educacionais e culturais, com base em direitos, evidências e impacto mensurável.",
+  visionStatement: "Ser uma organização de referência na construção de um mundo equitativo, próspero e regenerativo, onde o fortalecimento de capacidades e a garantia de direitos reduzam estruturalmente as situações de vulnerabilidade social.",
+  governanceIntro: "A Governança do Instituto Ser Melhor é uma arquitetura de controle, deliberação e prestação de contas, estruturada para garantir a perpetuidade da missão institucional, a transparência, a integridade, a conformidade e a máxima eficiência na gestão e na alocação dos recursos.",
+  transparencyIntro: "Garantimos acesso público e auditado às nossas demonstrações financeiras e relatórios de impacto. Operamos com padrões de transparência institucional compatíveis com as exigências legais e as melhores práticas internacionais de prestação de contas.",
+  logoImage: "/logo-ism.png",
+  heroImage: "",  // sem fallback externo — Firestore é a fonte de verdade
+  logoExplanation: "O emblema circular com três figuras humanas estilizadas representa o nosso compromisso com o Desenvolvimento Sustentável Integral. O arco exterior amarelo simboliza o ciclo da prosperidade e a natureza regenerativa de nosso trabalho.",
+  motto: "Sapere Aude",
+  mottoExplanation: "Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual, posicionando o Instituto como promotor do pensamento crítico e da formação cidadã.",
+  networkIntro: "O Instituto Ser Melhor reconhece que o impacto sustentável se constrói em parceria. Nosso Ecossistema Colaborativo Estratégico reúne organizações nacionais e internacionais comprometidas com o desenvolvimento sustentável e a inovação social.",
+  transparencyDocuments: [
+    { id: 1, documentName: "Demonstrações Financeiras 2024 (Auditado - Big 4)", documentType: "Financeiro", documentFile: "#", publicationDate: "2024-03-30", fileSize: "4.2 MB" },
+    { id: 2, documentName: "Relatório Anual de Impacto e Atividades", documentType: "Impacto", documentFile: "#", publicationDate: "2024-03-15", fileSize: "15.4 MB" },
+    { id: 3, documentName: "Código de Conduta Ética", documentType: "Código de Conduta", documentFile: "#", publicationDate: "2023-01-10", fileSize: "1.5 MB" },
+  ]
+};
+
+const mockValueBlocks: ValueBlockAttributes[] = [
+  { name: "Excelência com Integridade", iconIdentifier: "star", description: "Buscamos a melhoria contínua com rigor técnico, responsabilidade institucional e compromisso permanente com a qualidade de nossas ações e a dignidade das pessoas que atendemos." },
+  { name: "Transparência e Prestação de Contas", iconIdentifier: "shield", description: "Operamos com abertura e clareza em todos os processos, tornando públicas nossas decisões, contas e resultados de forma acessível, compreensível e auditável." },
+  { name: "Protagonismo Comunitário", iconIdentifier: "zap", description: "Reconhecemos as comunidades como protagonistas de seu próprio desenvolvimento, apoiando processos de fortalecimento de capacidades, autonomia e participação ativa na construção de soluções." },
+  { name: "Compromisso de Longo Prazo", iconIdentifier: "infinity", description: "Nossa atuação é orientada para impactos duradouros e estruturais, construindo legados que fortalecem gerações presentes e futuras com base em desenvolvimento sustentável e justiça social." },
+];
+
+const mockGovernanceInstances: GovernanceInstanceAttributes[] = [
+  { title: "Assembleia Geral de Associados", order: 1, summary: "Órgão máximo de deliberação institucional, responsável pelas decisões estratégicas e pela eleição dos demais órgãos de governança, nos termos do Estatuto Social e do Código Civil Brasileiro.", keyAttributes: [{ attributeText: "Aprova as demonstrações financeiras anuais auditadas por auditoria independente." }, { attributeText: "Elege e destituiu membros dos Conselhos Deliberativo e Fiscal." }, { attributeText: "Delibera alterações estatutárias por quórum qualificado (2/3 dos associados)." }] },
+  { title: "Conselho Deliberativo", order: 2, summary: "Órgão de supervisão e controle estratégico, responsável pela fiscalização da gestão executiva e pela aprovação de políticas institucionais de risco, compliance e integridade.", keyAttributes: [{ attributeText: "Independência funcional: membros sem vínculos com a gestão executiva." }, { attributeText: "Aprova políticas de gestão de riscos e compliance." }, { attributeText: "Avalia anualmente o desempenho da Diretoria Executiva com base em indicadores de impacto." }] },
+  { title: "Conselho Fiscal", order: 3, summary: "Órgão independente de fiscalização econômico-financeira, responsável pela emissão de pareceres sobre as demonstrações contábeis e pelo reporte direto à Assembleia Geral.", keyAttributes: [{ attributeText: "Emite parecer sobre as Demonstrações Financeiras auditadas." }, { attributeText: "Reporta diretamente à Assembleia Geral, assegurando independência." }, { attributeText: "Fiscaliza a aderência aos padrões contábeis e às normas legais aplicáveis." }] },
+  { title: "Diretoria Executiva", order: 4, summary: "Responsável pela gestão estratégica e operacional da instituição, pela execução orçamentária, pela prestação de contas e pela entrega dos resultados institucionais.", keyAttributes: [{ attributeText: "Executa o planejamento estratégico aprovado pelo Conselho Deliberativo." }, { attributeText: "Administra o patrimônio institucional com responsabilidade e transparência." }, { attributeText: "Presta contas periodicamente aos órgãos de governança e aos financiadores." }] },
+  { title: "Conselho Consultivo", order: 5, summary: "Órgão de caráter consultivo formado por especialistas nacionais e internacionais que contribuem com orientação técnica e estratégica para o fortalecimento da missão institucional.", keyAttributes: [{ attributeText: "Fornece orientação técnica especializada em áreas estratégicas de atuação." }, { attributeText: "Natureza estritamente consultiva, sem poder deliberativo." }, { attributeText: "Contribui para o alinhamento da atuação do Instituto com padrões internacionais." }] },
+];
+
+const mockTimelineMilestones: TimelineMilestoneAttributes[] = [
+  {
+    year: 2007,
+    title: "Fundação Conceitual",
+    impactDescription: "Surge a Associação de Bairro Vila Margarida, com o objetivo de representar a comunidade junto ao poder público e buscar melhorias essenciais para o bairro, como pavimentação das vias, iluminação pública e infraestrutura urbana."
   },
-  meta: {}
-};
+  {
+    year: 2012,
+    title: "A Associação a Serviço da Sociedade",
+    impactDescription: "A Associação de Bairro Vila Margarida amplia sua atuação e passa a desenvolver ações sociais voltadas às famílias em situação de vulnerabilidade, promovendo a distribuição de cestas básicas, leite e oferecendo transporte comunitário para facilitar o acesso da população aos serviços essenciais."
+  },
+  {
+    year: 2015,
+    title: "Vila Margarida e a Educação",
+    impactDescription: "É firmada parceria com a Associação de Professores da Educação Infantil, ampliando a atuação institucional para o atendimento de crianças da educação básica por meio de projetos educacionais."
+  },
+  {
+    year: 2017,
+    title: "A Educação como Foco",
+    impactDescription: "Uma nova parceria é estabelecida com a Associação Cultural Tiradentes, marcando o início do desenvolvimento de projetos de grande impacto social, educacional e cultural, fortalecendo o compromisso com a transformação das comunidades atendidas."
+  },
+  {
+    year: 2022,
+    title: "O Surgimento do Instituto Ser Melhor",
+    impactDescription: "A fusão das três entidades parceiras resulta na criação do Instituto Ser Melhor, consolidando uma nova estrutura institucional voltada ao desenvolvimento humano, à inovação social e à ampliação do impacto das ações realizadas."
+  },
+  {
+    year: 2023,
+    title: "Consolidação dos Valores Institucionais",
+    impactDescription: "Os princípios, valores e diretrizes institucionais são revisados e fortalecidos com a participação de profissionais de diversas áreas. Neste mesmo período, o Instituto Ser Melhor torna-se participante do Pacto Global das Nações Unidas, alinhando suas ações aos 17 Objetivos de Desenvolvimento Sustentável (ODS)."
+  },
+  {
+    year: 2024,
+    title: "Reconhecimento Internacional",
+    impactDescription: "O Instituto Ser Melhor recebe o Global Excellence Award (GEA) em reconhecimento às suas boas práticas institucionais. A Metodologia M-IS passa a ser reconhecida como referência internacional em inovação social. Também é implantada a metodologia SROI (Social Return on Investment), alcançando o índice de 1:4,83, demonstrando elevado retorno social sobre os investimentos realizados."
+  },
+  {
+    year: 2025,
+    title: "Criação do Fundo Perpétuo",
+    impactDescription: "É criado o Fundo Perpétuo (F-P), assegurando a sustentabilidade financeira da instituição e sua independência operacional. Com essa estrutura, 100% das doações recebidas passam a ser destinadas aos programas finalísticos, fortalecendo o compromisso com a transparência, a eficiência e o impacto social."
+  }
+];
 
-const mockValueBlocksResponse: StrapiCollectionResponse<ValueBlockAttributes> = {
-  data: [
-    { id: 1, attributes: { name: "Excelência com Integridade", iconIdentifier: "star", description: "Buscamos a melhoria contínua com rigor técnico, responsabilidade institucional e compromisso permanente com a qualidade de nossas ações e a dignidade das pessoas que atendemos." } },
-    { id: 2, attributes: { name: "Transparência e Prestação de Contas", iconIdentifier: "shield", description: "Operamos com abertura e clareza em todos os processos, tornando públicas nossas decisões, contas e resultados de forma acessível, compreensível e auditável." } },
-    { id: 3, attributes: { name: "Protagonismo Comunitário", iconIdentifier: "zap", description: "Reconhecemos as comunidades como protagonistas de seu próprio desenvolvimento, apoiando processos de fortalecimento de capacidades, autonomia e participação ativa na construção de soluções." } },
-    { id: 4, attributes: { name: "Compromisso de Longo Prazo", iconIdentifier: "infinity", description: "Nossa atuação é orientada para impactos duradouros e estruturais, construindo legados que fortalecem gerações presentes e futuras com base em desenvolvimento sustentável e justiça social." } },
-  ],
-  meta: { pagination: { page: 1, pageSize: 25, pageCount: 1, total: 4 } }
-};
-
-const mockGovernanceInstancesResponse: StrapiCollectionResponse<GovernanceInstanceAttributes> = {
-  data: [
-    { id: 1, attributes: { title: "Assembleia Geral de Associados", order: 1, summary: "Órgão máximo de deliberação institucional, responsável pelas decisões estratégicas e pela eleição dos demais órgãos de governança, nos termos do Estatuto Social e do Código Civil Brasileiro.", keyAttributes: [{ attributeText: "Aprova as demonstrações financeiras anuais auditadas por auditoria independente." }, { attributeText: "Elege e destituiu membros dos Conselhos Deliberativo e Fiscal." }, { attributeText: "Delibera alterações estatutárias por quórum qualificado (2/3 dos associados)." }] } },
-    { id: 2, attributes: { title: "Conselho Deliberativo", order: 2, summary: "Órgão de supervisão e controle estratégico, responsável pela fiscalização da gestão executiva e pela aprovação de políticas institucionais de risco, compliance e integridade.", keyAttributes: [{ attributeText: "Independência funcional: membros sem vínculos com a gestão executiva." }, { attributeText: "Aprova políticas de gestão de riscos e compliance." }, { attributeText: "Avalia anualmente o desempenho da Diretoria Executiva com base em indicadores de impacto." }] } },
-    { id: 3, attributes: { title: "Conselho Fiscal", order: 3, summary: "Órgão independente de fiscalização econômico-financeira, responsável pela emissão de pareceres sobre as demonstrações contábeis e pelo reporte direto à Assembleia Geral.", keyAttributes: [{ attributeText: "Emite parecer sobre as Demonstrações Financeiras auditadas." }, { attributeText: "Reporta diretamente à Assembleia Geral, assegurando independência." }, { attributeText: "Fiscaliza a aderência aos padrões contábeis e às normas legais aplicáveis." }] } },
-    { id: 4, attributes: { title: "Diretoria Executiva", order: 4, summary: "Responsável pela gestão estratégica e operacional da instituição, pela execução orçamentária, pela prestação de contas e pela entrega dos resultados institucionais.", keyAttributes: [{ attributeText: "Executa o planejamento estratégico aprovado pelo Conselho Deliberativo." }, { attributeText: "Administra o patrimônio institucional com responsabilidade e transparência." }, { attributeText: "Presta contas periodicamente aos órgãos de governança e aos financiadores." }] } },
-    { id: 5, attributes: { title: "Conselho Consultivo", order: 5, summary: "Órgão de caráter consultivo formado por especialistas nacionais e internacionais que contribuem com orientação técnica e estratégica para o fortalecimento da missão institucional.", keyAttributes: [{ attributeText: "Fornece orientação técnica especializada em áreas estratégicas de atuação." }, { attributeText: "Natureza estritamente consultiva, sem poder deliberativo." }, { attributeText: "Contribui para o alinhamento da atuação do Instituto com padrões internacionais." }] } },
-  ],
-  meta: { pagination: { page: 1, pageSize: 25, pageCount: 1, total: 5 } }
-};
-
-const mockTimelineMilestonesResponse: StrapiCollectionResponse<TimelineMilestoneAttributes> = {
-  data: [
-    {
-      id: 1,
-      attributes: {
-        year: 2007,
-        title: "Fundação Conceitual",
-        impactDescription: "Surge a Associação de Bairro Vila Margarida, com o objetivo de representar a comunidade junto ao poder público e buscar melhorias essenciais para o bairro, como pavimentação das vias, iluminação pública e infraestrutura urbana."
-      }
-    },
-    {
-      id: 2,
-      attributes: {
-        year: 2012,
-        title: "A Associação a Serviço da Sociedade",
-        impactDescription: "A Associação de Bairro Vila Margarida amplia sua atuação e passa a desenvolver ações sociais voltadas às famílias em situação de vulnerabilidade, promovendo a distribuição de cestas básicas, leite e oferecendo transporte comunitário para facilitar o acesso da população aos serviços essenciais."
-      }
-    },
-    {
-      id: 3,
-      attributes: {
-        year: 2015,
-        title: "Vila Margarida e a Educação",
-        impactDescription: "É firmada parceria com a Associação de Professores da Educação Infantil, ampliando a atuação institucional para o atendimento de crianças da educação básica por meio de projetos educacionais."
-      }
-    },
-    {
-      id: 4,
-      attributes: {
-        year: 2017,
-        title: "A Educação como Foco",
-        impactDescription: "Uma nova parceria é estabelecida com a Associação Cultural Tiradentes, marcando o início do desenvolvimento de projetos de grande impacto social, educacional e cultural, fortalecendo o compromisso com a transformação das comunidades atendidas."
-      }
-    },
-    {
-      id: 5,
-      attributes: {
-        year: 2022,
-        title: "O Surgimento do Instituto Ser Melhor",
-        impactDescription: "A fusão das três entidades parceiras resulta na criação do Instituto Ser Melhor, consolidando uma nova estrutura institucional voltada ao desenvolvimento humano, à inovação social e à ampliação do impacto das ações realizadas."
-      }
-    },
-    {
-      id: 6,
-      attributes: {
-        year: 2023,
-        title: "Consolidação dos Valores Institucionais",
-        impactDescription: "Os princípios, valores e diretrizes institucionais são revisados e fortalecidos com a participação de profissionais de diversas áreas. Neste mesmo período, o Instituto Ser Melhor torna-se participante do Pacto Global das Nações Unidas, alinhando suas ações aos 17 Objetivos de Desenvolvimento Sustentável (ODS)."
-      }
-    },
-    {
-      id: 7,
-      attributes: {
-        year: 2024,
-        title: "Reconhecimento Internacional",
-        impactDescription: "O Instituto Ser Melhor recebe o Global Excellence Award (GEA) em reconhecimento às suas boas práticas institucionais. A Metodologia M-IS passa a ser reconhecida como referência internacional em inovação social. Também é implantada a metodologia SROI (Social Return on Investment), alcançando o índice de 1:4,83, demonstrando elevado retorno social sobre os investimentos realizados."
-      }
-    },
-    {
-      id: 8,
-      attributes: {
-        year: 2025,
-        title: "Criação do Fundo Perpétuo",
-        impactDescription: "É criado o Fundo Perpétuo (F-P), assegurando a sustentabilidade financeira da instituição e sua independência operacional. Com essa estrutura, 100% das doações recebidas passam a ser destinadas aos programas finalísticos, fortalecendo o compromisso com a transparência, a eficiência e o impacto social."
-      }
-    }
-  ],
-  meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 8 } }
-};
-
-// membros são gerenciados exclusivamente pelo Firestore (governance_members)
-const mockMembersResponse: StrapiCollectionResponse<GovernanceMemberAttributes> = {
-  data: [],
-  meta: { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 0 } }
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS — Converte documentos Firestore para o formato Strapi-like do site
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Converte um array de docs Firestore em StrapiCollectionResponse */
-function toCollection<T>(
-  docs: { id: string; [key: string]: unknown }[],
-  fallback: StrapiCollectionResponse<T>
-): StrapiCollectionResponse<T> {
-  if (!docs || docs.length === 0) return fallback;
-  return {
-    data: docs.map((d, i) => ({
-      id: i + 1,
-      attributes: d as unknown as T,
-    })),
-    meta: { pagination: { page: 1, pageSize: docs.length, pageCount: 1, total: docs.length } }
-  };
-}
+const mockMembers: GovernanceMemberAttributes[] = [];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InstitutionalService — API pública usada pelo App.tsx
@@ -203,119 +139,105 @@ function toCollection<T>(
 export const InstitutionalService = {
 
   /** Dados da página institucional */
-  getPage: async (): Promise<StrapiSingleResponse<InstitutionalPageAttributes>> => {
+  getPage: async (): Promise<InstitutionalPageAttributes> => {
     if (!FIREBASE_ENABLED) {
-      return new Promise(resolve => setTimeout(() => resolve(mockPageResponse), 300));
+      return new Promise(resolve => setTimeout(() => resolve(mockPageAttributes), 300));
     }
     try {
       const snap = await getDoc(doc(db, 'institutional_page', 'main'));
       if (snap.exists()) {
-        const data = snap.data() as InstitutionalPageAttributes;
-        return { data: { id: 1, attributes: data }, meta: {} };
+        return snap.data() as InstitutionalPageAttributes;
       }
-      // Coleção ainda não inicializada — usa mock e avisa
       if (import.meta.env.DEV) {
         console.warn('[Firestore] institutional_page não encontrada. Use o admin para fazer o seed.');
       }
-      return mockPageResponse;
+      return mockPageAttributes;
     } catch (err) {
       console.error('[Firestore] Erro ao buscar institutional_page:', err);
-      return mockPageResponse;
+      return mockPageAttributes;
     }
   },
 
   /** Blocos de valores/pilares */
-  getValueBlocks: async (): Promise<StrapiCollectionResponse<ValueBlockAttributes>> => {
+  getValueBlocks: async (): Promise<ValueBlockAttributes[]> => {
     if (!FIREBASE_ENABLED) {
-      return new Promise(resolve => setTimeout(() => resolve(mockValueBlocksResponse), 300));
+      return new Promise(resolve => setTimeout(() => resolve(mockValueBlocks), 300));
     }
     try {
       const q = query(collection(db, 'value_blocks'), orderBy('order'));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        return toCollection<ValueBlockAttributes>(
-          snap.docs.map(d => ({ id: d.id, ...d.data() })),
-          mockValueBlocksResponse
-        );
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as ValueBlockAttributes));
       }
       if (import.meta.env.DEV) {
         console.warn('[Firestore] value_blocks vazio. Use o admin para fazer o seed.');
       }
-      return mockValueBlocksResponse;
+      return mockValueBlocks;
     } catch (err) {
       console.error('[Firestore] Erro ao buscar value_blocks:', err);
-      return mockValueBlocksResponse;
+      return mockValueBlocks;
     }
   },
 
   /** Instâncias de governança */
-  getGovernanceInstances: async (): Promise<StrapiCollectionResponse<GovernanceInstanceAttributes>> => {
+  getGovernanceInstances: async (): Promise<GovernanceInstanceAttributes[]> => {
     if (!FIREBASE_ENABLED) {
-      return new Promise(resolve => setTimeout(() => resolve(mockGovernanceInstancesResponse), 300));
+      return new Promise(resolve => setTimeout(() => resolve(mockGovernanceInstances), 300));
     }
     try {
       const q = query(collection(db, 'governance_instances'), orderBy('order'));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        return toCollection<GovernanceInstanceAttributes>(
-          snap.docs.map(d => ({ id: d.id, ...d.data() })),
-          mockGovernanceInstancesResponse
-        );
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as GovernanceInstanceAttributes));
       }
       if (import.meta.env.DEV) {
         console.warn('[Firestore] governance_instances vazio. Use o admin para fazer o seed.');
       }
-      return mockGovernanceInstancesResponse;
+      return mockGovernanceInstances;
     } catch (err) {
       console.error('[Firestore] Erro ao buscar governance_instances:', err);
-      return mockGovernanceInstancesResponse;
+      return mockGovernanceInstances;
     }
   },
 
   /** Marcos históricos */
-  getTimelineMilestones: async (): Promise<StrapiCollectionResponse<TimelineMilestoneAttributes>> => {
+  getTimelineMilestones: async (): Promise<TimelineMilestoneAttributes[]> => {
     if (!FIREBASE_ENABLED) {
-      return new Promise(resolve => setTimeout(() => resolve(mockTimelineMilestonesResponse), 300));
+      return new Promise(resolve => setTimeout(() => resolve(mockTimelineMilestones), 300));
     }
     try {
       const q = query(collection(db, 'timeline_milestones'), orderBy('year'));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        return toCollection<TimelineMilestoneAttributes>(
-          snap.docs.map(d => ({ id: d.id, ...d.data() })),
-          mockTimelineMilestonesResponse
-        );
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as TimelineMilestoneAttributes));
       }
       if (import.meta.env.DEV) {
         console.warn('[Firestore] timeline_milestones vazio. Use o admin para fazer o seed.');
       }
-      return mockTimelineMilestonesResponse;
+      return mockTimelineMilestones;
     } catch (err) {
       console.error('[Firestore] Erro ao buscar timeline_milestones:', err);
-      return mockTimelineMilestonesResponse;
+      return mockTimelineMilestones;
     }
   },
 
   /** Membros dos conselhos */
-  getGovernanceMembers: async (): Promise<StrapiCollectionResponse<GovernanceMemberAttributes>> => {
+  getGovernanceMembers: async (): Promise<GovernanceMemberAttributes[]> => {
     if (!FIREBASE_ENABLED) {
-      return new Promise(resolve => setTimeout(() => resolve(mockMembersResponse), 300));
+      return new Promise(resolve => setTimeout(() => resolve(mockMembers), 300));
     }
     try {
       const snap = await getDocs(collection(db, 'governance_members'));
       if (!snap.empty) {
-        return toCollection<GovernanceMemberAttributes>(
-          snap.docs.map(d => ({ id: d.id, ...d.data() })),
-          mockMembersResponse
-        );
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as unknown as GovernanceMemberAttributes));
       }
       if (import.meta.env.DEV) {
         console.warn('[Firestore] governance_members vazio. Use o admin para fazer o seed.');
       }
-      return mockMembersResponse;
+      return mockMembers;
     } catch (err) {
       console.error('[Firestore] Erro ao buscar governance_members:', err);
-      return mockMembersResponse;
+      return mockMembers;
     }
   },
 

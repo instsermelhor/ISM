@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { GovernanceInstanceAttributes, GovernanceMemberAttributes, StrapiItem } from '../../types';
+import { GovernanceInstanceAttributes, GovernanceMemberAttributes } from '../../types';
 import {
   Shield, Users, FileCheck, Briefcase, Globe, CheckCircle, ExternalLink,
   Linkedin, Instagram, Facebook, Twitter, Youtube, BookOpen, Award, FileText, Star
@@ -9,8 +9,8 @@ import { MemberModal } from './MemberModal';
 
 interface GovernanceStructureProps {
   intro: string;
-  instances: StrapiItem<GovernanceInstanceAttributes>[];
-  members: StrapiItem<GovernanceMemberAttributes>[];
+  instances: GovernanceInstanceAttributes[];
+  members: GovernanceMemberAttributes[];
 }
 
 const getIconForInstance = (title: string) => {
@@ -52,15 +52,14 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
   const safeMembers = Array.isArray(members) ? members : [];
 
   const sortedInstances = [...safeInstances].sort((a, b) => {
-    const aOrder = a?.attributes?.order ?? a?.order ?? 0;
-    const bOrder = b?.attributes?.order ?? b?.order ?? 0;
+    const aOrder = (a as any)?.order ?? 0;
+    const bOrder = (b as any)?.order ?? 0;
     return aOrder - bOrder;
   });
 
-  // Extrai lista de membros garantindo compatibilidade com StrapiItem ou modelo direto
-  const unrolledMembers: (GovernanceMemberAttributes & { id?: string })[] = safeMembers.map((m: any) => {
-    const attrs = m?.attributes ? m.attributes : m;
-    return { ...attrs, id: m?.id || attrs?.id };
+  // Extrai lista de membros diretamente do modelo plano
+  const unrolledMembers = safeMembers.map((m: any) => {
+    return { ...m, id: m?.id || m?.code || m?.name };
   }).filter(m => m.isPublished !== false && m.status !== 'DRAFT' && m.status !== 'ARCHIVED');
 
   const categoriesInUse = Array.from(new Set(unrolledMembers.map(m => m.category).filter(Boolean))) as string[];
