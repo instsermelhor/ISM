@@ -535,12 +535,12 @@ function App() {
         onClose={() => setState(s => ({ ...s, isVolunteerPortalOpen: false }))}
       />
 
-      {/* Botões de Acesso Rápido (Portal Família & Portal Voluntário) */}
+      {/* Botões de Acesso Rápido (Portal Família & Portal Voluntário) — Posicionados à esquerda para não sobrepor o Assistente ISM */}
       <div
         style={{
           position: 'fixed',
-          bottom: 74,
-          right: 20,
+          bottom: 24,
+          left: 24,
           zIndex: 9970,
           display: 'flex',
           gap: 10,
