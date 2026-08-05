@@ -248,7 +248,7 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
               rel="noopener noreferrer"
               className="w-full py-3 bg-secondary-900 text-white text-center rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary-800 hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
             >
-              {p.ctaLabel || 'Saiba Mais'}
+              {p.ctaLabel || 'Conhecer o Projeto AURA'}
               <ExternalLink size={12} className="opacity-70" />
             </a>
           ) : (
@@ -265,13 +265,27 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
             </button>
           )}
 
+          {/* Link do Projeto AURA */}
+          {p.auraProjectUrl && (
+            <a
+              href={p.auraProjectUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 bg-brand-50 hover:bg-brand-100 text-brand-700 text-center rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-200/50 flex items-center justify-center gap-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            >
+              <Globe size={13} />
+              <span>Conhecer o Projeto AURA</span>
+              <ExternalLink size={11} className="opacity-60" />
+            </a>
+          )}
+
           {/* Link externo secundário (websiteUrl / linkUrl) */}
           {(p.linkUrl || p.websiteUrl) && (
             <a
               href={p.linkUrl || p.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 bg-brand-50 hover:bg-brand-100 text-brand-700 text-center rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-200/50 flex items-center justify-center gap-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+              className="w-full py-3 bg-brand-50 hover:bg-brand-100 text-brand-700 text-center rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-200/50 flex items-center justify-center gap-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 mt-2"
             >
               <Globe size={13} />
               <span>{p.linkLabel || 'Acessar Link Oficial'}</span>
