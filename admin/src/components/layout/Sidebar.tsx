@@ -75,6 +75,7 @@ const NAV: NavGroup[] = [
     items: [
       { to: '/usuarios', label: 'Usuários', Icon: Users, roles: ['ADMIN'] },
       { to: '/auditoria', label: 'Auditoria', Icon: Activity, roles: ['ADMIN'] },
+      { to: '/auditoria/lgpd', label: 'Copiloto LGPD', Icon: Shield, roles: ['ADMIN'], badge: 'D004' },
       { to: '/health', label: 'Health Check', Icon: HeartPulse },
     ]
   },
