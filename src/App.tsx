@@ -24,6 +24,7 @@ import { Modal } from './components/ui/Modal';
 import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
 import { TermsOfUse } from './components/legal/TermsOfUse';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { AIAssistantWidget } from './components/ui/AIAssistantWidget';
 
 // Data & Types
 import { InstitutionalService } from './services/data';
@@ -479,6 +480,9 @@ function App() {
       >
         <TermsOfUse />
       </Modal>
+
+      {/* Agente IA de Atendimento Flutuante — D001 */}
+      <AIAssistantWidget />
     </LanguageProvider>
   );
 }
