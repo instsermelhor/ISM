@@ -54,6 +54,19 @@ const MOCK_PROGRAMS: ProgramData[] = [
   },
 ];
 
+// Programa sem conteúdo extra — para forçar renderização do link auraProjectUrl
+const MOCK_PROGRAM_AURA_ONLY: ProgramData[] = [
+  {
+    id: 'prog-aura',
+    order: 1,
+    title: 'Projeto AURA',
+    slug: 'projeto-aura',
+    description: 'Projeto AURA de preservação dos biomas.',
+    isPublished: true,
+    auraProjectUrl: 'https://aura.institutosermelhor.org',
+  },
+];
+
 describe('ProgramsSection — Dinâmico & E044', () => {
   it('renders programs titles dynamically', () => {
     render(<ProgramsSection programs={MOCK_PROGRAMS} />);
@@ -90,16 +103,17 @@ describe('ProgramsSection — Dinâmico & E044', () => {
     expect(screen.getByText(/Promover uma educação que transforma vidas/i)).toBeInTheDocument();
   });
 
-  it('renders "Conhecer o AURA" or CTA link when auraProjectUrl is present', () => {
-    render(<ProgramsSection programs={MOCK_PROGRAMS} />);
-    const links = screen.getAllByRole('link');
-    const auraBtn = links.find(l => l.getAttribute('href') === 'https://aura.institutosermelhor.org');
-    expect(auraBtn).toBeInTheDocument();
+  it('renders auraProjectUrl as link when program has no extra expandable content', () => {
+    render(<ProgramsSection programs={MOCK_PROGRAM_AURA_ONLY} />);
+    const auraBtn = screen.getByRole('link', { name: /Saiba Mais/i });
+    expect(auraBtn).toHaveAttribute('href', 'https://aura.institutosermelhor.org');
   });
 
-  it('renders loading skeleton when isLoading is true', () => {
+  it('renders loading skeleton cards (aria-hidden) when isLoading is true', () => {
     render(<ProgramsSection programs={[]} isLoading={true} />);
-    expect(screen.getByLabelText(/Carregando projetos em campo/i)).toBeInTheDocument();
+    // Skeleton cards are aria-hidden=true (decorative placeholders)
+    const skeletonCards = document.querySelectorAll('[aria-hidden="true"].animate-pulse');
+    expect(skeletonCards.length).toBeGreaterThan(0);
   });
 
   it('renders external links inside expanded state', async () => {

@@ -1,25 +1,4 @@
-// Strapi Base Types
-export interface StrapiItem<T> {
-  id: number;
-  attributes: T;
-}
-
-export interface StrapiCollectionResponse<T> {
-  data: StrapiItem<T>[];
-  meta: {
-    pagination: {
-      page: number;
-      pageSize: number;
-      pageCount: number;
-      total: number;
-    };
-  };
-}
-
-export interface StrapiSingleResponse<T> {
-  data: StrapiItem<T>;
-  meta: {};
-}
+// ── Base Domain Types ────────────────────────────────────────────────────────
 
 // 5. Component: transparency-document (Reutilizável/Component)
 export type DocumentType = 'Financeiro' | 'Impacto' | 'Legal' | 'Código de Conduta';
@@ -342,13 +321,13 @@ export interface DonationRecord extends DonationPayload {
   createdAt: string;
 }
 
-// Combined Data Structure for App State
+// Combined Data Structure for App State (Native Firestore Flat Types)
 export interface AppData {
-  page: StrapiItem<InstitutionalPageAttributes>;
-  valueBlocks: StrapiItem<ValueBlockAttributes>[];
-  governanceInstances: StrapiItem<GovernanceInstanceAttributes>[];
-  timelineMilestones: StrapiItem<TimelineMilestoneAttributes>[];
-  governanceMembers: StrapiItem<GovernanceMemberAttributes>[];
+  page: InstitutionalPageAttributes;
+  valueBlocks: ValueBlockAttributes[];
+  governanceInstances: GovernanceInstanceAttributes[];
+  timelineMilestones: TimelineMilestoneAttributes[];
+  governanceMembers: GovernanceMemberAttributes[];
   financials: FinancialEntry[];
   programs: ProgramData[];
   // Removed standalone transparencyDocuments as they are now part of 'page'
