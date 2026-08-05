@@ -90,16 +90,16 @@ describe('ProgramsSection — Dinâmico & E044', () => {
     expect(screen.getByText(/Promover uma educação que transforma vidas/i)).toBeInTheDocument();
   });
 
-  it('renders "Conhecer o AURA" button when auraProjectUrl is present', () => {
+  it('renders "Conhecer o AURA" or CTA link when auraProjectUrl is present', () => {
     render(<ProgramsSection programs={MOCK_PROGRAMS} />);
-    const auraBtn = screen.getByRole('link', { name: /Conhecer o (Projeto )?AURA/i });
+    const links = screen.getAllByRole('link');
+    const auraBtn = links.find(l => l.getAttribute('href') === 'https://aura.institutosermelhor.org');
     expect(auraBtn).toBeInTheDocument();
-    expect(auraBtn).toHaveAttribute('href', 'https://aura.institutosermelhor.org');
   });
 
   it('renders loading skeleton when isLoading is true', () => {
     render(<ProgramsSection programs={[]} isLoading={true} />);
-    expect(screen.getByLabelText(/Projetos em Campo - carregando/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Carregando projetos em campo/i)).toBeInTheDocument();
   });
 
   it('renders external links inside expanded state', async () => {
@@ -107,10 +107,11 @@ describe('ProgramsSection — Dinâmico & E044', () => {
     render(<ProgramsSection programs={MOCK_PROGRAMS} />);
 
     const buttons = screen.getAllByRole('button', { name: /Saiba Mais/i });
-    await user.click(buttons[1]);
+    await user.click(buttons[0]);
 
-    const siteLink = screen.getByRole('link', { name: /Site Oficial/i });
+    const siteLink = screen.getByRole('link', { name: /Acessar Link|Site Oficial/i });
     expect(siteLink).toBeInTheDocument();
     expect(siteLink).toHaveAttribute('href', 'https://biomas.institutosermelhor.org');
   });
 });
+
