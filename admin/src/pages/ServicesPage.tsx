@@ -612,13 +612,20 @@ export const ServicesPage: React.FC = () => {
                             {prog.iconEmoji || '🎯'}
                           </div>
                         )}
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 14, fontWeight: 800, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {prog.isFeatured && <Star size={12} color="#d97706" style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} />}
                             {prog.title}
                           </div>
-                          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                            #{prog.order} • {prog.slug} {prog.category && `• ${prog.category}`} {prog.isFeatured ? '• ★ Destaque' : ''}
+                          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <span>#{prog.order} • {prog.slug}</span>
+                            {prog.category && <span>• {prog.category}</span>}
+                            {prog.isFeatured && <span>• ★ Destaque</span>}
+                            {prog.status === 'PUBLISHED' && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#dcfce7', color: '#15803d', fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 20, border: '1px solid #bbf7d0' }}>
+                                🌐 Visível no Site
+                              </span>
+                            )}
                           </div>
                         </div>
                         <select

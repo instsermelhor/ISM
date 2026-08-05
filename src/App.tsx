@@ -420,7 +420,7 @@ function App() {
           <ProgramsSection
             programs={activePrograms as any}
             servicesPage={activeServices}
-            isLoading={!data && activePrograms.length === 0}
+            isLoading={activePrograms.length === 0 && realtimePrograms.length === 0}
           />
 
           {/* Pilares — lê de pillars (realtime) */}

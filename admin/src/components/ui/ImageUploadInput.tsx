@@ -4,11 +4,12 @@
  * Campo reutilizável de imagem que permite:
  *   • Digitar/colar uma URL manualmente
  *   • Fazer upload de um arquivo local (via Firebase Storage ou Base64 fallback)
+ *   • Arrastar e soltar (drag-and-drop) uma imagem diretamente na zona de upload
  *   • Visualizar o preview da imagem atual
  *   • Limpar a imagem com um clique
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { Upload, Link2, X, Loader2, ImageOff } from 'lucide-react';
 import { uploadImage } from '../../services/upload';
 
@@ -35,6 +36,7 @@ export const ImageUploadInput: React.FC<Props> = ({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'url' | 'upload'>('url');
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const iS: React.CSSProperties = {
     width: '100%', padding: '9px 12px', borderRadius: 10,
@@ -43,11 +45,15 @@ export const ImageUploadInput: React.FC<Props> = ({
     flex: 1,
   };
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { setError('Selecione um arquivo de imagem (JPG, PNG, WebP, SVG…)'); return; }
-    if (file.size > 10 * 1024 * 1024) { setError('Arquivo muito grande. Máx: 10 MB'); return; }
+  const processFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Selecione um arquivo de imagem (JPG, PNG, WebP, SVG…)');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Arquivo muito grande. Máx: 10 MB');
+      return;
+    }
     setError(null);
     setUploading(true);
     try {
@@ -57,9 +63,35 @@ export const ImageUploadInput: React.FC<Props> = ({
       setError('Falha no upload. Tente novamente.');
     } finally {
       setUploading(false);
-      // Limpa o input de arquivo para permitir re-seleção do mesmo arquivo
       if (fileRef.current) fileRef.current.value = '';
     }
+  }, [folder, onChange]);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await processFile(file);
   };
 
   return (
@@ -106,22 +138,47 @@ export const ImageUploadInput: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Tab — Upload */}
+      {/* Tab — Upload com Drag-and-Drop */}
       {tab === 'upload' && (
         <div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile} />
-          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
-            style={{ width: '100%', padding: '12px 16px', borderRadius: 10, border: '2px dashed #d1d5db', background: uploading ? '#f9fafb' : 'white',
-              cursor: uploading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontSize: 12, fontWeight: 700, color: '#374151', transition: 'all 0.15s' }}
-            onMouseEnter={e => { if (!uploading) (e.currentTarget as HTMLButtonElement).style.borderColor = '#16a34a'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#d1d5db'; }}
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => !uploading && fileRef.current?.click()}
+            style={{
+              width: '100%', padding: '20px 16px', borderRadius: 10,
+              border: `2px dashed ${isDragOver ? '#16a34a' : uploading ? '#d1d5db' : '#d1d5db'}`,
+              background: isDragOver ? '#f0fdf4' : uploading ? '#f9fafb' : 'white',
+              cursor: uploading ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexDirection: 'column', gap: 6,
+              transition: 'all 0.15s',
+              transform: isDragOver ? 'scale(1.01)' : 'scale(1)',
+              boxSizing: 'border-box',
+            }}
           >
-            {uploading
-              ? <><Loader2 size={14} style={{ animation: 'spin .7s linear infinite' }} /> Enviando…</>
-              : <><Upload size={14} /> Selecionar arquivo (JPG, PNG, WebP…)</>}
-          </button>
-          <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 4, textAlign: 'center' }}>Máx. 10 MB · Enviado para Firebase Storage</p>
+            {uploading ? (
+              <>
+                <Loader2 size={22} color="#16a34a" style={{ animation: 'spin .7s linear infinite' }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>Enviando…</span>
+              </>
+            ) : isDragOver ? (
+              <>
+                <Upload size={22} color="#16a34a" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a' }}>Solte para fazer upload</span>
+              </>
+            ) : (
+              <>
+                <Upload size={20} color="#6b7280" />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>
+                  Arraste uma imagem aqui ou <span style={{ color: '#2563eb', textDecoration: 'underline' }}>clique para selecionar</span>
+                </span>
+                <span style={{ fontSize: 10, color: '#9ca3af' }}>JPG, PNG, WebP, SVG · Máx. 10 MB</span>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -150,11 +207,19 @@ export const ImageUploadInput: React.FC<Props> = ({
             <ImageOff size={24} />
             <span style={{ fontSize: 11, fontWeight: 600 }}>Imagem não disponível</span>
           </div>
-          {/* Badge URL curta */}
-          <div style={{ position: 'absolute', bottom: 6, left: 6, right: 6, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', borderRadius: 6, padding: '3px 8px' }}>
-            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+          {/* Overlay com URL + botão remover */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', padding: '4px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.8)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
               {value.startsWith('data:') ? '📷 Imagem local (Base64)' : value}
             </span>
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onChange(''); }}
+              title="Remover imagem"
+              style={{ background: 'rgba(239,68,68,0.85)', border: 'none', borderRadius: 4, padding: '2px 6px', cursor: 'pointer', color: 'white', fontSize: 10, fontWeight: 700, flexShrink: 0 }}
+            >
+              ✕ Remover
+            </button>
           </div>
         </div>
       )}

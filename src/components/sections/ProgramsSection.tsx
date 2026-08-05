@@ -217,7 +217,7 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
 
         {/* CTAs */}
         <div className="flex flex-col gap-2 mt-auto">
-          {/* Primary CTA (Saiba Mais / Mostrar Menos with Expand/Collapse) */}
+          {/* Primary CTA — hierarquia: expand > ctaUrl > auraProjectUrl > websiteUrl > expand fallback */}
           {hasExtraContent ? (
             <button
               type="button"
@@ -229,21 +229,46 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
               <span>{isExpanded ? 'Mostrar Menos' : (p.ctaLabel || 'Saiba Mais')}</span>
               {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
             </button>
+          ) : p.ctaLabel && p.ctaUrl ? (
+            /* CTA configurado no admin — link direto */
+            <a
+              href={p.ctaUrl}
+              target={p.ctaUrl.startsWith('http') ? '_blank' : '_self'}
+              rel="noopener noreferrer"
+              className="w-full py-3 bg-secondary-900 text-white text-center rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary-800 hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              {p.ctaLabel}
+              {p.ctaUrl.startsWith('http') && <ExternalLink size={12} className="opacity-70" />}
+            </a>
+          ) : p.auraProjectUrl ? (
+            /* Fallback: URL do Projeto Aura */
+            <a
+              href={p.auraProjectUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 bg-secondary-900 text-white text-center rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary-800 hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              {p.ctaLabel || 'Saiba Mais'}
+              <ExternalLink size={12} className="opacity-70" />
+            </a>
           ) : (
-            p.ctaLabel && (
-              <a
-                href={p.ctaUrl || '#'}
-                className="w-full py-3 bg-secondary-900 text-white text-center rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary-850 hover:shadow-lg transition-all duration-200 flex items-center justify-center"
-              >
-                {p.ctaLabel}
-              </a>
-            )
+            /* Fallback final: botão expand mesmo sem conteúdo extra */
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              aria-expanded={isExpanded}
+              aria-controls={contentId}
+              className="w-full py-3 bg-secondary-900 text-white text-center rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-secondary-800 hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>{isExpanded ? 'Mostrar Menos' : (p.ctaLabel || 'Saiba Mais')}</span>
+              {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            </button>
           )}
 
-          {/* Domain/Subdomain URL link */}
-          {p.linkUrl && (
+          {/* Link externo secundário (websiteUrl / linkUrl) */}
+          {(p.linkUrl || p.websiteUrl) && (
             <a
-              href={p.linkUrl}
+              href={p.linkUrl || p.websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-3 bg-brand-50 hover:bg-brand-100 text-brand-700 text-center rounded-xl text-xs font-bold uppercase tracking-wider border border-brand-200/50 flex items-center justify-center gap-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
@@ -254,6 +279,7 @@ const ProgramCardItem: React.FC<{ program: ProgramData; index: number; isInView:
             </a>
           )}
         </div>
+
       </div>
     </motion.div>
   );
@@ -268,9 +294,10 @@ export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage, 
 
   const safePrograms = Array.isArray(programs) ? programs : [];
 
-  // Filter only published programs
+  // Ordena por campo order — o hook useRealtimePrograms já filtra isPublished server-side
+  // Mantemos filtragem client-side apenas como salvaguarda para dados do fallback inicial
   const publishedPrograms = safePrograms
-    .filter(p => p && p.isPublished)
+    .filter(p => p && (p.isPublished === true || p.isPublished === undefined))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   // Enquanto carrega, mostra skeleton; se vazio e já carregou, oculta a seção
