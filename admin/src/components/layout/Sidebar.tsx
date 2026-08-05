@@ -6,7 +6,7 @@ import {
   Mail, Kanban, BarChart2, Activity, HeartPulse,
   Users, Globe, ChevronDown, LogOut, Menu, X, Zap,
   DollarSign, CreditCard, Landmark, Target, UserCheck,
-  Heart, Monitor, Settings, Star, Shield, Clock, FileText, TrendingUp
+  Heart, Monitor, Settings, Star, Shield, Clock, FileText, TrendingUp, Bot
 } from 'lucide-react';
 
 interface NavGroup {
@@ -43,6 +43,7 @@ const NAV: NavGroup[] = [
       { to: '/site/timeline', label: 'Linha do Tempo', Icon: Clock, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/transparencia', label: 'Transparência', Icon: FileText, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/sroi', label: 'Calculadora SROI', Icon: TrendingUp, roles: ['ADMIN', 'EDITOR'], badge: 'C003' },
+      { to: '/site/ia', label: 'Agente IA & Chat', Icon: Bot, roles: ['ADMIN', 'EDITOR'], badge: 'D001' },
       { to: '/site/navegacao', label: 'Menu de Navegação', Icon: Globe, roles: ['ADMIN'] },
       { to: '/site/doacoes', label: 'Seção de Doação', Icon: Heart, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/seo', label: 'Site & SEO', Icon: Globe, roles: ['ADMIN'] },
