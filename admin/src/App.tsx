@@ -135,7 +135,7 @@ function App() {
 
               {/* Editor do Site (Módulo Separado) */}
               <Route path="site" element={<SiteEditorPage />} />
-              <Route path="site/hero" element={<HeroHomePage />} />
+              <Route path="site/hero" element={<Navigate to="/configuracoes?tab=hero" replace />} />
               <Route path="site/institucional" element={<AboutTeamPage />} />
               <Route path="site/projetos" element={<ServicesPage />} />
               <Route path="site/doacoes" element={<DonationEditorPage />} />

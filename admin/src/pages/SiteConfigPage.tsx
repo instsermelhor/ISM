@@ -20,6 +20,8 @@ import {
   Trash2, MoveUp, MoveDown, CheckCircle, RefreshCw, Eye, ExternalLink,
   Shield, Image as ImageIcon, MapPin, Mail, MessageSquare, AlertCircle
 } from 'lucide-react';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { SaveBar } from '../components/ui/SaveBar';
 import { ImageUploadInput } from '../components/ui/ImageUploadInput';
 import { SocialNetworksService, type SocialNetwork } from '../services/socialNetworksService';
@@ -125,6 +127,8 @@ export const SiteConfigPage: React.FC = () => {
           email: footerDoc.email || prev.email,
           phone: footerDoc.phone || prev.phone,
           address: footerDoc.address || prev.address,
+          whatsapp: footerDoc.whatsapp || prev.whatsapp,
+          googleMapsUrl: footerDoc.googleMapsUrl || prev.googleMapsUrl,
         }));
         if (footerDoc.organizationName) {
           setIdentity(prev => ({
@@ -134,6 +138,22 @@ export const SiteConfigPage: React.FC = () => {
           }));
         }
       }
+      // Carregar identidade estendida (logo, favicon, cnpj, motto)
+      try {
+        const identitySnap = await getDoc(doc(db, 'site_identity', 'main'));
+        if (identitySnap.exists()) {
+          const iData = identitySnap.data();
+          setIdentity(prev => ({
+            ...prev,
+            logoUrl: iData.logoUrl || prev.logoUrl,
+            faviconUrl: iData.faviconUrl || prev.faviconUrl,
+            cnpj: iData.cnpj || prev.cnpj,
+            motto: iData.motto || prev.motto,
+            slogan: iData.slogan || prev.slogan,
+            organizationName: iData.organizationName || prev.organizationName,
+          }));
+        }
+      } catch { /* site_identity ainda não existe — usa defaults */ }
     } catch (err) {
       console.error('[SiteConfigPage] Erro ao carregar dados:', err);
     } finally {
@@ -153,16 +173,32 @@ export const SiteConfigPage: React.FC = () => {
     setSaving(true);
     try {
       await Promise.all([
+        // Hero Section
         HeroService.save(heroData),
+        // Redes Sociais (dinâmicas)
         SocialNetworksService.saveAll(socialNetworks),
+        // SEO & Meta
         InstitutionalFirestoreService.saveSeoSettings(seo),
+        // Contatos & Rodapé (inclui whatsapp e googleMapsUrl)
         InstitutionalFirestoreService.saveFooterData({
           organizationName: identity.organizationName,
           tagline: identity.slogan,
           email: contacts.email,
           phone: contacts.phone,
           address: contacts.address,
+          whatsapp: contacts.whatsapp,
+          googleMapsUrl: contacts.googleMapsUrl,
         }),
+        // Identidade estendida — site_identity/main (logo, favicon, cnpj, motto)
+        setDoc(doc(db, 'site_identity', 'main'), {
+          organizationName: identity.organizationName,
+          slogan: identity.slogan,
+          motto: identity.motto,
+          logoUrl: identity.logoUrl,
+          faviconUrl: identity.faviconUrl,
+          cnpj: identity.cnpj,
+          updatedAt: serverTimestamp(),
+        }, { merge: true }),
       ]);
 
       setSaved(true);

@@ -26,7 +26,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
     ? heroSection.stats
     : [
         { value: '15+', label: 'Anos de Impacto', icon: 'leaf' },
-        { value: '15K+', label: 'Vidas Impactadas', icon: 'users' },
+        { value: '1M+', label: 'Vidas Impactadas', icon: 'users' },
         { value: '50+', label: 'Parceiros Globais', icon: 'globe' },
       ];
 

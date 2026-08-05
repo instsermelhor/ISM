@@ -480,4 +480,28 @@ export const InstitutionalFirestoreService = {
 
     return { seeded, skipped };
   },
+
+  // ── Footer / Contatos (site_footer/main) ───────────────────────────────
+  /** Carrega os dados de contato/rodapé do Firestore */
+  async getFooterData(): Promise<Record<string, unknown> | null> {
+    const snap = await getDoc(doc(db, 'site_footer', 'main'));
+    return snap.exists() ? snap.data() as Record<string, unknown> : null;
+  },
+
+  /** Persiste dados de contato e rodapé em site_footer/main (merge) */
+  async saveFooterData(data: {
+    organizationName?: string;
+    tagline?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    whatsapp?: string;
+    googleMapsUrl?: string;
+  }): Promise<void> {
+    await setDoc(
+      doc(db, 'site_footer', 'main'),
+      { ...data, updatedAt: serverTimestamp() },
+      { merge: true },
+    );
+  },
 };
