@@ -23,6 +23,7 @@ import { SROICalculator } from './components/sections/SROICalculator';
 import { Modal } from './components/ui/Modal';
 import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
 import { TermsOfUse } from './components/legal/TermsOfUse';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Data & Types
 import { InstitutionalService } from './services/data';
@@ -380,7 +381,7 @@ function App() {
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <>
+    <LanguageProvider>
       {/* Skip to main content — keyboard a11y */}
       <a href="#main-content" className="skip-link">Ir para o conteúdo principal</a>
 
@@ -478,7 +479,7 @@ function App() {
       >
         <TermsOfUse />
       </Modal>
-    </>
+    </LanguageProvider>
   );
 }
 

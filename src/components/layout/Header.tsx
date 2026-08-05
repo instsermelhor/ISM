@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronDown, Heart, Handshake } from 'lucide-react';
+import { LanguageSelector } from '../ui/LanguageSelector';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface NavItem {
   label: string;
@@ -36,7 +38,29 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ navData }) => {
-  const navItems: NavItem[] = navData?.items && navData.items.length > 0 ? navData.items : NAV_ITEMS;
+  const { t } = useLanguage();
+  const navItems: NavItem[] = navData?.items && navData.items.length > 0 ? navData.items : [
+    {
+      label: t.nav.whoWeAre,
+      subItems: [
+        { label: t.nav.ourMission, href: '#mission' },
+        { label: t.nav.history, href: '#history' },
+        { label: t.nav.governance, href: '#governance' },
+      ]
+    },
+    {
+      label: t.nav.whatWeDo,
+      subItems: [
+        { label: t.nav.principles, href: '#values' },
+        { label: t.nav.programs, href: '#programs' },
+        { label: t.nav.news, href: '#blog' },
+      ]
+    },
+    {
+      label: t.nav.transparency,
+      href: '#transparency'
+    }
+  ];
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -132,7 +156,7 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
                 )}
               </a>
 
-              {/* Dropdown Desktop — corrigido: usa translate-y ao invés de scale-y */}
+              {/* Dropdown Desktop */}
               {item.subItems && (
                 <div
                   className={`absolute top-full left-0 w-56 bg-white rounded-xl shadow-2xl shadow-black/10 border border-gray-100 overflow-hidden transition-all duration-200 origin-top ${
@@ -141,7 +165,6 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
                       : 'opacity-0 -translate-y-2 pointer-events-none'
                   }`}
                 >
-                  {/* Accent line */}
                   <div className="h-0.5 w-full bg-gradient-to-r from-brand-400 to-brand-600" />
                   <ul className="py-2">
                     {item.subItems.map((sub) => (
@@ -165,6 +188,7 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
 
         {/* CTAs Desktop */}
         <div className="hidden lg:flex items-center gap-3">
+          <LanguageSelector isScrolled={isScrolled} />
           <a
             href="#partner"
             className={`flex items-center gap-2 px-5 py-2.5 rounded-full border-2 font-bold text-xs uppercase tracking-wider transition-all duration-200 ${
@@ -181,7 +205,7 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
             className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-brand-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-brand-600/30 hover:bg-brand-700 hover:shadow-brand-700/40 hover:scale-105 transition-all duration-200"
           >
             <Heart size={15} fill="currentColor" />
-            Apoie Agora
+            {t.nav.donate}
           </a>
         </div>
 
