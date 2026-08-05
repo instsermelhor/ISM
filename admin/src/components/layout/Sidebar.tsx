@@ -57,6 +57,7 @@ const NAV: NavGroup[] = [
       { to: '/leads', label: 'Leads', Icon: Mail, badge: 'NEW' },
       { to: '/pipeline', label: 'Pipeline Kanban', Icon: Kanban },
       { to: '/analytics', label: 'Analytics', Icon: BarChart2 },
+      { to: '/analytics/bi', label: 'BI & Analytics Preditivo', Icon: TrendingUp, roles: ['ADMIN', 'EDITOR'], badge: 'D003' },
     ]
   },
   {
