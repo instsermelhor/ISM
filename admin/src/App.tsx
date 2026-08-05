@@ -30,6 +30,7 @@ const TimelineEditorPage = lazy(() => import('./pages/TimelineEditorPage').then(
 const TransparencyEditorPage = lazy(() => import('./pages/TransparencyEditorPage').then(m => ({ default: m.TransparencyEditorPage })));
 const SROICalculatorPage = lazy(() => import('./pages/SROICalculatorPage').then(m => ({ default: m.SROICalculatorPage })));
 const AIAgentManagerPage = lazy(() => import('./pages/AIAgentManagerPage').then(m => ({ default: m.AIAgentManagerPage })));
+const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReportPage').then(m => ({ default: m.ExecutiveReportPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -66,6 +67,7 @@ function App() {
               <Route path="site/transparencia" element={<TransparencyEditorPage />} />
               <Route path="site/sroi" element={<SROICalculatorPage />} />
               <Route path="site/ia" element={<AIAgentManagerPage />} />
+              <Route path="site/relatorios" element={<ExecutiveReportPage />} />
               <Route path="configuracoes" element={<SiteConfigPage />} />
 
               {/* Gestão da Instituição */}
