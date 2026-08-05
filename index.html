@@ -29,6 +29,49 @@
     <meta name="theme-color" content="#16a34a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Schema.org JSON-LD estático (F003) — indexado por crawlers sem JS -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["NonprofitOrganization", "NGO"],
+      "@id": "https://www.institutosermelhor.org/#organization",
+      "name": "Instituto Ser Melhor",
+      "alternateName": "ISM",
+      "url": "https://www.institutosermelhor.org",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.institutosermelhor.org/logo-ism.png",
+        "width": 512,
+        "height": 512
+      },
+      "foundingDate": "2007",
+      "taxID": "09.040.440/0001-47",
+      "description": "ONG brasileira que catalisa transformações sociais, ambientais, educacionais e culturais em comunidades vulneráveis. Presente em 12 estados com mais de 47.000 impactos diretos.",
+      "address": { "@type": "PostalAddress", "addressCountry": "BR" },
+      "sameAs": [
+        "https://www.instagram.com/institutosermelhor",
+        "https://www.facebook.com/institutosermelhor",
+        "https://www.linkedin.com/company/instituto-ser-melhor"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": "https://www.institutosermelhor.org/#website",
+      "url": "https://www.institutosermelhor.org",
+      "name": "Instituto Ser Melhor",
+      "inLanguage": "pt-BR",
+      "publisher": { "@id": "https://www.institutosermelhor.org/#organization" },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": { "@type": "EntryPoint", "urlTemplate": "https://www.institutosermelhor.org/?q={search_term_string}" },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body class="bg-ism-papyrus text-ism-dark font-body antialiased selection:bg-ism-education selection:text-white">
     <div id="root"></div>

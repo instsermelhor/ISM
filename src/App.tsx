@@ -29,6 +29,8 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { AIAssistantWidget } from './components/ui/AIAssistantWidget';
 import { PWAInstallBanner } from './components/ui/PWAInstallBanner';
 import { PerformanceMonitorBadge } from './components/ui/PerformanceMonitorBadge';
+import { SEOHead } from './components/seo/SEOHead';
+import { SEOService } from './services/seoService';
 import { PWARegisterService } from './services/pwaRegisterService';
 
 // Data & Types
@@ -388,6 +390,18 @@ function App() {
   // ── Render ──────────────────────────────────────────────────────────────
   return (
     <LanguageProvider>
+      {/* SEO: Meta tags dinâmicas + Schema.org JSON-LD — F003 */}
+      <SEOHead
+        meta={{
+          title: 'Instituto Ser Melhor — Transformação Social e Sustentabilidade',
+          description: 'ONG brasileira que catalisa transformações sociais, ambientais, educacionais e culturais. Conheça nossa missão, faça uma doação e acompanhe nosso impacto.',
+          path: '/',
+          keywords: 'ONG, instituto, sustentabilidade, transformação social, doação, impacto social, OSCIP, Brasil',
+          ogType: 'website',
+        }}
+        schemas={SEOService.buildHomepageSchemas()}
+      />
+
       {/* Skip to main content — keyboard a11y */}
       <a href="#main-content" className="skip-link">Ir para o conteúdo principal</a>
 
