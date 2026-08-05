@@ -3,6 +3,10 @@ import { Heart } from 'lucide-react';
 import { DonationForm } from '../payment/DonationForm';
 import { motion, useInView } from 'framer-motion';
 
+/** Chave Pix oficial do Instituto Ser Melhor (CNPJ) */
+const ISM_PIX_CNPJ = '09.040.440/0001-47';
+const ISM_PIX_BANK = 'Banco do Brasil';
+
 interface DonationSectionProps {
   donationData?: {
     badge?: string;
@@ -33,6 +37,10 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
     'Proteção e restauração de biomas com envolvimento comunitário e apoio técnico.',
     'Sustentabilidade financeira e gestão transparente de recursos.'
   ];
+  /** Chave Pix: usa o valor do CMS se disponível, senão usa o CNPJ oficial ISM */
+  const pixKey = donationData?.pixKey || ISM_PIX_CNPJ;
+  const bankName = donationData?.bankName || ISM_PIX_BANK;
+
 
   const renderTitle = () => {
     if (donationData?.title) {
@@ -114,15 +122,15 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
               </ul>
             </div>
 
-            {donationData?.pixKey ? (
-              <div className="relative z-10 mt-6 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm text-white">
-                <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Pix Direto</p>
-                <p className="text-xs font-bold font-mono select-all break-all">{donationData.pixKey}</p>
-                {donationData.bankName && <p className="text-[10px] text-secondary-500 mt-1">{donationData.bankName}</p>}
-              </div>
-            ) : donationData?.raisedAmount ? (
+            {/* PIX Panel — sempre visível com CNPJ oficial como fallback */}
+            <div className="relative z-10 mt-6 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm text-white">
+              <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Pix Direto ⚡</p>
+              <p className="text-xs font-bold font-mono select-all break-all">{pixKey}</p>
+              {bankName && <p className="text-[10px] text-secondary-500 mt-1">{bankName}</p>}
+            </div>
+            {donationData?.raisedAmount && (
               /* Bloco de progresso — só renderiza quando os dados vierem do CMS */
-              <div className="relative z-10 mt-8">
+              <div className="relative z-10 mt-4">
                 <div className="bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-sm">
                   <p className="text-xs text-secondary-400 uppercase font-bold tracking-widest mb-1">
                     Total Arrecadado{donationData.goalYear ? ` (${donationData.goalYear})` : ''}
@@ -143,7 +151,8 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
                   )}
                 </div>
               </div>
-            ) : null /* sem dados de arrecadação configuráveis — oculta o bloco */}
+            )}
+
           </div>
 
           {/* Right Panel: Form */}
