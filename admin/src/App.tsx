@@ -24,6 +24,9 @@ const PartnersPage = lazy(() => import('./pages/PartnersPage').then(m => ({ defa
 const ImpactMetricsPage = lazy(() => import('./pages/ImpactMetricsPage').then(m => ({ default: m.ImpactMetricsPage })));
 const PillarsEditorPage = lazy(() => import('./pages/PillarsEditorPage').then(m => ({ default: m.PillarsEditorPage })));
 const NavigationEditorPage = lazy(() => import('./pages/NavigationEditorPage').then(m => ({ default: m.NavigationEditorPage })));
+const ValuesEditorPage = lazy(() => import('./pages/ValuesEditorPage').then(m => ({ default: m.ValuesEditorPage })));
+const GovernanceEditorPage = lazy(() => import('./pages/GovernanceEditorPage').then(m => ({ default: m.GovernanceEditorPage })));
+const TimelineEditorPage = lazy(() => import('./pages/TimelineEditorPage').then(m => ({ default: m.TimelineEditorPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -54,6 +57,9 @@ function App() {
               <Route path="site/metricas" element={<ImpactMetricsPage />} />
               <Route path="site/pilares" element={<PillarsEditorPage />} />
               <Route path="site/navegacao" element={<NavigationEditorPage />} />
+              <Route path="site/valores" element={<ValuesEditorPage />} />
+              <Route path="site/governanca" element={<GovernanceEditorPage />} />
+              <Route path="site/timeline" element={<TimelineEditorPage />} />
               <Route path="configuracoes" element={<SiteConfigPage />} />
 
               {/* Gestão da Instituição */}
