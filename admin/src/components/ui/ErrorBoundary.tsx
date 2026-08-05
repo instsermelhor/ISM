@@ -8,7 +8,36 @@
  * C001 — Observabilidade & Telemetria — Instituto Ser Melhor
  */
 import React from 'react';
-import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp, ShieldAlert } from 'lucide-react';
+
+// Inline pure SVG icons to avoid cross-package React context duplicates in root unit tests
+const ShieldAlertIcon: React.FC = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+    <path d="M12 8v4" />
+    <path d="M12 16h.01" />
+  </svg>
+);
+
+const RefreshCwIcon: React.FC = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+    <path d="M21 3v5h-5" />
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+    <path d="M8 16H3v5" />
+  </svg>
+);
+
+const ChevronDownIcon: React.FC = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+const ChevronUpIcon: React.FC = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m18 15-6-6-6 6" />
+  </svg>
+);
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -101,7 +130,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 20px', color: '#ef4444'
             }}>
-              <ShieldAlert size={28} />
+              <ShieldAlertIcon />
             </div>
 
             <h1 style={{ fontSize: 20, fontWeight: 900, color: 'white', margin: '0 0 8px 0' }}>
@@ -129,7 +158,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 13
                 }}
               >
-                <RefreshCw size={14} /> Recarregar Painel
+                <RefreshCwIcon /> Recarregar Painel
               </button>
 
               <button
@@ -140,7 +169,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                   borderRadius: 10, border: '1px solid #4b5563', cursor: 'pointer', fontSize: 13
                 }}
               >
-                {this.state.showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {this.state.showDetails ? <ChevronUpIcon /> : <ChevronDownIcon />}
                 Detalhes
               </button>
             </div>
