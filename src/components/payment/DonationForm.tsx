@@ -1,7 +1,9 @@
 /**
- * DonationForm.tsx — Refactored with react-hook-form + zod validation
- * Adds pillar destination selector, proper field validation,
- * accessible error messages (aria-describedby), and LGPD consent.
+ * DonationForm.tsx — Gateway de Doações ISM
+ * Multi-método: PIX CNPJ, Cartão de Crédito e Boleto Bancário.
+ * Inclui seletor de pilar, validação Zod + react-hook-form, LGPD consent.
+ *
+ * Chave Pix Oficial (CNPJ): 09.040.440/0001-47
  */
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -10,9 +12,15 @@ import { z } from 'zod';
 import {
   Heart, Lock, CreditCard, RefreshCcw, CheckCircle,
   ShieldCheck, Zap, AlertCircle, BookOpen, Users, Leaf, Palette,
+  Copy, Check, QrCode, FileText,
 } from 'lucide-react';
 import { InstitutionalService } from '../../services/data';
 import type { DonationType, DonationPillar } from '../../types';
+
+/* ── PIX ISM ── */
+const ISM_PIX_CNPJ = '09.040.440/0001-47';
+const ISM_PIX_BANK = 'Banco do Brasil';
+const ISM_PIX_NAME = 'Instituto Ser Melhor';
 
 /* ── Zod Schema ────────────────────────────────────────────────────── */
 const donationSchema = z.object({
@@ -39,7 +47,8 @@ const donationSchema = z.object({
 type DonationFormData = z.infer<typeof donationSchema>;
 
 /* ── Constants ─────────────────────────────────────────────────────── */
-type Step = 'select' | 'details' | 'processing' | 'success';
+type Step = 'select' | 'payment_method' | 'pix_panel' | 'boleto_panel' | 'details' | 'processing' | 'success';
+type PaymentMethod = 'PIX' | 'CARTAO' | 'BOLETO';
 const PRESET_AMOUNTS = [50, 100, 200, 500, 1000];
 const MIN_AMOUNT = 5;
 
@@ -72,6 +81,18 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
   const [selectedPillar, setSelectedPillar] = useState<DonationPillar>(initialPillar);
   const [transactionId, setTransactionId] = useState<string>('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
+  const [pixCopied, setPixCopied] = useState(false);
+
+  const handleCopyPix = async () => {
+    try {
+      await navigator.clipboard.writeText(ISM_PIX_CNPJ.replace(/\D/g, ''));
+      setPixCopied(true);
+      setTimeout(() => setPixCopied(false), 2500);
+    } catch {
+      /* fallback silencioso */
+    }
+  };
 
   const {
     register,
@@ -95,7 +116,7 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
       return;
     }
     setAmountError(null);
-    setStep('details');
+    setStep('payment_method');
   };
 
   const onSubmit = async (data: DonationFormData) => {
@@ -125,12 +146,13 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
     setCustomAmount('');
     setSelectedPillar('Geral');
     setSubmitError(null);
+    setPaymentMethod('PIX');
+    setPixCopied(false);
     reset();
   };
 
   /* ── Success ── */
   if (step === 'success') {
-    const donorEmail = (document.getElementById('donor-email') as HTMLInputElement)?.value || '';
     const pillar = PILLAR_OPTIONS.find((p) => p.key === selectedPillar)!;
     return (
       <div
@@ -158,6 +180,13 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
             </div>
             <div className="text-xs text-secondary-400 font-mono">ID: {transactionId}</div>
           </div>
+          {paymentMethod === 'PIX' && (
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 text-left">
+              <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Chave Pix para Confirmação</p>
+              <p className="text-xs font-bold font-mono select-all break-all text-white">{ISM_PIX_CNPJ}</p>
+              <p className="text-[10px] text-secondary-400 mt-1">{ISM_PIX_NAME} · {ISM_PIX_BANK}</p>
+            </div>
+          )}
           <button
             onClick={handleReset}
             className="px-8 py-3 bg-white text-secondary-900 font-bold rounded-full hover:bg-brand-50 transition-colors shadow-lg"
@@ -178,6 +207,167 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
         <p className="text-sm text-secondary-400 mt-2 max-w-xs">
           Conectando ao Gateway Seguro (256-bit SSL). Por favor, não feche esta janela.
         </p>
+      </div>
+    );
+  }
+
+  /* ── Step: payment_method ── */
+  if (step === 'payment_method') {
+    const methods: { id: PaymentMethod; label: string; desc: string; icon: React.ElementType; badge: string; color: string }[] = [
+      { id: 'PIX',    label: 'PIX Instantâneo',        desc: 'Chave CNPJ · Aprovação imediata',                   icon: QrCode,    badge: '⚡ Instantâneo',  color: '#16a34a' },
+      { id: 'CARTAO', label: 'Cartão de Crédito',      desc: 'Débito automático · Parcelamento em até 12x',       icon: CreditCard, badge: '💳 Recorrente', color: '#2563eb' },
+      { id: 'BOLETO', label: 'Boleto Bancário',        desc: 'Vencimento em 3 dias úteis · Sem taxas extras',      icon: FileText,  badge: '📄 Sem taxa',    color: '#d97706' },
+    ];
+    return (
+      <div className="animate-fade-in flex flex-col h-full">
+        <button
+          type="button"
+          onClick={() => setStep('select')}
+          className="text-sm text-secondary-400 hover:text-brand-600 font-bold mb-5 flex items-center gap-1 group transition-colors"
+        >
+          <span className="group-hover:-translate-x-1 transition-transform inline-block" aria-hidden="true">←</span>
+          Alterar valor
+        </button>
+        <h3 className="text-xl font-bold text-secondary-900 mb-1">Forma de Pagamento</h3>
+        <p className="text-sm text-secondary-400 mb-6">
+          Doação de <strong className="text-secondary-900">R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> · {frequency}
+        </p>
+        <div className="space-y-3 mb-6">
+          {methods.map(m => (
+            <button
+              key={m.id}
+              onClick={() => setPaymentMethod(m.id)}
+              aria-pressed={paymentMethod === m.id}
+              className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                paymentMethod === m.id
+                  ? 'border-brand-500 bg-brand-50 shadow-inner shadow-brand-100'
+                  : 'border-gray-100 bg-white hover:border-brand-200'
+              }`}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: paymentMethod === m.id ? `${m.color}18` : '#f3f4f6', color: m.color }}
+              >
+                <m.icon size={20} aria-hidden="true" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-secondary-900">{m.label}</span>
+                  <span className="text-[10px] font-bold text-secondary-400 bg-gray-100 px-2 py-0.5 rounded-full">{m.badge}</span>
+                </div>
+                <p className="text-xs text-secondary-400 mt-0.5">{m.desc}</p>
+              </div>
+              {paymentMethod === m.id && (
+                <CheckCircle size={18} className="text-brand-500 shrink-0" aria-hidden="true" />
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="mt-auto">
+          <button
+            onClick={() => {
+              if (paymentMethod === 'PIX')   setStep('pix_panel');
+              else if (paymentMethod === 'BOLETO') setStep('boleto_panel');
+              else setStep('details');
+            }}
+            className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 transition-all duration-200 flex items-center justify-center gap-2"
+          >
+            Continuar com {paymentMethod === 'PIX' ? 'PIX' : paymentMethod === 'CARTAO' ? 'Cartão' : 'Boleto'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Step: pix_panel ── */
+  if (step === 'pix_panel') {
+    return (
+      <div className="animate-fade-in flex flex-col h-full">
+        <button
+          type="button"
+          onClick={() => setStep('payment_method')}
+          className="text-sm text-secondary-400 hover:text-brand-600 font-bold mb-5 flex items-center gap-1 group transition-colors"
+        >
+          <span className="group-hover:-translate-x-1 transition-transform inline-block" aria-hidden="true">←</span>
+          Voltar
+        </button>
+        <div className="flex flex-col items-center text-center flex-1 justify-center">
+          {/* QR Code visual */}
+          <div className="w-36 h-36 bg-gray-50 border-2 border-gray-200 rounded-2xl flex flex-col items-center justify-center mb-5 mx-auto">
+            <QrCode size={64} className="text-secondary-300" aria-hidden="true" />
+            <span className="text-[9px] text-secondary-300 font-mono mt-1">QR PIX ISM</span>
+          </div>
+          <h3 className="text-lg font-black text-secondary-900 mb-1">Pix CNPJ — Instituto Ser Melhor</h3>
+          <p className="text-xs text-secondary-400 mb-5">
+            Valor: <strong className="text-secondary-900">R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> · {frequency}
+          </p>
+          {/* Chave */}
+          <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
+            <p className="text-[10px] text-brand-600 uppercase font-bold tracking-widest mb-1">Chave Pix (CNPJ)</p>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-bold text-secondary-900 select-all text-sm flex-1 text-left break-all">
+                {ISM_PIX_CNPJ}
+              </span>
+              <button
+                id="pix-copy-btn"
+                onClick={handleCopyPix}
+                aria-label="Copiar chave Pix"
+                className="shrink-0 p-2 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-600 transition-colors"
+              >
+                {pixCopied ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
+            <p className="text-[10px] text-secondary-400 mt-1">{ISM_PIX_NAME} · {ISM_PIX_BANK}</p>
+          </div>
+          {pixCopied && (
+            <p role="status" aria-live="polite" className="text-xs text-brand-600 font-bold mb-3 flex items-center gap-1">
+              <Check size={12} /> Chave copiada!
+            </p>
+          )}
+          <p className="text-xs text-secondary-400 mb-6">
+            Após o pagamento, salve o comprovante. Envie para
+            {' '}<strong className="text-secondary-700">financeiro@institutosm.com.br</strong> para receber o certificado de impacto.
+          </p>
+          <button
+            id="pix-confirm-btn"
+            onClick={() => {
+              setTransactionId(`PIX-${Date.now().toString(36).toUpperCase()}`);
+              setStep('success');
+            }}
+            className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 transition-all duration-200"
+          >
+            Já realizei o Pix ✓
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Step: boleto_panel ── */
+  if (step === 'boleto_panel') {
+    return (
+      <div className="animate-fade-in flex flex-col h-full">
+        <button
+          type="button"
+          onClick={() => setStep('payment_method')}
+          className="text-sm text-secondary-400 hover:text-brand-600 font-bold mb-5 flex items-center gap-1 group transition-colors"
+        >
+          <span className="group-hover:-translate-x-1 transition-transform inline-block" aria-hidden="true">←</span>
+          Voltar
+        </button>
+        <div className="flex flex-col items-center text-center flex-1 justify-center">
+          <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center mb-5 mx-auto">
+            <FileText size={32} className="text-amber-500" aria-hidden="true" />
+          </div>
+          <h3 className="text-lg font-black text-secondary-900 mb-1">Boleto Bancário</h3>
+          <p className="text-sm text-secondary-400 mb-6">Informe seus dados para gerar o boleto.</p>
+          <button
+            onClick={() => setStep('details')}
+            className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 transition-all duration-200"
+          >
+            Preencher dados
+          </button>
+        </div>
       </div>
     );
   }
@@ -420,7 +610,7 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
         className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 mt-auto flex items-center justify-center gap-2 group transition-all duration-200"
       >
         <CreditCard size={20} className="group-hover:scale-110 transition-transform" aria-hidden="true" />
-        Ir para Pagamento Seguro
+        {paymentMethod === 'BOLETO' ? 'Gerar Boleto' : 'Ir para Pagamento Seguro'}
       </button>
 
       <div className="flex items-center justify-center gap-4 mt-5 opacity-50">
