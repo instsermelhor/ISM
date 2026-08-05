@@ -44,6 +44,7 @@ const NAV: NavGroup[] = [
       { to: '/site/transparencia', label: 'Transparência', Icon: FileText, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/sroi', label: 'Calculadora SROI', Icon: TrendingUp, roles: ['ADMIN', 'EDITOR'], badge: 'C003' },
       { to: '/site/ia', label: 'Agente IA & Chat', Icon: Bot, roles: ['ADMIN', 'EDITOR'], badge: 'D001' },
+      { to: '/site/relatorios', label: 'Relatórios Executivos', Icon: FileText, roles: ['ADMIN', 'EDITOR'], badge: 'D002' },
       { to: '/site/navegacao', label: 'Menu de Navegação', Icon: Globe, roles: ['ADMIN'] },
       { to: '/site/doacoes', label: 'Seção de Doação', Icon: Heart, roles: ['ADMIN', 'EDITOR'] },
       { to: '/site/seo', label: 'Site & SEO', Icon: Globe, roles: ['ADMIN'] },
