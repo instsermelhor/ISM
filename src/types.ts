@@ -1,25 +1,5 @@
-// Strapi Base Types
-export interface StrapiItem<T> {
-  id: number;
-  attributes: T;
-}
-
-export interface StrapiCollectionResponse<T> {
-  data: StrapiItem<T>[];
-  meta: {
-    pagination: {
-      page: number;
-      pageSize: number;
-      pageCount: number;
-      total: number;
-    };
-  };
-}
-
-export interface StrapiSingleResponse<T> {
-  data: StrapiItem<T>;
-  meta: {};
-}
+// NOTE: Strapi wrapper types (StrapiItem, StrapiCollectionResponse, StrapiSingleResponse) were
+// permanently removed in R011 (SIL-ISM 1.0). All data is now flat native Firestore objects.
 
 // 5. Component: transparency-document (Reutilizável/Component)
 export type DocumentType = 'Financeiro' | 'Impacto' | 'Legal' | 'Código de Conduta';
@@ -342,16 +322,15 @@ export interface DonationRecord extends DonationPayload {
   createdAt: string;
 }
 
-// Combined Data Structure for App State
+// Combined Data Structure for App State — SIL-ISM 1.0 (flat native Firestore types)
 export interface AppData {
-  page: StrapiItem<InstitutionalPageAttributes>;
-  valueBlocks: StrapiItem<ValueBlockAttributes>[];
-  governanceInstances: StrapiItem<GovernanceInstanceAttributes>[];
-  timelineMilestones: StrapiItem<TimelineMilestoneAttributes>[];
-  governanceMembers: StrapiItem<GovernanceMemberAttributes>[];
+  page: InstitutionalPageAttributes;
+  valueBlocks: ValueBlockAttributes[];
+  governanceInstances: GovernanceInstanceAttributes[];
+  timelineMilestones: TimelineMilestoneAttributes[];
+  governanceMembers: GovernanceMemberAttributes[];
   financials: FinancialEntry[];
   programs: ProgramData[];
-  // Removed standalone transparencyDocuments as they are now part of 'page'
 }
 
 // ── Programas & Serviços (publicados pelo Admin Panel) ─────────────────────

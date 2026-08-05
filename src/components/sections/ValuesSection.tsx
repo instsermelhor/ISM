@@ -1,11 +1,11 @@
 import React from 'react';
-import { StrapiItem, ValueBlockAttributes } from '../../types';
+import { ValueBlockAttributes } from '../../types';
 import { ValueBlock } from '../ui/ValueBlock';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 
 interface Props {
-  values: StrapiItem<ValueBlockAttributes>[];
+  values: ValueBlockAttributes[];
 }
 
 export const ValuesSection: React.FC<Props> = ({ values = [] }) => {

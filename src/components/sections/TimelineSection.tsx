@@ -37,7 +37,7 @@ import {
   Landmark,
   Sparkles,
 } from 'lucide-react';
-import { StrapiItem, TimelineMilestoneAttributes } from '../../types';
+import { TimelineMilestoneAttributes } from '../../types';
 
 // ── Tipos internos ────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ interface MilestoneEntry {
 }
 
 interface Props {
-  milestones?: StrapiItem<TimelineMilestoneAttributes>[];
+  milestones?: TimelineMilestoneAttributes[];
 }
 
 // ── Cronologia Canônica do Instituto Ser Melhor (2007–2025) ──────────────────

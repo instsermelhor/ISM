@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { GovernanceInstanceAttributes, GovernanceMemberAttributes, StrapiItem } from '../../types';
+import { GovernanceInstanceAttributes, GovernanceMemberAttributes } from '../../types';
 import {
   Shield, Users, FileCheck, Briefcase, Globe, CheckCircle, ExternalLink,
   Linkedin, Instagram, Facebook, Twitter, Youtube, BookOpen, Award, FileText, Star
@@ -9,8 +9,8 @@ import { MemberModal } from './MemberModal';
 
 interface GovernanceStructureProps {
   intro: string;
-  instances: StrapiItem<GovernanceInstanceAttributes>[];
-  members: StrapiItem<GovernanceMemberAttributes>[];
+  instances: GovernanceInstanceAttributes[];
+  members: GovernanceMemberAttributes[];
 }
 
 const getIconForInstance = (title: string) => {

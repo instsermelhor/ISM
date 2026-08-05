@@ -268,12 +268,12 @@ function App() {
       const getValue = <T,>(result: PromiseSettledResult<T>, fallback: T): T =>
         result.status === 'fulfilled' ? result.value : fallback;
 
-      const EMPTY_META = { pagination: { page: 1, pageSize: 10, pageCount: 1, total: 0 } };
-      const pageRes            = getValue(results[0], { data: { id: 1, attributes: {} as any }, meta: EMPTY_META });
-      const valuesRes          = getValue(results[1], { data: [], meta: EMPTY_META });
-      const governanceInstRes  = getValue(results[2], { data: [], meta: EMPTY_META });
-      const timelineRes        = getValue(results[3], { data: [], meta: EMPTY_META });
-      const membersRes         = getValue(results[4], { data: [], meta: EMPTY_META });
+      const EMPTY_ARRAY: any[] = [];
+      const pageRes            = getValue(results[0], {} as any);
+      const valuesRes          = getValue(results[1], EMPTY_ARRAY);
+      const governanceInstRes  = getValue(results[2], EMPTY_ARRAY);
+      const timelineRes        = getValue(results[3], EMPTY_ARRAY);
+      const membersRes         = getValue(results[4], EMPTY_ARRAY);
       const programsRes        = getValue(results[5], []);
       const servicesPageRes    = getValue(results[6], null);
       const seoSettingsRes     = getValue(results[8], null);
@@ -285,11 +285,11 @@ function App() {
         ...s,
         servicesPage: servicesPageRes,
         data: {
-          page: pageRes.data,
-          valueBlocks: valuesRes.data,
-          governanceInstances: governanceInstRes.data,
-          timelineMilestones: timelineRes.data,
-          governanceMembers: membersRes.data,
+          page: pageRes,
+          valueBlocks: valuesRes,
+          governanceInstances: governanceInstRes,
+          timelineMilestones: timelineRes,
+          governanceMembers: membersRes,
           programs: programsRes,
           financials: servicesPageRes?.financialSlices?.length
             ? servicesPageRes.financialSlices.map((s: any, i: number) => ({ id: i + 1, name: s.name, value: Number(s.value), color: s.color }))
@@ -307,7 +307,7 @@ function App() {
         ...s,
         error: false,
         data: s.data || {
-          page: { id: 1, attributes: {} as any },
+          page: {} as any,
           valueBlocks: [],
           governanceInstances: [],
           timelineMilestones: [],
@@ -351,7 +351,7 @@ function App() {
 
   const activePageAttrs = {
     ...DEFAULT_PAGE_ATTRS,
-    ...data?.page?.attributes,
+    ...(data?.page || {}),
     ...(realtimeInstPage || {}),
   };
 
@@ -370,20 +370,7 @@ function App() {
   const activeBlog      = realtimeBlogPosts.length    > 0 ? realtimeBlogPosts    : [];
   const activePartners  = realtimePartners;
 
-  // ── Normaliza coleções do Strapi para o formato plano ───────────────────
-  function flattenStrapi<T>(items: any[]): T[] {
-    if (!items || !Array.isArray(items) || items.length === 0) return [];
-    if (items[0]?.attributes !== undefined) {
-      return items.map((item: any) => (item ? { id: item.id, ...item.attributes } : {})) as T[];
-    }
-    return items as T[];
-  }
-
-  const flatValues    = flattenStrapi<any>(activeValues);
-  const flatGovInst   = flattenStrapi<any>(activeGovInst);
-  const flatGovMem    = flattenStrapi<any>(activeGovMem);
-  const flatTimeline  = flattenStrapi<any>(activeTimeline);
-
+  // ── NOTE: dados já são planos (SIL-ISM 1.0 — flattenStrapi removido).
   // ── Render Guards ───────────────────────────────────────────────────────
   if (error) return <ErrorScreen onRetry={loadData} />;
   if (!data && !realtimeInstPage) return <LoadingScreen />;
@@ -414,7 +401,7 @@ function App() {
           <MissionVisionValues data={activePageAttrs as any} />
 
           {/* Valores Institucionais — lê de value_blocks (realtime) */}
-          <ValuesSection values={flatValues as any} />
+          <ValuesSection values={activeValues as any} />
 
           {/* Programas — lê de programs (realtime) */}
           <ProgramsSection
@@ -427,7 +414,7 @@ function App() {
           <PillarsSection pillars={activePillars} />
 
           {/* Timeline — lê de timeline_milestones (realtime) */}
-          <TimelineSection milestones={flatTimeline as any} />
+          <TimelineSection milestones={activeTimeline as any} />
 
           {/* Identidade & Rede — lê de institutional_page/main + services_page/main */}
           <IdentityAndNetwork
@@ -438,8 +425,8 @@ function App() {
           {/* Governança — lê de governance_instances + governance_members (realtime) */}
           <GovernanceStructure
             intro={activePageAttrs?.governanceIntro}
-            instances={flatGovInst as any}
-            members={flatGovMem as any}
+            instances={activeGovInst as any}
+            members={activeGovMem as any}
           />
 
           {/* Transparência — lê de services_page/main (realtime) */}
