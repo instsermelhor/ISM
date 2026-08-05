@@ -63,8 +63,9 @@ export const DonationEditorPage: React.FC = () => {
           badge: 'Apoie Agora',
           title: mainCamp.title,
           subtitle: mainCamp.description,
-          pixKey: '000.000.000-00 (Chave PIX Oficial)',
+          pixKey: '09.040.440/0001-47',
           bankName: 'Banco do Brasil',
+          pixName: 'Instituto Ser Melhor',
           benefits: mainCamp.benefits || [
             'Financiamento de bolsas para jovens líderes climáticos.',
             'Proteção de biomas através de tecnologia de monitoramento via satélite.',
@@ -197,10 +198,27 @@ export const DonationEditorPage: React.FC = () => {
       {/* Tab: Meios de Pagamento */}
       {activeTab === 'meios_pagamento' && (
         <div style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24 }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 800 }}>Gateway Multimeios de Doações</h3>
+          <h3 style={{ margin: '0 0 4px 0', fontSize: 16, fontWeight: 800 }}>Gateway Multimeios de Doações</h3>
+          <p style={{ margin: '0 0 20px 0', fontSize: 13, color: '#6b7280' }}>Configuração dos canais de recebimento ativo.</p>
+
+          {/* Chave PIX Oficial */}
+          <div style={{
+            background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 12,
+            padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 16
+          }}>
+            <div style={{ fontSize: 28 }}>⚡</div>
+            <div style={{ flex: 1 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: 1 }}>PIX Instantâneo — Chave Oficial</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+                <code style={{ fontSize: 18, fontWeight: 900, color: '#111827', fontFamily: 'monospace', letterSpacing: '0.04em' }}>09.040.440/0001-47</code>
+                <span style={{ fontSize: 11, background: '#dcfce7', color: '#16a34a', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>CNPJ</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Instituto Ser Melhor · Banco do Brasil</div>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
             {[
-              { name: 'PIX Institucional', status: 'Ativo (Chave E-mail)', badge: '⚡ Instantâneo' },
               { name: 'Cartão de Crédito / Débito', status: 'Ativo (Stripe / Pagar.me)', badge: '💳 Recorrente' },
               { name: 'Boleto Bancário', status: 'Ativo (Cora)', badge: '📄 Sem taxa' },
               { name: 'Open Finance (Pix Agendado)', status: 'Ativo (Banco Central)', badge: '🏦 Automático' },
