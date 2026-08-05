@@ -34,6 +34,7 @@ import { SEOHead } from './components/seo/SEOHead';
 import { SEOService } from './services/seoService';
 import { PWARegisterService } from './services/pwaRegisterService';
 import { AnalyticsService } from './services/analyticsService';
+import { BeneficiaryPortalModal } from './components/beneficiary/BeneficiaryPortalModal';
 
 // Data & Types
 import { InstitutionalService } from './services/data';
@@ -218,6 +219,7 @@ interface AppState {
   error: boolean;
   isPrivacyOpen: boolean;
   isTermsOpen: boolean;
+  isBeneficiaryPortalOpen: boolean;
 }
 
 function App() {
@@ -227,6 +229,7 @@ function App() {
     error: false,
     isPrivacyOpen: false,
     isTermsOpen: false,
+    isBeneficiaryPortalOpen: false,
   });
 
   // ── Realtime listeners — admin changes reflect in < 1s ───────────────────
@@ -516,6 +519,41 @@ function App() {
       >
         <TermsOfUse />
       </Modal>
+
+      {/* Portal do Beneficiário & Famílias Assistidas — G002 */}
+      <BeneficiaryPortalModal
+        isOpen={state.isBeneficiaryPortalOpen}
+        onClose={() => setState(s => ({ ...s, isBeneficiaryPortalOpen: false }))}
+      />
+
+      {/* Botão de Acesso Rápido ao Portal do Beneficiário */}
+      <button
+        onClick={() => setState(s => ({ ...s, isBeneficiaryPortalOpen: true }))}
+        style={{
+          position: 'fixed',
+          bottom: 74,
+          right: 20,
+          zIndex: 9970,
+          background: 'rgba(15, 23, 42, 0.9)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(34, 197, 94, 0.4)',
+          borderRadius: 20,
+          color: '#4ade80',
+          padding: '8px 14px',
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: 'pointer',
+          boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontFamily: 'Inter, system-ui, sans-serif',
+        }}
+        title="Área Restrita do Beneficiário & Cadastro Familiar"
+      >
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ade80' }} />
+        Portal Família Assistida
+      </button>
 
       {/* Agente IA de Atendimento Flutuante — D001 */}
       <AIAssistantWidget />
