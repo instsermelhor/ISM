@@ -362,7 +362,7 @@ export const TimelineSection: React.FC<Props> = ({ milestones }) => {
   // Prioridade: dados do Firestore (via prop) › cronologia canônica embutida.
   // Ordenação automática por order ?? year (escalável para CMS).
   const entries: MilestoneEntry[] = React.useMemo(() => {
-    const raw = (milestones ?? []).map((m) => m.attributes ?? m);
+    const raw = milestones ?? [];
     if (raw.length > 0) {
       const mapped = raw
         .map(firestoreToEntry)

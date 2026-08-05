@@ -40,8 +40,7 @@ export const ValuesSection: React.FC<Props> = ({ values = [] }) => {
         {/* BUG FIX: grid 2x2 para 4 itens, sem card orfão desalinhado */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {safeValues.map((item, index) => {
-            const data = item?.attributes ? item.attributes : item;
-            return <ValueBlock key={item?.id || index} data={data as any} index={index} />;
+            return <ValueBlock key={item?.id || index} data={item as any} index={index} />;
           })}
         </div>
       </div>

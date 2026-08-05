@@ -52,15 +52,14 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
   const safeMembers = Array.isArray(members) ? members : [];
 
   const sortedInstances = [...safeInstances].sort((a, b) => {
-    const aOrder = a?.attributes?.order ?? a?.order ?? 0;
-    const bOrder = b?.attributes?.order ?? b?.order ?? 0;
+    const aOrder = a?.order ?? 0;
+    const bOrder = b?.order ?? 0;
     return aOrder - bOrder;
   });
 
-  // Extrai lista de membros garantindo compatibilidade com StrapiItem ou modelo direto
+  // Extrai lista de membros garantindo consumo do modelo direto
   const unrolledMembers: (GovernanceMemberAttributes & { id?: string })[] = safeMembers.map((m: any) => {
-    const attrs = m?.attributes ? m.attributes : m;
-    return { ...attrs, id: m?.id || attrs?.id };
+    return { ...m, id: m?.id };
   }).filter(m => m.isPublished !== false && m.status !== 'DRAFT' && m.status !== 'ARCHIVED');
 
   const categoriesInUse = Array.from(new Set(unrolledMembers.map(m => m.category).filter(Boolean))) as string[];
@@ -96,11 +95,10 @@ export const GovernanceStructure: React.FC<GovernanceStructureProps> = ({ intro,
         {/* Instâncias de Governança */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {sortedInstances.map((instance, index) => {
-            const attrs = instance?.attributes ? instance.attributes : instance;
-            const title = attrs.title || '';
-            const order = attrs.order ?? (index + 1);
-            const summary = attrs.summary || '';
-            const keyAttrs: any[] = Array.isArray(attrs.keyAttributes) ? attrs.keyAttributes : [];
+            const title = instance.title || '';
+            const order = instance.order ?? (index + 1);
+            const summary = instance.summary || '';
+            const keyAttrs: any[] = Array.isArray(instance.keyAttributes) ? instance.keyAttributes : [];
             const Icon = getIconForInstance(title);
             const gradient = instanceColors[index % instanceColors.length];
             return (
