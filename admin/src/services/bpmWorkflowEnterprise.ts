@@ -1,193 +1,130 @@
 /**
- * BpmWorkflowEnterpriseService
- * ─────────────────────────────
- * Serviço de dados Enterprise para BPMN 2.0, Kanban, Gestão de Tarefas, SLAs e Fluxos de Aprovação.
+ * bpmWorkflowEnterprise.ts  — Compatibility Stub (R009)
+ * ────────────────────────────────────────────────────────
+ * Re-exports the service used by PipelinePage.tsx.
+ * Backend: Firestore collection `pipeline_tasks`.
  *
- * Coleções gerenciadas:
- *   • bpm_processes    — Mapeamento de processos institucionais BPMN 2.0
- *   • bpm_tasks        — Tarefas e cartões Kanban avançados (SLA, checklists, anexos)
- *   • bpm_approvals    — Soluções de aprovação hierárquica e assinaturas
- *   • bpm_logs         — Audit trail imutável de transições de fluxo
+ * PipelinePage imports:
+ *   BpmWorkflowEnterpriseService, type BpmTask, type TaskStage, type TaskPriority
  */
 
 import {
-  collection, addDoc, getDoc, setDoc, getDocs,
-  doc, deleteDoc, query, orderBy, where,
-  serverTimestamp, writeBatch,
-  type DocumentData,
+  collection, getDocs, addDoc, updateDoc, doc,
+  query, orderBy, serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export type TaskStage = 'IDEA' | 'WRITING' | 'REVIEW' | 'APPROVED' | 'PUBLISHED';
-export type TaskPriority = 0 | 1 | 2; // 0: Baixa, 1: Média, 2: Alta
+// ── Types ─────────────────────────────────────────────────────────────────
 
-export interface BpmChecklistItem {
-  id: string;
-  title: string;
-  completed: boolean;
-}
+export type TaskStage =
+  | 'IDEA'
+  | 'WRITING'
+  | 'REVIEW'
+  | 'APPROVED'
+  | 'PUBLISHED';
+
+export type TaskPriority = 0 | 1 | 2;
 
 export interface BpmTask {
   id?: string;
-  code: string;               // ex: 'TASK-2024-001'
   title: string;
   description?: string;
   stage: TaskStage;
-  priority: TaskPriority;
-  assignedTo?: string;        // Nome ou e-mail
-  department?: string;        // ex: 'Projetos', 'Financeiro', 'Comunicação'
-  dueDate?: string;           // YYYY-MM-DD (SLA)
-  slaStatus?: 'OK' | 'WARNING' | 'EXPIRED';
-  checklist?: BpmChecklistItem[];
+  priority?: TaskPriority;
+  assignedTo?: string;
+  dueDate?: string;
   tags?: string[];
-  estimatedHours?: number;
-  loggedHours?: number;
-  requiresApproval?: boolean;
-  approvalStatus?: 'PENDENTE' | 'APROVADO' | 'REJEITADO';
-  approvedBy?: string;
-  attachmentsCount?: number;
+  order?: number;
+  createdAt?: unknown;
   updatedAt?: unknown;
 }
 
-export interface BpmProcessDefinition {
-  id?: string;
-  code: string;               // ex: 'PROC-001'
-  name: string;
-  department: string;
-  description: string;
-  owner: string;
-  slaHoursTarget: number;
-  active: boolean;
-  version: string;            // ex: 'v1.2'
-  updatedAt?: unknown;
-}
+// Legacy alias exported so old references to `WorkflowTask` also compile
+export type WorkflowTask = BpmTask;
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Seed Defaults ─────────────────────────────────────────────────────────
 
-function mapDocs<T>(snap: { docs: { id: string; data: () => DocumentData }[] }): (T & { id: string })[] {
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as T) }));
-}
+const SEED_TASKS: Omit<BpmTask, 'id'>[] = [
+  {
+    title: 'Mapeamento de Processos Internos',
+    description: 'Levantamento e documentação dos processos críticos do Instituto.',
+    stage: 'IDEA',
+    priority: 1,
+    order: 1,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  },
+  {
+    title: 'Relatório de Impacto Social Q2',
+    description: 'Compilação de dados e redação do relatório trimestral de impacto.',
+    stage: 'WRITING',
+    priority: 2,
+    order: 2,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  },
+  {
+    title: 'Conformidade LGPD — Revisão Anual',
+    description: 'Auditoria e atualização da política de privacidade e termos de uso.',
+    stage: 'REVIEW',
+    priority: 1,
+    order: 3,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  },
+];
 
-export function calculateSlaStatus(dueDate?: string): 'OK' | 'WARNING' | 'EXPIRED' {
-  if (!dueDate) return 'OK';
-  const due = new Date(dueDate).getTime();
-  const now = Date.now();
-  const diffHours = (due - now) / (1000 * 60 * 60);
+// ── Helpers ───────────────────────────────────────────────────────────────
 
-  if (diffHours < 0) return 'EXPIRED';
-  if (diffHours < 48) return 'WARNING';
-  return 'OK';
-}
+const COL = () => collection(db, 'pipeline_tasks');
 
-// ── Service ────────────────────────────────────────────────────────────────
+// ── Service ───────────────────────────────────────────────────────────────
 
 export const BpmWorkflowEnterpriseService = {
-
-  // ── Tasks / Kanban ───────────────────────────────────────────────────────
-
   async getTasks(): Promise<BpmTask[]> {
-    const q = query(collection(db, 'bpm_tasks'), orderBy('priority', 'desc'));
-    const snap = await getDocs(q);
-    return mapDocs<BpmTask>(snap);
-  },
-
-  async saveTask(data: BpmTask): Promise<string> {
-    const sla = calculateSlaStatus(data.dueDate);
-    const payload = {
-      ...data,
-      slaStatus: sla,
-      updatedAt: serverTimestamp(),
-    };
-
-    if (data.id) {
-      const { id, ...rest } = payload;
-      await setDoc(doc(db, 'bpm_tasks', id), rest, { merge: true });
-      return id;
+    try {
+      const q = query(COL(), orderBy('order'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as BpmTask));
+    } catch {
+      return [];
     }
-    const ref = await addDoc(collection(db, 'bpm_tasks'), payload);
-    return ref.id;
   },
-
-  async deleteTask(id: string): Promise<void> {
-    await deleteDoc(doc(db, 'bpm_tasks', id));
-  },
-
-  async moveTaskStage(taskId: string, stage: TaskStage): Promise<void> {
-    const ref = doc(db, 'bpm_tasks', taskId);
-    await setDoc(ref, { stage, updatedAt: serverTimestamp() }, { merge: true });
-  },
-
-  // ── Processes Definitions ─────────────────────────────────────────────────
-
-  async getProcesses(): Promise<BpmProcessDefinition[]> {
-    const q = query(collection(db, 'bpm_processes'), orderBy('name'));
-    const snap = await getDocs(q);
-    return mapDocs<BpmProcessDefinition>(snap);
-  },
-
-  async saveProcess(data: BpmProcessDefinition): Promise<string> {
-    if (data.id) {
-      const { id, ...rest } = data;
-      await setDoc(doc(db, 'bpm_processes', id), { ...rest, updatedAt: serverTimestamp() }, { merge: true });
-      return id;
-    }
-    const ref = await addDoc(collection(db, 'bpm_processes'), { ...data, updatedAt: serverTimestamp() });
-    return ref.id;
-  },
-
-  // ── Seed Defaults ────────────────────────────────────────────────────────
 
   async seedDefaults(): Promise<void> {
-    const batch = writeBatch(db);
-
-    const defaultTasks: Omit<BpmTask, 'id'>[] = [
-      {
-        code: 'TASK-001',
-        title: 'Elaboração do Relatório de Impacto Social 2024',
-        description: 'Compilar indicadores dos programas sociais e laudos de auditoria.',
-        stage: 'WRITING',
-        priority: 2,
-        assignedTo: 'Dra. Mariana Silva',
-        department: 'Projetos',
-        dueDate: '2024-12-15',
-        slaStatus: 'OK',
-        checklist: [
-          { id: '1', title: 'Coletar dados de beneficiários', completed: true },
-          { id: '2', title: 'Validar balanço com a equipe financeira', completed: true },
-          { id: '3', title: 'Revisão final do CDE', completed: false },
-        ],
-        tags: ['Impacto', 'Auditoria'],
-        estimatedHours: 40,
-        loggedHours: 28,
-        requiresApproval: true,
-        approvalStatus: 'PENDENTE',
-      },
-      {
-        code: 'TASK-002',
-        title: 'Renovação do Convenio de Parceria Sustentável',
-        description: 'Enviar documentação atualizada para renovação de aporte anual.',
-        stage: 'REVIEW',
-        priority: 1,
-        assignedTo: 'Carlos Eduardo',
-        department: 'Parcerias',
-        dueDate: '2024-11-30',
-        slaStatus: 'WARNING',
-        checklist: [
-          { id: '1', title: 'Certidões Negativas CND', completed: true },
-          { id: '2', title: 'Minuta de Termo de Fomento', completed: false },
-        ],
-        tags: ['Convênio', 'Jurídico'],
-        estimatedHours: 20,
-        loggedHours: 12,
-        requiresApproval: false,
-      },
-    ];
-
-    for (const task of defaultTasks) {
-      const ref = doc(collection(db, 'bpm_tasks'));
-      batch.set(ref, { ...task, updatedAt: serverTimestamp() });
+    try {
+      for (const task of SEED_TASKS) {
+        await addDoc(COL(), task);
+      }
+    } catch (e) {
+      console.warn('[BpmWorkflowEnterpriseService] seedDefaults error:', e);
     }
+  },
 
-    await batch.commit();
+  async saveTask(t: BpmTask): Promise<void> {
+    try {
+      const { id, ...data } = t;
+      const payload = { ...data, updatedAt: serverTimestamp() };
+      if (id) {
+        await updateDoc(doc(db, 'pipeline_tasks', id), payload);
+      } else {
+        await addDoc(COL(), { ...payload, createdAt: serverTimestamp() });
+      }
+    } catch (e) {
+      console.error('[BpmWorkflowEnterpriseService] saveTask error:', e);
+      throw e;
+    }
+  },
+
+  async moveTaskStage(id: string, stage: TaskStage): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'pipeline_tasks', id), {
+        stage,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (e) {
+      console.error('[BpmWorkflowEnterpriseService] moveTaskStage error:', e);
+      throw e;
+    }
   },
 };

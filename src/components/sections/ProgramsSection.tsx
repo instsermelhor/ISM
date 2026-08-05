@@ -327,7 +327,10 @@ export const ProgramsSection: React.FC<Props> = ({ programs = [], servicesPage, 
         </motion.div>
 
         {/* Programs Grid — Skeleton durante carregamento, cards reais quando prontos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto items-start">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto items-start"
+          aria-label={isLoading ? "Carregando projetos em campo" : undefined}
+        >
           {isLoading && publishedPrograms.length === 0
             ? Array.from({ length: 3 }).map((_, i) => <ProgramCardSkeleton key={i} index={i} />)
             : publishedPrograms.map((p, index) => (
