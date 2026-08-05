@@ -13,6 +13,7 @@ import { ValuesSection } from './components/sections/ValuesSection';
 import { GovernanceStructure } from './components/sections/GovernanceStructure';
 import { TransparencyReport } from './components/sections/TransparencyReport';
 import { PartnerSection } from './components/sections/PartnerSection';
+import { PartnersESGSection } from './components/sections/PartnersESGSection';
 import { DonationSection } from './components/sections/DonationSection';
 import { ProgramsSection } from './components/sections/ProgramsSection';
 import { PillarsSection } from './components/sections/PillarsSection';
@@ -458,6 +459,9 @@ function App() {
             servicesPage={activeServices}
             partners={activePartners}
           />
+
+          {/* Portal de Parceiros & Co-benefícios ESG — E002 */}
+          <PartnersESGSection />
 
           {/* Doações — lê de donation_section/main (realtime) */}
           <DonationSection donationData={activeDonation} />
