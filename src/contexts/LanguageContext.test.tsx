@@ -83,6 +83,6 @@ describe('LanguageContext i18n System', () => {
     const btnEn = screen.getByTestId('btn-en');
     await user.click(btnEn);
 
-    expect(localStorage.getItem('ism_lang')).toBe('EN');
+    expect(localStorage.getItem('ism_language')).toBe('EN');
   });
 });
