@@ -31,6 +31,7 @@ const TransparencyEditorPage = lazy(() => import('./pages/TransparencyEditorPage
 const SROICalculatorPage = lazy(() => import('./pages/SROICalculatorPage').then(m => ({ default: m.SROICalculatorPage })));
 const AIAgentManagerPage = lazy(() => import('./pages/AIAgentManagerPage').then(m => ({ default: m.AIAgentManagerPage })));
 const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReportPage').then(m => ({ default: m.ExecutiveReportPage })));
+const BIAnalyticsDashboardPage = lazy(() => import('./pages/BIAnalyticsDashboardPage').then(m => ({ default: m.BIAnalyticsDashboardPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -85,6 +86,7 @@ function App() {
 
               {/* Sistema & Analytics */}
               <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="analytics/bi" element={<BIAnalyticsDashboardPage />} />
               <Route path="auditoria" element={<AuditPage />} />
               <Route path="health" element={<HealthPage />} />
               <Route path="usuarios" element={<UsersPage />} />
