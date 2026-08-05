@@ -1,0 +1,26 @@
+{
+  "name": "Instituto Ser Melhor — Sapere Aude",
+  "short_name": "Ser Melhor",
+  "description": "Organização Não Governamental voltada ao impacto educacional, social, ambiental e cultural.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-ism.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-ism.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "education", "non-profit"],
+  "lang": "pt-BR"
+}
