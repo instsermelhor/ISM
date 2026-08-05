@@ -400,6 +400,50 @@ export const ServicesPage: React.FC = () => {
     }
   };
 
+  /** Salva e publica o programa de uma só vez — aparêce imediatamente no site */
+  const handleProgSaveAndPublish = async () => {
+    if (!progDraft.title?.trim()) { alert('O título é obrigatório.'); return; }
+    if (!progDraft.slug?.trim()) { alert('O slug é obrigatório.'); return; }
+    setProgSaving(true);
+    try {
+      const toSave: Partial<ProgramDataAdmin> = {
+        ...progDraft,
+        status: 'PUBLISHED',
+        isPublished: true,
+        pillarsTitle: progDraft.pillarsTitle || 'Nossos pilares',
+        actionLinesTitle: progDraft.actionLinesTitle || 'Linhas de atuação',
+        commitmentTitle: progDraft.commitmentTitle || 'Nosso compromisso',
+      };
+      if (progEditMode === 'create') {
+        const newId = await ProgramsService.create(toSave as Omit<ProgramDataAdmin, 'id'>, 'admin');
+        await CMSVersionService.saveDraft('programs', toSave as Record<string, unknown>, 'admin', `Criação e publicação: ${toSave.title}`);
+        const updated = await ProgramsService.getAll();
+        setPublicPrograms(updated);
+        setProgLastSync(new Date());
+        setSelectedProgId(newId);
+      } else if (selectedProgId) {
+        await ProgramsService.update(selectedProgId, toSave, 'admin');
+        await ProgramsService.setStatus(selectedProgId, 'PUBLISHED', 'admin');
+        await CMSVersionService.saveDraft('programs', toSave as Record<string, unknown>, 'admin', `Publicação: ${toSave.title}`);
+        const updated = await ProgramsService.getAll();
+        setPublicPrograms(updated);
+        setProgLastSync(new Date());
+      }
+      setProgDraft(d => ({ ...d, status: 'PUBLISHED', isPublished: true }));
+      setProgSaved(true);
+      setTimeout(() => {
+        setProgSaved(false);
+        setProgEditMode('list');
+        setProgDraft({});
+      }, 1800);
+    } catch (e) {
+      console.error('[ServicesPage] Erro ao publicar programa:', e);
+      alert('Erro ao publicar o programa. Verifique o console.');
+    } finally {
+      setProgSaving(false);
+    }
+  };
+
   const handleProgDelete = async (id: string, title: string) => {
     if (!window.confirm(`Excluir permanentemente "${title}"? Esta ação não pode ser desfeita.`)) return;
     await ProgramsService.delete(id, title, 'admin');
@@ -544,7 +588,13 @@ export const ServicesPage: React.FC = () => {
               {progEditMode !== 'list' && (
                 <button onClick={handleProgSave} disabled={progSaving}
                   style={{ display: 'flex', alignItems: 'center', gap: 6, background: progSaved ? '#16a34a' : '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: progSaving ? 'not-allowed' : 'pointer', opacity: progSaving ? 0.7 : 1 }}>
-                  {progSaving ? 'Salvando...' : progSaved ? '✓ Salvo' : 'Salvar Programa'}
+                  {progSaving ? 'Salvando...' : progSaved ? '✓ Salvo' : 'Salvar Rascunho'}
+                </button>
+              )}
+              {progEditMode !== 'list' && (
+                <button onClick={handleProgSaveAndPublish} disabled={progSaving}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: progSaved ? '#15803d' : '#16a34a', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: progSaving ? 'not-allowed' : 'pointer', opacity: progSaving ? 0.7 : 1, boxShadow: '0 2px 8px rgba(22,163,74,0.35)' }}>
+                  {progSaving ? 'Publicando...' : progSaved ? '✓ Publicado no Site!' : '🟢 Salvar e Publicar'}
                 </button>
               )}
             </div>
@@ -1002,8 +1052,27 @@ export const ServicesPage: React.FC = () => {
                   <button
                     onClick={handleProgSave}
                     disabled={progSaving}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: progSaved ? '#16a34a' : '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: progSaving ? 'not-allowed' : 'pointer', opacity: progSaving ? 0.7 : 1 }}>
-                    {progSaving ? 'Salvando...' : progSaved ? '✓ Salvo com Sucesso' : 'Salvar Programa'}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: progSaving ? 'not-allowed' : 'pointer', opacity: progSaving ? 0.7 : 1 }}>
+                    {progSaving ? 'Salvando...' : 'Salvar Rascunho'}
+                  </button>
+                  <button
+                    onClick={handleProgSaveAndPublish}
+                    disabled={progSaving}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      background: progSaved ? '#15803d' : '#16a34a',
+                      color: 'white', border: 'none', borderRadius: 8,
+                      padding: '10px 24px', fontSize: 14, fontWeight: 800,
+                      cursor: progSaving ? 'not-allowed' : 'pointer',
+                      opacity: progSaving ? 0.7 : 1,
+                      boxShadow: progSaved ? 'none' : '0 4px 14px rgba(22,163,74,0.4)',
+                      transition: 'all 0.2s',
+                    }}>
+                    {progSaving
+                      ? <><span style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin .6s linear infinite', display: 'inline-block' }} /> Publicando...</>
+                      : progSaved
+                      ? <>✓ Publicado no Site!</>
+                      : <>🟢 Salvar e Publicar</>}
                   </button>
                 </div>
               </div>
