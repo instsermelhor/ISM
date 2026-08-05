@@ -48,8 +48,8 @@ export const PartnersESGSection: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (typeof InstitutionalService.getPublishedPartners === 'function') {
-      InstitutionalService.getPublishedPartners().then(res => {
+    if (typeof InstitutionalService.getPartners === 'function') {
+      InstitutionalService.getPartners().then(res => {
         if (res && res.length > 0) {
           setPartners(res.map((p: any) => ({
             id: p.id,
@@ -78,6 +78,9 @@ export const PartnersESGSection: React.FC = () => {
     setSubmitError(null);
     try {
       await InstitutionalService.submitPartnerApplication({
+        areaOfInterest: data.interestPillar || "CORPORATE_ESG",
+        intendedContribution: data.message || "",
+        email: data.contactEmail,
         companyName: data.companyName,
         taxId: data.taxId,
         contactName: data.contactName,

@@ -5,7 +5,7 @@
  * Executa no Vitest da raiz (sem React/jsdom admin) — garante cobertura do D002.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // ── Mock Firestore e serviços admin para isolar do firebase real ─────────────
 vi.mock('../../../admin/src/services/impactMetricsService', () => ({
@@ -14,7 +14,7 @@ vi.mock('../../../admin/src/services/impactMetricsService', () => ({
       { label: 'Beneficiários Diretos', value: '32.000+', sublabel: 'Assistidos anualmente', prefix: '', suffix: '' },
     ]),
   },
-}), { virtual: true });
+}));
 
 vi.mock('../../../admin/src/services/sroiService', () => ({
   SROIService: { getOrSeed: vi.fn().mockResolvedValue(null) },
@@ -27,7 +27,7 @@ vi.mock('../../../admin/src/services/sroiService', () => ({
     organizacaoAuditora: 'Auditoria Independente ISM',
     notaMetodologica: 'Relatório gerado pelo Sistema de Inteligência de Impacto.',
   },
-}), { virtual: true });
+}));
 
 // ── Simulação inline do ReportGeneratorService para teste puro ────────────────
 const MOCK_PILARES = [

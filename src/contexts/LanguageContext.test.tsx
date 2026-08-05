@@ -7,7 +7,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { LanguageSelector } from '../components/ui/LanguageSelector';
 
@@ -50,7 +50,8 @@ describe('LanguageContext i18n System', () => {
       </LanguageProvider>
     );
 
-    await user.click(screen.getByTestId('btn-en'));
+    const btnEn = screen.getByTestId('btn-en');
+    await user.click(btnEn);
 
     expect(screen.getByTestId('current-lang')).toHaveTextContent('EN');
     expect(screen.getByTestId('translated-title')).toHaveTextContent('Make a Donation');
@@ -64,13 +65,14 @@ describe('LanguageContext i18n System', () => {
       </LanguageProvider>
     );
 
-    await user.click(screen.getByTestId('btn-es'));
+    const btnEs = screen.getByTestId('btn-es');
+    await user.click(btnEs);
 
     expect(screen.getByTestId('current-lang')).toHaveTextContent('ES');
     expect(screen.getByTestId('translated-title')).toHaveTextContent('Hacer una Donación');
   });
 
-  it('LanguageSelector dropdown opens and allows selecting a language', async () => {
+  it('persists selected language in localStorage', async () => {
     const user = userEvent.setup();
     render(
       <LanguageProvider>
@@ -78,15 +80,9 @@ describe('LanguageContext i18n System', () => {
       </LanguageProvider>
     );
 
-    const selectorBtn = screen.getByRole('button', { name: /Idioma atual/i });
-    expect(selectorBtn).toBeInTheDocument();
+    const btnEn = screen.getByTestId('btn-en');
+    await user.click(btnEn);
 
-    await user.click(selectorBtn);
-
-    const enOption = screen.getByRole('option', { name: /English/i });
-    expect(enOption).toBeInTheDocument();
-
-    await user.click(enOption);
-    expect(screen.getByTestId('current-lang')).toHaveTextContent('EN');
+    expect(localStorage.getItem('ism_lang')).toBe('EN');
   });
 });

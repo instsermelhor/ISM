@@ -142,16 +142,22 @@ export interface FinancialEntry {
 export type PartnerStatus = 'Novo' | 'Em Análise' | 'Contato Inicial' | 'Rejeitado' | 'Parceria Formalizada';
 
 export interface PartnerApplicationPayload {
-  submissionDate: string;
+  submissionDate?: string;
   type: PartnerType;
   companyName?: string;
   contactName: string;
   contactTitle?: string;
-  email: string;
+  contactEmail?: string;
+  email?: string;
   phone?: string;
-  areaOfInterest: string;
+  areaOfInterest?: string;
   intendedContribution?: string;
-  status: PartnerStatus;
+  status?: PartnerStatus;
+  taxId?: string;
+  estimatedBudget?: string;
+  interestPillar?: string;
+  message?: string;
+  [key: string]: any;
 }
 
 // ── Tipos para Seção Seja Parceiro & Parceiros Publicados ──────────────────────
