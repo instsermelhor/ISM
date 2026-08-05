@@ -32,6 +32,7 @@ import { PerformanceMonitorBadge } from './components/ui/PerformanceMonitorBadge
 import { SEOHead } from './components/seo/SEOHead';
 import { SEOService } from './services/seoService';
 import { PWARegisterService } from './services/pwaRegisterService';
+import { AnalyticsService } from './services/analyticsService';
 
 // Data & Types
 import { InstitutionalService } from './services/data';
@@ -255,6 +256,12 @@ function App() {
   useEffect(() => {
     if (realtimeSeo) applySeoSettings(realtimeSeo, realtimeSocials);
   }, [realtimeSeo, realtimeSocials]);
+
+  // ── Analytics F004 — init motor de conversão + page_view homepage ────────────
+  useEffect(() => {
+    AnalyticsService.init();
+    AnalyticsService.trackPageView('/', 'Instituto Ser Melhor — Transformação Social');
+  }, []);
 
   // ── Carga inicial (fallback para dados existentes no Firestore) ──────────
   // ── Carga inicial (resiliente com fallback para dados institucionais) ──────────
