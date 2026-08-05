@@ -172,7 +172,7 @@ export const BlogPage: React.FC = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
-                      <button className="btn btn-icon btn-ghost btn-sm" title="Visualizar" onClick={() => window.open(`http://localhost:3000/blog/${post.slug}`, '_blank')}>
+                      <button className="btn btn-icon btn-ghost btn-sm" title="Visualizar" onClick={() => window.open(`${(import.meta.env.VITE_SITE_URL as string) || 'http://localhost:3000'}/blog/${post.slug}`, '_blank')}>
                         <Eye size={14} />
                       </button>
                       <button className="btn btn-icon btn-ghost btn-sm" title="Editar" onClick={() => navigate(`/conteudo/blog/${post.id}`)}>

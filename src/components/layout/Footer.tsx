@@ -45,11 +45,24 @@ function renderSocialIcon(platform: string, size = 16) {
   }
 }
 
-// Detecta ambiente: produção → domínio real, dev → localhost
-const ADMIN_URL =
-  typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-    ? 'https://admin.institutosermelhor.org/login'
-    : 'http://localhost:3001/admin/login';
+// URL do painel admin — lida de variável de ambiente (VITE_ADMIN_URL no build do site).
+// Em dev: usa window.location para derivar a porta 3001 automaticamente; nunca hardcoded.
+const ADMIN_URL = (() => {
+  // 1. Variável de ambiente definida no build (produção/staging)
+  const envUrl = typeof import.meta !== 'undefined'
+    ? (import.meta as any).env?.VITE_ADMIN_URL as string | undefined
+    : undefined;
+  if (envUrl) return envUrl;
+  // 2. Em runtime: detecta produção pelo hostname
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://admin.institutosermelhor.org/login';
+  }
+  // 3. Dev local: deriva do origin, troca porta pelo padrão do admin (3001)
+  if (typeof window !== 'undefined') {
+    return window.location.origin.replace(/:\d+$/, ':3001') + '/admin/login';
+  }
+  return '/admin/login';
+})();
 
 interface Props {
   onOpenPrivacy: () => void;
