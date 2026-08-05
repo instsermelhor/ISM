@@ -27,6 +27,7 @@ const NavigationEditorPage = lazy(() => import('./pages/NavigationEditorPage').t
 const ValuesEditorPage = lazy(() => import('./pages/ValuesEditorPage').then(m => ({ default: m.ValuesEditorPage })));
 const GovernanceEditorPage = lazy(() => import('./pages/GovernanceEditorPage').then(m => ({ default: m.GovernanceEditorPage })));
 const TimelineEditorPage = lazy(() => import('./pages/TimelineEditorPage').then(m => ({ default: m.TimelineEditorPage })));
+const TransparencyEditorPage = lazy(() => import('./pages/TransparencyEditorPage').then(m => ({ default: m.TransparencyEditorPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -60,6 +61,7 @@ function App() {
               <Route path="site/valores" element={<ValuesEditorPage />} />
               <Route path="site/governanca" element={<GovernanceEditorPage />} />
               <Route path="site/timeline" element={<TimelineEditorPage />} />
+              <Route path="site/transparencia" element={<TransparencyEditorPage />} />
               <Route path="configuracoes" element={<SiteConfigPage />} />
 
               {/* Gestão da Instituição */}
