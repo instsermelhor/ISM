@@ -183,8 +183,40 @@ router.post('/leads', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/** Middleware de Autorização baseado em Papéis RBAC */
+function requireRole(...allowedRoles: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const user = (req as any).user;
+    if (!user) {
+      sendProblemDetails(res, 401, 'Unauthorized', 'Usuário não autenticado', 'UNAUTHORIZED');
+      return;
+    }
+
+    const SUPER_ADMIN_EMAILS = [
+      'ribeiro.rikardo@gmail.com',
+      'admism@institutosermelhor.org',
+      'instsermelhor.adm@gmail.com',
+      'admin@ism.org'
+    ];
+
+    const userEmail = (user.email || '').toLowerCase();
+    const isSuperAdmin = userEmail === 'ribeiro.rikardo@gmail.com' || SUPER_ADMIN_EMAILS.includes(userEmail);
+    const role = isSuperAdmin ? 'SUPER_ADMIN' : (user.role || user.customClaims?.role || 'EDITOR');
+
+    if (role === 'SUPER_ADMIN') {
+      return next();
+    }
+
+    if (allowedRoles.includes(role)) {
+      return next();
+    }
+
+    sendProblemDetails(res, 403, 'Forbidden', `Acesso negado. Requer função: ${allowedRoles.join(', ')}`, 'FORBIDDEN');
+  };
+}
+
 /** PUT /api/v2/admin/cms/institutional */
-router.put('/admin/cms/institutional', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+router.put('/admin/cms/institutional', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN', 'EDITOR'), async (req: Request, res: Response): Promise<void> => {
   try {
     const data = req.body;
     await db.collection('institutional_page').doc('main').set({
@@ -193,10 +225,86 @@ router.put('/admin/cms/institutional', authenticateToken, async (req: Request, r
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
+    // Registrar Trilha de Auditoria Imutável
+    await db.collection('audit_logs').add({
+      action: 'CONTENT_UPDATED',
+      userEmail: (req as any).user.email || 'desconhecido',
+      details: 'Atualização do conteúdo institucional via API v2',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
     res.status(200).json({ success: true, message: 'Conteúdo institucional atualizado via API Gateway Admin REST v2.' });
   } catch (err: any) {
     console.error('[API Gateway] Erro no CMS Admin:', err);
     sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao atualizar o CMS', 'CMS_UPDATE_ERROR');
+  }
+});
+
+/** POST /api/v2/admin/change-password — Alteração Obrigatória / Voluntária de Senha */
+router.post('/admin/change-password', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 8) {
+      sendProblemDetails(res, 400, 'Bad Request', 'A nova senha deve possuir no mínimo 8 caracteres.', 'WEAK_PASSWORD');
+      return;
+    }
+    if (newPassword === oldPassword) {
+      sendProblemDetails(res, 400, 'Bad Request', 'A nova senha deve ser diferente da senha atual/provisória.', 'SAME_PASSWORD');
+      return;
+    }
+
+    const uid = (req as any).user.uid;
+    const email = (req as any).user.email;
+
+    // Atualiza credencial no Firebase Auth via Admin SDK
+    await admin.auth().updateUser(uid, { password: newPassword });
+
+    // Registra auditoria imutável
+    await db.collection('audit_logs').add({
+      action: 'PASSWORD_CHANGE',
+      userEmail: email,
+      details: 'Troca de senha realizada com sucesso via API REST v2',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({ success: true, message: 'Senha alterada com sucesso.' });
+  } catch (err: any) {
+    console.error('[API Gateway] Erro na alteração de senha:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao alterar a senha', 'PASSWORD_CHANGE_FAILED');
+  }
+});
+
+/** DELETE /api/v2/admin/users/:userId — Exclusão protegida de usuário */
+router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const targetUserId = req.params.userId;
+    const callerEmail = ((req as any).user.email || '').toLowerCase();
+    
+    // Buscar perfil do usuário alvo
+    const targetUserRecord = await admin.auth().getUser(targetUserId).catch(() => null);
+    const targetEmail = (targetUserRecord?.email || '').toLowerCase();
+
+    // Trava de Segurança: Impedir exclusão de SUPER_ADMIN por administradores normais
+    if (targetEmail === 'ribeiro.rikardo@gmail.com' || targetUserRecord?.customClaims?.role === 'SUPER_ADMIN') {
+      if (callerEmail !== 'ribeiro.rikardo@gmail.com') {
+        sendProblemDetails(res, 403, 'Forbidden', 'Operação bloqueada pelo backend. O Super Administrador não pode ser excluído por usuários delegados.', 'SUPER_ADMIN_PROTECTED');
+        return;
+      }
+    }
+
+    await admin.auth().deleteUser(targetUserId);
+
+    await db.collection('audit_logs').add({
+      action: 'USER_DELETED',
+      userEmail: callerEmail,
+      details: `Usuário ${targetEmail || targetUserId} excluído com sucesso`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({ success: true, message: 'Usuário excluído com sucesso.' });
+  } catch (err: any) {
+    console.error('[API Gateway] Erro ao excluir usuário:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao excluir usuário', 'USER_DELETE_ERROR');
   }
 });
 
