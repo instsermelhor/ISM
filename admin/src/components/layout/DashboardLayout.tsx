@@ -5,7 +5,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 
 export const DashboardLayout: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, mustChangePassword } = useAuth();
 
   if (loading) {
     return (
@@ -15,7 +15,7 @@ export const DashboardLayout: React.FC = () => {
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user || mustChangePassword) return <Navigate to="/login" replace />;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--gray-50)' }}>
