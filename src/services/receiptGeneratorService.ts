@@ -79,7 +79,8 @@ export const ReceiptGeneratorService = {
         <div class="header">
           <div>
             <div class="logo-title">INSTITUTO SER MELHOR</div>
-            <div class="subtitle">CNPJ 09.040.440/0001-47 · Organização Não Governamental</div>
+            <div class="subtitle" style="font-weight: 700; color: #1e293b;">ORGANIZAÇÃO ASSOCIATIVA CIVIL PARA PROMOÇÃO E DESENVOLVIMENTO DA ASSISTÊNCIA EDUCACIONAL, CULTURAL, AMBIENTAL E SOCIAL</div>
+            <div class="subtitle">CNPJ 09.040.440/0001-47 · Banco Cora SCFI · Organização Sem Fins Lucrativos</div>
           </div>
           <div style="text-align: right; font-size: 11px; color: #16a34a; font-weight: 800;">
             RECIBO OFICIAL DE DOAÇÃO<br>
