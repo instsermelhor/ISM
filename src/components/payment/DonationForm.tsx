@@ -22,8 +22,8 @@ import { DonationReceiptModal } from './DonationReceiptModal';
 
 /* ── PIX ISM ── */
 const ISM_PIX_CNPJ = '09.040.440/0001-47';
-const ISM_PIX_BANK = 'Banco do Brasil';
-const ISM_PIX_NAME = 'Instituto Ser Melhor';
+const ISM_PIX_BANK = 'Cora SCFI';
+const ISM_PIX_NAME = 'ORGANIZAÇÃO ASSOCIATIVA CIVIL PARA PROMOÇÃO E DESENVOLVIMENTO DA ASSISTÊNCIA EDUCACIONAL, CULTURAL, AMBIENTAL E SOCIAL';
 
 /* ── Zod Schema ────────────────────────────────────────────────────── */
 const donationSchema = z.object({
@@ -92,7 +92,7 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
   // Payload PIX Copia e Cola Padrão EMV Bacen
   const pixEmvPayload = PixGeneratorService.generatePayload({
     chave: ISM_PIX_CNPJ,
-    nomeRecebedor: 'INSTITUTO SER MELHOR',
+    nomeRecebedor: 'ORGANIZACAO ASSOC CIVIL',
     cidade: 'SAO PAULO',
     valor: amount,
     txid: transactionId || 'ISMDOACAO',
