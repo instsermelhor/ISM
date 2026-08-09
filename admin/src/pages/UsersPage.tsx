@@ -6,9 +6,11 @@ import {
   UserCheck, Users, Key, Bell, Activity
 } from 'lucide-react';
 import { ImageUploadInput } from '../components/ui/ImageUploadInput';
+import { useAuth } from '../contexts/AuthContext';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
+// ─── Types ───────────────────────────────────────────────────────────────────
+type Role = 'SUPER_ADMIN' | 'ADMIN' | 'GESTOR' | 'EDITOR' | 'OPERADOR' | 'CONSULTA' | 'VIEWER';
 type UserStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED';
 
 interface Permission {
@@ -108,12 +110,21 @@ const MODULES = [...new Set(PERMISSIONS.map(p => p.module))];
 // ─── Default data ─────────────────────────────────────────────────────────────
 const SEED_USERS: AdminUser[] = [
   {
+    id: 'super_admin_universal_id', name: 'Super Administrador', email: 'ribeiro.rikardo@gmail.com',
+    role: 'SUPER_ADMIN', status: 'ACTIVE', department: 'Diretoria Executiva',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&size=80',
+    lastLoginAt: new Date().toISOString(),
+    loginCount: 1, createdAt: '2024-01-01', invitedBy: 'Sistema de Bootstrap',
+    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Super Usuário Universal com autoridade máxima sobre toda a plataforma.',
+    forcePasswordChange: true,
+  },
+  {
     id: '0_admism', name: 'Instituto Ser Melhor', email: 'admism@institutosermelhor.org',
     role: 'ADMIN', status: 'ACTIVE', department: 'Diretoria',
     avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&size=80',
     lastLoginAt: new Date().toISOString(),
     loginCount: 99, createdAt: '2024-01-01', invitedBy: 'Sistema',
-    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Super Administrador Principal.',
+    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Administrador da Instituição.',
   },
   {
     id: '0_gmail', name: 'Administrador ISM Gmail', email: 'instsermelhor.adm@gmail.com',
@@ -121,7 +132,7 @@ const SEED_USERS: AdminUser[] = [
     avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Gmail&background=16a34a&color=fff&size=80',
     lastLoginAt: new Date().toISOString(),
     loginCount: 50, createdAt: '2024-01-01', invitedBy: 'Sistema',
-    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Super Administrador Gmail.',
+    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Administrador Gmail.',
   },
   {
     id: '1', name: 'Rikardo Ribeiro', email: 'admin@institutosermelhor.org',
@@ -186,9 +197,13 @@ const SEED_LOGS: ActivityLog[] = [
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ROLE_CONFIG: Record<Role, { label: string; color: string; bg: string; icon: React.ReactNode; description: string }> = {
+  SUPER_ADMIN: { label: 'Super Admin', color: '#15803d', bg: '#dcfce7', icon: <Crown size={12} />, description: 'Autoridade máxima sobre toda a plataforma. Acesso e controle irrestrito.' },
   ADMIN:  { label: 'Admin',  color: '#b45309', bg: '#fef3c7', icon: <Crown size={12} />,  description: 'Acesso total a todos os módulos e configurações.' },
+  GESTOR: { label: 'Gestor', color: '#0369a1', bg: '#e0f2fe', icon: <UserCheck size={12} />, description: 'Gestão operacional de módulos e equipes atribuídas.' },
   EDITOR: { label: 'Editor', color: '#1d4ed8', bg: '#eff6ff', icon: <Edit3 size={12} />,  description: 'Cria e edita conteúdo. Sem acesso financeiro ou a usuários.' },
-  VIEWER: { label: 'Viewer', color: '#166534', bg: '#f0fdf4', icon: <Eye size={12} />,    description: 'Somente leitura. Ideal para consultores externos.' },
+  OPERADOR: { label: 'Operador', color: '#4338ca', bg: '#e0e7ff', icon: <Activity size={12} />, description: 'Operação de cadastros e triagem de formulários/leads.' },
+  CONSULTA: { label: 'Consulta', color: '#374151', bg: '#f3f4f6', icon: <Search size={12} />, description: 'Acesso somente leitura para auditores e consultores externos.' },
+  VIEWER: { label: 'Viewer', color: '#166534', bg: '#f0fdf4', icon: <Eye size={12} />,    description: 'Somente leitura de conteúdo público e métricas.' },
 };
 
 const STATUS_CONFIG: Record<UserStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -557,6 +572,9 @@ const InviteModal: React.FC<{ onClose: () => void; onSend: (i: Invite) => void }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export const UsersPage: React.FC = () => {
+  const { user: currentUser } = useAuth();
+  const isCurrentUserSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+
   const [users, setUsers] = useState<AdminUser[]>(SEED_USERS);
   const [invites, setInvites] = useState<Invite[]>(SEED_INVITES);
   const [logs] = useState<ActivityLog[]>(SEED_LOGS);
@@ -576,11 +594,37 @@ export const UsersPage: React.FC = () => {
   ), [users, search, roleFilter, statusFilter]);
 
   const saveUser = (u: AdminUser) => {
+    if (u.role === 'SUPER_ADMIN' && !isCurrentUserSuperAdmin) {
+      alert('Acesso negado: Usuários delegados não têm permissão para criar ou atribuir a função SUPER_ADMIN.');
+      return;
+    }
+    const existing = users.find(x => x.id === u.id);
+    if (existing && existing.role === 'SUPER_ADMIN' && !isCurrentUserSuperAdmin) {
+      alert('Acesso negado: Administradores comuns não podem alterar a conta do Super Administrador.');
+      return;
+    }
     setUsers(prev => prev.some(x => x.id === u.id) ? prev.map(x => x.id === u.id ? u : x) : [...prev, u]);
     setEditUser(null); setShowNewUser(false);
   };
-  const deleteUser = (id: string) => { if (!confirm('Excluir permanentemente este usuário?')) return; setUsers(prev => prev.filter(u => u.id !== id)); };
-  const toggleStatus = (id: string) => setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' } : u));
+  
+  const deleteUser = (id: string) => {
+    const target = users.find(u => u.id === id);
+    if (target && target.role === 'SUPER_ADMIN') {
+      alert('Operação Bloqueada: O Super Administrador não pode ser excluído por nenhum usuário delegado.');
+      return;
+    }
+    if (!confirm('Excluir permanentemente este usuário?')) return;
+    setUsers(prev => prev.filter(u => u.id !== id));
+  };
+  
+  const toggleStatus = (id: string) => {
+    const target = users.find(u => u.id === id);
+    if (target && target.role === 'SUPER_ADMIN') {
+      alert('Operação Bloqueada: O Super Administrador não pode ser desativado ou suspenso.');
+      return;
+    }
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' } : u));
+  };
   const resendInvite = (id: string) => setInvites(prev => prev.map(i => i.id === id ? { ...i, sentAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 72).toISOString(), status: 'PENDING' } : i));
   const cancelInvite = (id: string) => { if (!confirm('Cancelar este convite?')) return; setInvites(prev => prev.filter(i => i.id !== id)); };
 
