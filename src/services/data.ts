@@ -607,9 +607,82 @@ Por meio de ações integradas, humanizadas e baseadas em evidências, o Institu
       createdAt: serverTimestamp(),
     });
 
+    // Sincroniza também no CRM de Leads (/leads)
+    try {
+      await addDoc(collection(db, 'enterprise_leads'), {
+        name: data.contactName,
+        email: data.email,
+        phone: data.phone || '',
+        companyName: data.companyName,
+        role: data.contactTitle || '',
+        category: data.type === 'Corporativo' ? 'Patrocinador' : 'Parceiro',
+        sourceChannel: 'Site',
+        interestArea: data.areaOfInterest || 'Parceria Institucional',
+        stage: 'NOVO',
+        leadScore: 85,
+        temperature: 'HOT',
+        lgpdConsent: true,
+        lgpdConsentDate: new Date().toISOString(),
+        aiSummary: `Proposta de parceria enviada por ${data.companyName} (${data.type}). ${data.intendedContribution ? `Contribuição: "${data.intendedContribution}"` : ''}`,
+        nextBestAction: 'Agendar reunião de alinhamento com a diretoria de parcerias.',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn('[Firestore] Falha ao sincronizar lead no CRM:', e);
+    }
+
     if (import.meta.env.DEV) {
       console.log('[Firestore] Partner application saved:', docRef.id);
     }
+    return { success: true, id: docRef.id };
+  },
+
+  /** Submissão de Lead via Formulário de Contato do Site */
+  submitLead: async (data: {
+    name: string;
+    email: string;
+    phone?: string;
+    companyName?: string;
+    role?: string;
+    category?: string;
+    sourceChannel?: string;
+    subject?: string;
+    message?: string;
+    interestArea?: string;
+  }): Promise<{ success: boolean; id: string }> => {
+    if (!FIREBASE_ENABLED) {
+      if (import.meta.env.DEV) {
+        console.log('[DEV] Lead registrado (mock):', data);
+      }
+      return new Promise(resolve => setTimeout(() => resolve({ success: true, id: `LEAD-MOCK-${Date.now()}` }), 1000));
+    }
+
+    const payload = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone || '',
+      companyName: data.companyName || '',
+      role: data.role || '',
+      category: data.category || 'PessoaFisica',
+      sourceChannel: data.sourceChannel || 'Site',
+      interestArea: data.interestArea || data.subject || 'Contato Geral',
+      subject: data.subject || '',
+      message: data.message || '',
+      stage: 'NOVO',
+      leadScore: 80,
+      temperature: 'HOT',
+      lgpdConsent: true,
+      lgpdConsentDate: new Date().toISOString(),
+      aiSummary: `Lead recebido do formulário de contato do site em ${new Date().toLocaleDateString('pt-BR')}. ${data.message ? `Mensagem: "${data.message}"` : ''}`,
+      nextBestAction: 'Entrar em contato via e-mail ou WhatsApp para acolhimento e qualificação.',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    const docRef = await addDoc(collection(db, 'enterprise_leads'), payload);
+    await addDoc(collection(db, 'leads'), { ...payload, leadId: docRef.id });
+
     return { success: true, id: docRef.id };
   },
 
