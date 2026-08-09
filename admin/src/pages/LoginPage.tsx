@@ -306,9 +306,149 @@ const ForgotPasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
   );
 };
 
+// ── Modal de Alteração Obrigatória de Senha no Primeiro Acesso ──────
+const MandatoryPasswordChangeModal: React.FC<{
+  onComplete: () => void;
+}> = ({ onComplete }) => {
+  const { changePassword } = useAuth();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setError('A nova senha e a confirmação de senha não coincidem.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setError('A nova senha deve possuir no mínimo 8 caracteres.');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setError('A nova senha deve ser diferente da senha atual/provisória.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await changePassword(currentPassword, newPassword);
+      onComplete();
+    } catch (err: any) {
+      setError(err.message || 'Falha ao alterar senha.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 10000,
+      background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(8px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24
+    }}>
+      <div style={{
+        background: 'white', borderRadius: 20, width: '100%', maxWidth: 460,
+        padding: '36px 32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+        animation: 'slideUp 0.25s cubic-bezier(.16,1,.3,1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: 14,
+            background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#b45309'
+          }}>
+            <Lock size={24} />
+          </div>
+          <div>
+            <h3 style={{ fontSize: 18, fontWeight: 900, color: '#111827', margin: 0 }}>
+              Alteração obrigatória de senha
+            </h3>
+            <p style={{ fontSize: 13, color: '#6b7280', margin: '2px 0 0' }}>
+              Primeiro acesso detectado
+            </p>
+          </div>
+        </div>
+
+        <div style={{
+          padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a',
+          borderRadius: 12, marginBottom: 20, color: '#b45309', fontSize: 13, lineHeight: 1.5
+        }}>
+          Por motivos de segurança, é necessário criar uma nova senha antes de continuar.
+        </div>
+
+        {error && (
+          <div style={{
+            padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca',
+            borderRadius: 10, marginBottom: 20, color: '#b91c1c', fontSize: 13
+          }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 14 }}>
+            <label className="input-label" style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Senha atual</label>
+            <input
+              type="password"
+              className="input"
+              value={currentPassword}
+              onChange={e => setCurrentPassword(e.target.value)}
+              placeholder="Sua senha atual ou provisória"
+              required
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label className="input-label" style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Nova senha</label>
+            <input
+              type="password"
+              className="input"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="No mínimo 8 caracteres com letras e números"
+              required
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label className="input-label" style={{ fontSize: 11, fontWeight: 700, color: '#374151', textTransform: 'uppercase', marginBottom: 4, display: 'block' }}>Confirmação da nova senha</label>
+            <input
+              type="password"
+              className="input"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Digite novamente a nova senha"
+              required
+              style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%', padding: '13px', borderRadius: 12, border: 'none',
+              background: loading ? '#93c5fd' : 'linear-gradient(135deg, #16a34a, #22c55e)',
+              color: 'white', fontWeight: 800, fontSize: 14, cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {loading ? 'Salvando...' : 'Salvar Nova Senha & Acessar'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ── Página de Login ──────────────────────────────────────────────
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, mustChangePassword } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -318,6 +458,7 @@ export const LoginPage: React.FC = () => {
   const [attempts, setAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [showForgot, setShowForgot] = useState(false);
+  const [showForceChange, setShowForceChange] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -332,9 +473,13 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      await login(email, password);
+      const u = await login(email, password);
       setAttempts(0);
-      navigate('/');
+      if (u.forcePasswordChange) {
+        setShowForceChange(true);
+      } else {
+        navigate('/');
+      }
     } catch (err: any) {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -442,7 +587,7 @@ export const LoginPage: React.FC = () => {
                 className="input"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="seu@email.com"
+                placeholder="Seu e-mail"
                 required
               />
             </div>
@@ -455,7 +600,7 @@ export const LoginPage: React.FC = () => {
                   className="input"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Sua senha"
                   required
                   style={{ paddingRight: 44 }}
                 />
@@ -533,6 +678,11 @@ export const LoginPage: React.FC = () => {
 
       {/* Modal Recuperação de Senha */}
       {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} />}
+
+      {/* Modal Alteração Obrigatória de Senha no Primeiro Acesso */}
+      {(showForceChange || mustChangePassword) && (
+        <MandatoryPasswordChangeModal onComplete={() => { setShowForceChange(false); navigate('/'); }} />
+      )}
     </>
   );
 };
