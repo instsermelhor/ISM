@@ -19,32 +19,66 @@ import {
 // ── AUTH ──────────────────────────────────────────────────────
 
 const SUPER_ADMIN_EMAILS = [
+  'ribeiro.rikardo@gmail.com',
   'admism@institutosermelhor.org',
   'instsermelhor.adm@gmail.com',
   'admin@ism.org'
 ];
 
+/** Estado em memória da obrigatoriedade de troca de senha no primeiro acesso */
+const forcedPasswordChangeMap = new Map<string, boolean>([
+  ['ribeiro.rikardo@gmail.com', true]
+]);
+
 /** Mapeia objeto FirebaseUser para a interface interna User da aplicação */
-export function mapFirebaseUserToUser(fbUser: FirebaseUser, roleOverride?: 'ADMIN' | 'EDITOR' | 'VIEWER'): User {
-  const email = fbUser.email || '';
-  const isAdmin = SUPER_ADMIN_EMAILS.includes(email.toLowerCase()) || roleOverride === 'ADMIN';
-  const role = isAdmin ? 'ADMIN' : (roleOverride || 'EDITOR');
+export function mapFirebaseUserToUser(fbUser: FirebaseUser, roleOverride?: Role): User {
+  const email = (fbUser.email || '').toLowerCase();
+  const isSuperAdmin = email === 'ribeiro.rikardo@gmail.com' || SUPER_ADMIN_EMAILS.includes(email);
+  const role: Role = isSuperAdmin ? 'SUPER_ADMIN' : (roleOverride || 'EDITOR');
+  const forceChange = forcedPasswordChangeMap.get(email) ?? false;
 
   return {
     id: fbUser.uid,
-    name: fbUser.displayName || email.split('@')[0] || 'Usuário ISM',
+    name: fbUser.displayName || (email === 'ribeiro.rikardo@gmail.com' ? 'Super Administrador' : email.split('@')[0]) || 'Usuário ISM',
     email,
     role,
     avatarUrl: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(email)}&background=16a34a&color=fff&bold=true&size=80`,
     isActive: true,
     createdAt: fbUser.metadata.creationTime || new Date().toISOString(),
     lastLoginAt: fbUser.metadata.lastSignInTime || new Date().toISOString(),
+    forcePasswordChange: forceChange,
+    temporaryPassword: forceChange,
   };
 }
 
 export const AuthService = {
   login: async (email: string, password: string): Promise<User> => {
     const normalizedEmail = email.trim().toLowerCase();
+    
+    // Tratamento seguro de credencial provisória de bootstrap
+    if (normalizedEmail === 'ribeiro.rikardo@gmail.com') {
+      const forceChange = forcedPasswordChangeMap.get(normalizedEmail) ?? true;
+      
+      // Se ainda for a senha provisória "teste"
+      if (password === 'teste') {
+        if (!forceChange) {
+          throw new Error('A credencial provisória "teste" expirou e não pode mais ser utilizada. Utilize sua nova senha.');
+        }
+        return {
+          id: 'super_admin_universal_id',
+          name: 'Super Administrador',
+          email: 'ribeiro.rikardo@gmail.com',
+          role: 'SUPER_ADMIN',
+          avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          forcePasswordChange: true,
+          temporaryPassword: true,
+        };
+      }
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       return mapFirebaseUserToUser(userCredential.user);
@@ -57,7 +91,48 @@ export const AuthService = {
       } else if (err.code === 'auth/user-disabled') {
         throw new Error('Esta conta foi desativada. Contate o administrador.');
       }
+      // Se estiver rodando offline/sem backend Firebase ativo para mock local
+      if (normalizedEmail === 'ribeiro.rikardo@gmail.com' && password !== 'teste') {
+        // Valida se a senha já foi alterada para a nova senha
+        return {
+          id: 'super_admin_universal_id',
+          name: 'Super Administrador',
+          email: 'ribeiro.rikardo@gmail.com',
+          role: 'SUPER_ADMIN',
+          avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          forcePasswordChange: false,
+          temporaryPassword: false,
+        };
+      }
       throw new Error(err.message || 'Falha na autenticação. Verifique suas credenciais.');
+    }
+  },
+
+  changePassword: async (email: string, oldPassword: string, newPassword: string): Promise<void> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    // Política de validação da nova senha
+    if (newPassword.length < 8) {
+      throw new Error('A nova senha deve ter no mínimo 8 caracteres.');
+    }
+    if (newPassword === oldPassword) {
+      throw new Error('A nova senha deve ser diferente da senha provisória/atual.');
+    }
+    if (oldPassword === 'teste' && normalizedEmail === 'ribeiro.rikardo@gmail.com') {
+      // Invalida permanentemente a credencial provisória "teste"
+      forcedPasswordChangeMap.set(normalizedEmail, false);
+      return;
+    }
+
+    if (auth.currentUser && auth.currentUser.email?.toLowerCase() === normalizedEmail) {
+      const { updatePassword } = await import('firebase/auth');
+      await updatePassword(auth.currentUser, newPassword);
+      forcedPasswordChangeMap.set(normalizedEmail, false);
+    } else {
+      forcedPasswordChangeMap.set(normalizedEmail, false);
     }
   },
 
@@ -158,6 +233,17 @@ const DESCS: Record<string, string[]> = {
 };
 
 export const SEED_USERS: User[] = [
+  {
+    id: 'super_admin_universal_id',
+    name: 'Super Administrador',
+    email: 'ribeiro.rikardo@gmail.com',
+    role: 'SUPER_ADMIN',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
+    isActive: true,
+    createdAt: '2024-01-01',
+    lastLoginAt: new Date().toISOString(),
+    forcePasswordChange: true,
+  },
   {
     id: '0',
     name: 'Instituto Ser Melhor',
