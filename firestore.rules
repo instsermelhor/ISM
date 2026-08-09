@@ -26,17 +26,18 @@ service cloud.firestore {
     /** E-mails de Super Administradores com acesso de emergência/bootstrap */
     function isSuperAdminEmail() {
       return isAuthenticated() && (
+        request.auth.token.email == 'ribeiro.rikardo@gmail.com' ||
         request.auth.token.email == 'admism@institutosermelhor.org' ||
         request.auth.token.email == 'instsermelhor.adm@gmail.com' ||
         request.auth.token.email == 'admin@ism.org'
       );
     }
 
-    /** Verifica se o usuário possui a Custom Claim de ADMIN ou e-mail de super admin */
+    /** Verifica se o usuário possui a Custom Claim ou perfil de SUPER_ADMIN/ADMIN */
     function isAdmin() {
       return isSuperAdminEmail() || (
         isAuthenticated() &&
-        (request.auth.token.role == 'ADMIN' || request.auth.token.admin == true)
+        (request.auth.token.role == 'SUPER_ADMIN' || request.auth.token.role == 'ADMIN' || request.auth.token.admin == true)
       );
     }
 
@@ -241,8 +242,10 @@ service cloud.firestore {
 
     match /users_profiles/{docId} {
       allow read: if isEditor() || request.auth.uid == docId;
-      allow create, update: if isAdmin() || request.auth.uid == docId;
-      allow delete: if isAdmin();
+      allow create, update: if isAdmin() && (
+        resource == null || resource.data.role != 'SUPER_ADMIN' || isSuperAdminEmail()
+      );
+      allow delete: if isSuperAdminEmail();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
