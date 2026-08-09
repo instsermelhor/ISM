@@ -1,6 +1,6 @@
 // Tipos centrais do Admin Panel
 
-export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'GESTOR' | 'EDITOR' | 'OPERADOR' | 'CONSULTA' | 'VIEWER';
 export type PostStatus = 'DRAFT' | 'REVIEW' | 'SCHEDULED' | 'PUBLISHED' | 'ARCHIVED';
 export type LeadStatus = 'NEW' | 'READ' | 'REPLIED' | 'ARCHIVED';
 export type PipelineStage = 'IDEA' | 'WRITING' | 'REVIEW' | 'APPROVED' | 'PUBLISHED';
@@ -136,6 +136,8 @@ export interface User {
   isActive: boolean;
   lastLoginAt?: string;
   createdAt: string;
+  forcePasswordChange?: boolean;
+  temporaryPassword?: boolean;
 }
 
 export interface KpiCard {
