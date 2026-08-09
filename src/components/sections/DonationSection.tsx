@@ -5,7 +5,8 @@ import { motion, useInView } from 'framer-motion';
 
 /** Chave Pix oficial do Instituto Ser Melhor (CNPJ) */
 const ISM_PIX_CNPJ = '09.040.440/0001-47';
-const ISM_PIX_BANK = 'Banco do Brasil';
+const ISM_PIX_BANK = 'Cora SCFI';
+const ISM_PIX_NAME = 'ORGANIZAÇÃO ASSOCIATIVA CIVIL PARA PROMOÇÃO E DESENVOLVIMENTO DA ASSISTÊNCIA EDUCACIONAL, CULTURAL, AMBIENTAL E SOCIAL';
 
 interface DonationSectionProps {
   donationData?: {
@@ -126,7 +127,8 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
             <div className="relative z-10 mt-6 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm text-white">
               <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Pix Direto ⚡</p>
               <p className="text-xs font-bold font-mono select-all break-all">{pixKey}</p>
-              {bankName && <p className="text-[10px] text-secondary-500 mt-1">{bankName}</p>}
+              <p className="text-[10px] text-secondary-300 mt-1 font-medium leading-tight">{ISM_PIX_NAME}</p>
+              {bankName && <p className="text-[10px] text-brand-300 font-bold mt-0.5">{bankName}</p>}
             </div>
             {donationData?.raisedAmount && (
               /* Bloco de progresso — só renderiza quando os dados vierem do CMS */
