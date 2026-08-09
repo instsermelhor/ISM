@@ -7,9 +7,11 @@ import { onAuthStateChanged } from 'firebase/auth';
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  mustChangePassword: boolean;
+  login: (email: string, password: string) => Promise<User>;
+  changePassword: (oldPass: string, newPass: string) => Promise<void>;
   logout: () => Promise<void>;
-  can: (action: 'write' | 'admin' | 'analytics') => boolean;
+  can: (action: 'write' | 'admin' | 'analytics' | 'super_admin') => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue>({} as AuthContextValue);
@@ -32,9 +34,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const u = await AuthService.login(email, password);
     setUser(u);
+    return u;
+  };
+
+  const changePassword = async (oldPass: string, newPass: string): Promise<void> => {
+    if (!user) throw new Error('Nenhum usuário autenticado.');
+    await AuthService.changePassword(user.email, oldPass, newPass);
+    setUser(prev => prev ? { ...prev, forcePasswordChange: false, temporaryPassword: false } : null);
   };
 
   const logout = async () => {
@@ -42,17 +51,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  // RBAC permission helper baseada em papéis
-  const can = (action: 'write' | 'admin' | 'analytics'): boolean => {
+  const mustChangePassword = !!user?.forcePasswordChange;
+
+  // RBAC permission helper baseada em papéis formais
+  const can = (action: 'write' | 'admin' | 'analytics' | 'super_admin'): boolean => {
     if (!user) return false;
+    if (user.role === 'SUPER_ADMIN') return true;
+    if (action === 'super_admin') return false;
     if (user.role === 'ADMIN') return true;
-    if (action === 'write') return user.role === 'EDITOR';
-    if (action === 'analytics') return ['EDITOR', 'ADMIN'].includes(user.role);
+    if (action === 'write') return ['EDITOR', 'GESTOR'].includes(user.role);
+    if (action === 'analytics') return ['EDITOR', 'ADMIN', 'GESTOR'].includes(user.role);
     return false;
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, can }}>
+    <AuthContext.Provider value={{ user, loading, mustChangePassword, login, changePassword, logout, can }}>
       {children}
     </AuthContext.Provider>
   );
