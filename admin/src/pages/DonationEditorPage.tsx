@@ -64,8 +64,8 @@ export const DonationEditorPage: React.FC = () => {
           title: mainCamp.title,
           subtitle: mainCamp.description,
           pixKey: '09.040.440/0001-47',
-          bankName: 'Banco do Brasil',
-          pixName: 'Instituto Ser Melhor',
+          bankName: 'Cora SCFI',
+          pixName: 'ORGANIZAÇÃO ASSOCIATIVA CIVIL PARA PROMOÇÃO E DESENVOLVIMENTO DA ASSISTÊNCIA EDUCACIONAL, CULTURAL, AMBIENTAL E SOCIAL',
           benefits: mainCamp.benefits || [
             'Financiamento de bolsas para jovens líderes climáticos.',
             'Proteção de biomas através de tecnologia de monitoramento via satélite.',
@@ -213,7 +213,9 @@ export const DonationEditorPage: React.FC = () => {
                 <code style={{ fontSize: 18, fontWeight: 900, color: '#111827', fontFamily: 'monospace', letterSpacing: '0.04em' }}>09.040.440/0001-47</code>
                 <span style={{ fontSize: 11, background: '#dcfce7', color: '#16a34a', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>CNPJ</span>
               </div>
-              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Instituto Ser Melhor · Banco do Brasil</div>
+              <div style={{ fontSize: 12, color: '#4b5563', marginTop: 4, fontWeight: 600 }}>
+                ORGANIZAÇÃO ASSOCIATIVA CIVIL PARA PROMOÇÃO E DESENVOLVIMENTO DA ASSISTÊNCIA EDUCACIONAL, CULTURAL, AMBIENTAL E SOCIAL · <strong>Banco Cora SCFI</strong>
+              </div>
             </div>
           </div>
 
