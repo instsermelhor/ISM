@@ -1,7 +1,7 @@
 // Mock data service — simulates API (replace with real API calls)
 import type {
   User, Post, Service, ContactLead, LeadStatus, PipelineCard,
-  AuditLog, HealthCheck, SiteSetting, AnalyticsSummary, TimeSeriesPoint
+  AuditLog, HealthCheck, SiteSetting, AnalyticsSummary, TimeSeriesPoint, Role
 } from '../types';
 
 
@@ -241,27 +241,6 @@ export const SEED_USERS: User[] = [
     lastLoginAt: new Date().toISOString(),
     forcePasswordChange: true,
   },
-  {
-    id: '0',
-    name: 'Instituto Ser Melhor',
-    email: 'admism@institutosermelhor.org',
-    role: 'ADMIN',
-    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&bold=true&size=80',
-    isActive: true,
-    createdAt: '2024-01-01',
-    lastLoginAt: new Date().toISOString(),
-  },
-  {
-    id: '0_gmail',
-    name: 'Administrador ISM Gmail',
-    email: 'instsermelhor.adm@gmail.com',
-    role: 'ADMIN',
-    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Gmail&background=16a34a&color=fff&bold=true&size=80',
-    isActive: true,
-    createdAt: '2024-01-01',
-    lastLoginAt: new Date().toISOString(),
-  },
-  { id: '1', name: 'Rikardo Ribeiro', email: 'admin@ism.org', role: 'ADMIN', avatarUrl: 'https://api.dicebear.com/8.x/initials/svg?seed=RR&backgroundColor=16a34a&textColor=ffffff', isActive: true, createdAt: '2024-01-01' },
 ];
 
 const mockAuditLogs: AuditLog[] = Array.from({ length: 40 }, (_, i) => {

@@ -71,7 +71,7 @@ describe('Suíte Obrigatória de Testes de Segurança e Autenticação (SIL-ISM 
   });
 
   it('Teste 09: Tentativa de alterar privilégio ou manipular regras no backend é bloqueada', () => {
-    const callerRole = 'ADMIN';
+    const callerRole: string = 'ADMIN';
     const isAllowed = callerRole === 'SUPER_ADMIN';
     expect(isAllowed).toBe(false);
   });
