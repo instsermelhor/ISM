@@ -1,0 +1,11 @@
+# robots.txt — Instituto Ser Melhor
+# Permite a indexação completa do site institucional pelos buscadores oficiais
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+
+# Localização Oficial do Sitemap XML para o Google Search Console
+Sitemap: https://institutosermelhor.org/sitemap.xml
