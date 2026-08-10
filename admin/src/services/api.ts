@@ -19,27 +19,24 @@ import {
 // ── AUTH ──────────────────────────────────────────────────────
 
 const SUPER_ADMIN_EMAILS = [
-  'ribeiro.rikardo@gmail.com',
-  'admism@institutosermelhor.org',
-  'instsermelhor.adm@gmail.com',
-  'admin@ism.org'
+  'instsermelhor.adm@gmail.com'
 ];
 
 /** Estado em memória da obrigatoriedade de troca de senha no primeiro acesso */
 const forcedPasswordChangeMap = new Map<string, boolean>([
-  ['ribeiro.rikardo@gmail.com', true]
+  ['instsermelhor.adm@gmail.com', true]
 ]);
 
 /** Mapeia objeto FirebaseUser para a interface interna User da aplicação */
 export function mapFirebaseUserToUser(fbUser: FirebaseUser, roleOverride?: Role): User {
   const email = (fbUser.email || '').toLowerCase();
-  const isSuperAdmin = email === 'ribeiro.rikardo@gmail.com' || SUPER_ADMIN_EMAILS.includes(email);
+  const isSuperAdmin = email === 'instsermelhor.adm@gmail.com' || SUPER_ADMIN_EMAILS.includes(email);
   const role: Role = isSuperAdmin ? 'SUPER_ADMIN' : (roleOverride || 'EDITOR');
   const forceChange = forcedPasswordChangeMap.get(email) ?? false;
 
   return {
     id: fbUser.uid,
-    name: fbUser.displayName || (email === 'ribeiro.rikardo@gmail.com' ? 'Super Administrador' : email.split('@')[0]) || 'Usuário ISM',
+    name: fbUser.displayName || (email === 'instsermelhor.adm@gmail.com' ? 'Super Administrador' : email.split('@')[0]) || 'Usuário ISM',
     email,
     role,
     avatarUrl: fbUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(email)}&background=16a34a&color=fff&bold=true&size=80`,
@@ -56,7 +53,7 @@ export const AuthService = {
     const normalizedEmail = email.trim().toLowerCase();
     
     // Tratamento seguro de credencial provisória de bootstrap
-    if (normalizedEmail === 'ribeiro.rikardo@gmail.com') {
+    if (normalizedEmail === 'instsermelhor.adm@gmail.com') {
       const forceChange = forcedPasswordChangeMap.get(normalizedEmail) ?? true;
       
       // Se ainda for a senha provisória "teste"
@@ -67,7 +64,7 @@ export const AuthService = {
         return {
           id: 'super_admin_universal_id',
           name: 'Super Administrador',
-          email: 'ribeiro.rikardo@gmail.com',
+          email: 'instsermelhor.adm@gmail.com',
           role: 'SUPER_ADMIN',
           avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
           isActive: true,
@@ -92,12 +89,12 @@ export const AuthService = {
         throw new Error('Esta conta foi desativada. Contate o administrador.');
       }
       // Se estiver rodando offline/sem backend Firebase ativo para mock local
-      if (normalizedEmail === 'ribeiro.rikardo@gmail.com' && password !== 'teste') {
+      if (normalizedEmail === 'instsermelhor.adm@gmail.com' && password !== 'teste') {
         // Valida se a senha já foi alterada para a nova senha
         return {
           id: 'super_admin_universal_id',
           name: 'Super Administrador',
-          email: 'ribeiro.rikardo@gmail.com',
+          email: 'instsermelhor.adm@gmail.com',
           role: 'SUPER_ADMIN',
           avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
           isActive: true,
@@ -121,7 +118,7 @@ export const AuthService = {
     if (newPassword === oldPassword) {
       throw new Error('A nova senha deve ser diferente da senha provisória/atual.');
     }
-    if (oldPassword === 'teste' && normalizedEmail === 'ribeiro.rikardo@gmail.com') {
+    if (oldPassword === 'teste' && normalizedEmail === 'instsermelhor.adm@gmail.com') {
       // Invalida permanentemente a credencial provisória "teste"
       forcedPasswordChangeMap.set(normalizedEmail, false);
       return;
@@ -236,7 +233,7 @@ export const SEED_USERS: User[] = [
   {
     id: 'super_admin_universal_id',
     name: 'Super Administrador',
-    email: 'ribeiro.rikardo@gmail.com',
+    email: 'instsermelhor.adm@gmail.com',
     role: 'SUPER_ADMIN',
     avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
     isActive: true,
