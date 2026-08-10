@@ -3,7 +3,7 @@ import { AuthService } from '../../admin/src/services/api';
 import { SuperAdminAuditService } from '../../admin/src/services/superAdminAuditService';
 
 describe('Suíte Obrigatória de Testes de Segurança e Autenticação (SIL-ISM 1.0)', () => {
-  const superAdminEmail = 'ribeiro.rikardo@gmail.com';
+  const superAdminEmail = 'instsermelhor.adm@gmail.com';
   const provisionalPassword = 'teste';
   const newStrongPassword = 'NovaSenhaSegura#2026';
 
