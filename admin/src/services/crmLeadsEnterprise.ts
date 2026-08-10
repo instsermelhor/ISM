@@ -173,7 +173,7 @@ export const CrmLeadsEnterpriseService = {
         lgpdConsentDate: '2024-03-10T10:00:00Z',
         aiSummary: 'Empresa de médio porte buscando investimento social focado em capacitação jovem.',
         nextBestAction: 'Agendar videoconferência com o coordenador do Programa Educação Regenerativa.',
-        assignedTo: 'admism@institutosermelhor.org',
+        assignedTo: 'instsermelhor.adm@gmail.com',
       },
       {
         name: 'Rodrigo Mendes',
