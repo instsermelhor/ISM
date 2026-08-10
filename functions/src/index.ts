@@ -193,14 +193,11 @@ function requireRole(...allowedRoles: string[]) {
     }
 
     const SUPER_ADMIN_EMAILS = [
-      'ribeiro.rikardo@gmail.com',
-      'admism@institutosermelhor.org',
-      'instsermelhor.adm@gmail.com',
-      'admin@ism.org'
+      'instsermelhor.adm@gmail.com'
     ];
 
     const userEmail = (user.email || '').toLowerCase();
-    const isSuperAdmin = userEmail === 'ribeiro.rikardo@gmail.com' || SUPER_ADMIN_EMAILS.includes(userEmail);
+    const isSuperAdmin = userEmail === 'instsermelhor.adm@gmail.com' || SUPER_ADMIN_EMAILS.includes(userEmail);
     const role = isSuperAdmin ? 'SUPER_ADMIN' : (user.role || user.customClaims?.role || 'EDITOR');
 
     if (role === 'SUPER_ADMIN') {
@@ -285,8 +282,8 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
     const targetEmail = (targetUserRecord?.email || '').toLowerCase();
 
     // Trava de Segurança: Impedir exclusão de SUPER_ADMIN por administradores normais
-    if (targetEmail === 'ribeiro.rikardo@gmail.com' || targetUserRecord?.customClaims?.role === 'SUPER_ADMIN') {
-      if (callerEmail !== 'ribeiro.rikardo@gmail.com') {
+    if (targetEmail === 'instsermelhor.adm@gmail.com' || targetUserRecord?.customClaims?.role === 'SUPER_ADMIN') {
+      if (callerEmail !== 'instsermelhor.adm@gmail.com') {
         sendProblemDetails(res, 403, 'Forbidden', 'Operação bloqueada pelo backend. O Super Administrador não pode ser excluído por usuários delegados.', 'SUPER_ADMIN_PROTECTED');
         return;
       }
