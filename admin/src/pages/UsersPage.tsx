@@ -110,7 +110,7 @@ const MODULES = [...new Set(PERMISSIONS.map(p => p.module))];
 // ─── Default data ─────────────────────────────────────────────────────────────
 const SEED_USERS: AdminUser[] = [
   {
-    id: 'super_admin_universal_id', name: 'Super Administrador', email: 'ribeiro.rikardo@gmail.com',
+    id: 'super_admin_universal_id', name: 'Super Administrador', email: 'instsermelhor.adm@gmail.com',
     role: 'SUPER_ADMIN', status: 'ACTIVE', department: 'Diretoria Executiva',
     avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&size=80',
     lastLoginAt: new Date().toISOString(),
@@ -119,28 +119,12 @@ const SEED_USERS: AdminUser[] = [
     forcePasswordChange: true,
   },
   {
-    id: '0_admism', name: 'Instituto Ser Melhor', email: 'admism@institutosermelhor.org',
-    role: 'ADMIN', status: 'ACTIVE', department: 'Diretoria',
-    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Admin&background=16a34a&color=fff&size=80',
-    lastLoginAt: new Date().toISOString(),
-    loginCount: 99, createdAt: '2024-01-01', invitedBy: 'Sistema',
-    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Administrador da Instituição.',
-  },
-  {
-    id: '0_gmail', name: 'Administrador ISM Gmail', email: 'instsermelhor.adm@gmail.com',
-    role: 'ADMIN', status: 'ACTIVE', department: 'Diretoria',
-    avatarUrl: 'https://ui-avatars.com/api/?name=ISM+Gmail&background=16a34a&color=fff&size=80',
-    lastLoginAt: new Date().toISOString(),
-    loginCount: 50, createdAt: '2024-01-01', invitedBy: 'Sistema',
-    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Administrador Gmail.',
-  },
-  {
     id: '1', name: 'Rikardo Ribeiro', email: 'admin@institutosermelhor.org',
     role: 'ADMIN', status: 'ACTIVE', department: 'Diretoria',
     avatarUrl: 'https://ui-avatars.com/api/?name=Rikardo+Ribeiro&background=16a34a&color=fff&size=80',
     lastLoginAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
     loginCount: 342, createdAt: '2024-01-01', invitedBy: 'Sistema',
-    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Fundador e Administrador Principal.',
+    twoFactorEnabled: true, customPermissions: [], restrictedPermissions: [], notes: 'Fundador e Administrador Delegado.',
     instagramLink: 'https://instagram.com/institutosermelhor',
     linkedinLink: 'https://linkedin.com/company/institutosermelhor',
     facebookLink: 'https://facebook.com/institutosermelhor',
