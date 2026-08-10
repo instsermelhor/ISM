@@ -26,10 +26,7 @@ service cloud.firestore {
     /** E-mails de Super Administradores com acesso de emergência/bootstrap */
     function isSuperAdminEmail() {
       return isAuthenticated() && (
-        request.auth.token.email == 'ribeiro.rikardo@gmail.com' ||
-        request.auth.token.email == 'admism@institutosermelhor.org' ||
-        request.auth.token.email == 'instsermelhor.adm@gmail.com' ||
-        request.auth.token.email == 'admin@ism.org'
+        request.auth.token.email == 'instsermelhor.adm@gmail.com'
       );
     }
 
