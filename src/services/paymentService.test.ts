@@ -26,7 +26,7 @@ describe('E001 — Engine de Captação Avançada & PIX EMV Bacen', () => {
       expect(payload).toContain('5303986'); // BRL
       expect(payload).toContain('5406150.00'); // Amount 150.00
       expect(payload).toContain('BR'); // Country
-      expect(payload).toContain('INSTITUTO SER MELHOR'); // Merchant
+      expect(payload).toContain(PixGeneratorService.RECEBEDOR_NOME); // Merchant (ORGANIZACAO ASSOC CIVIL)
       expect(payload).toContain('SAO PAULO'); // City
       expect(payload.slice(-4)).toMatch(/^[0-9A-F]{4}$/); // CRC16 at the end
     });
