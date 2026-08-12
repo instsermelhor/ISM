@@ -791,7 +791,36 @@ router.get('/admin/system/errors', authenticateToken, requireRole('SUPER_ADMIN',
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ENDPOINTS DE PAGAMENTO MULTI-GATEWAY — Stripe, ASAAS, Efí, Cora, Nubank, BB
+// TELEMETRIA DE CORE WEB VITALS — Fase 12 / PERF-003
+// ─────────────────────────────────────────────────────────────────────────────
+
+const WebVitalSchema = z.object({
+  name:      z.enum(['LCP', 'INP', 'CLS', 'FCP', 'TTFB']),
+  value:     z.number().nonnegative(),
+  rating:    z.enum(['good', 'needs-improvement', 'poor']),
+  delta:     z.number(),
+  id:        z.string().max(128),
+  url:       z.string().max(512),
+  timestamp: z.number().positive(),
+});
+
+/** POST /api/v2/telemetry/web-vitals — Recebe métricas CWV do frontend (sendBeacon) */
+router.post('/telemetry/web-vitals', rateLimiterMiddleware(60, 60000), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validated = WebVitalSchema.parse(req.body);
+    // Persiste assincronamente — não bloqueia a resposta
+    db.collection('cwv_metrics').add({
+      ...validated,
+      receivedAt: new Date().toISOString(),
+    }).catch((err: Error) => {
+      logStructured('WARNING', '[WebVitals] Falha ao persistir métrica CWV', { error: err.message });
+    });
+    res.status(202).json({ success: true });
+  } catch {
+    res.status(400).json({ success: false, error: 'Payload de métrica inválido.' });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -981,6 +1010,87 @@ router.post('/payments/checkout', rateLimiterMiddleware(10, 60000), async (req: 
     console.error('[Payments Checkout] Erro ao criar checkout:', err);
     sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao inicializar o checkout', 'CHECKOUT_ERROR');
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEO: SITEMAP.XML E ROBOTS.TXT DINÂMICOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SITE_URL = 'https://institutosermelhor.org';
+
+const STATIC_ROUTES = [
+  { path: '/', priority: '1.0', changefreq: 'weekly' },
+  { path: '/#sobre', priority: '0.8', changefreq: 'monthly' },
+  { path: '/#projetos', priority: '0.8', changefreq: 'weekly' },
+  { path: '/#impacto', priority: '0.8', changefreq: 'monthly' },
+  { path: '/#governança', priority: '0.7', changefreq: 'monthly' },
+  { path: '/#transparência', priority: '0.7', changefreq: 'monthly' },
+  { path: '/#parceiros', priority: '0.6', changefreq: 'monthly' },
+  { path: '/#doação', priority: '0.9', changefreq: 'weekly' },
+];
+
+/** GET /api/v2/sitemap.xml — Sitemap XML dinâmico com posts publicados do blog */
+router.get('/sitemap.xml', async (_req: Request, res: Response) => {
+  try {
+    const now = new Date().toISOString().split('T')[0];
+
+    // Busca posts publicados do Firestore
+    const blogSnap = await db.collection('blog_posts')
+      .where('status', '==', 'PUBLISHED')
+      .limit(200)
+      .get();
+
+    const blogUrls = blogSnap.docs.map(doc => {
+      const data = doc.data();
+      const slug = data.slug || doc.id;
+      const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString().split('T')[0] : now;
+      return `  <url>
+    <loc>${SITE_URL}/blog/${slug}</loc>
+    <lastmod>${updatedAt}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`;
+    });
+
+    const staticUrls = STATIC_ROUTES.map(route => `  <url>
+    <loc>${SITE_URL}${route.path}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`);
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${staticUrls.join('\n')}
+${blogUrls.join('\n')}
+</urlset>`;
+
+    res.set('Content-Type', 'application/xml; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.status(200).send(xml);
+  } catch (err: any) {
+    logStructured('ERROR', '[Sitemap] Falha ao gerar sitemap.xml', { error: err.message });
+    res.status(500).send('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+  }
+});
+
+/** GET /api/v2/robots.txt — Robots.txt com referência ao sitemap */
+router.get('/robots.txt', (_req: Request, res: Response) => {
+  const robotsTxt = `User-agent: *
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+Sitemap: ${SITE_URL}/api/sitemap.xml
+Sitemap: https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api/api/v2/sitemap.xml
+`;
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.status(200).send(robotsTxt);
 });
 
 app.use('/api/v2', router);
