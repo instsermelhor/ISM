@@ -36,6 +36,7 @@ import { SEOHead } from './components/seo/SEOHead';
 import { SEOService } from './services/seoService';
 import { PWARegisterService } from './services/pwaRegisterService';
 import { AnalyticsService } from './services/analyticsService';
+import { TelemetryService } from './services/telemetryService';
 import { BeneficiaryPortalModal } from './components/beneficiary/BeneficiaryPortalModal';
 import { VolunteerPortalModal } from './components/volunteer/VolunteerPortalModal';
 
@@ -266,8 +267,9 @@ function App() {
     if (realtimeSeo) applySeoSettings(realtimeSeo, realtimeSocials);
   }, [realtimeSeo, realtimeSocials]);
 
-  // ── Analytics F004 — init motor de conversão + page_view homepage ────────────
+  // ── Analytics & Telemetria — init motor de conversão, telemetria e page_view ────────────
   useEffect(() => {
+    TelemetryService.init();
     AnalyticsService.init();
     AnalyticsService.trackPageView('/', 'Instituto Ser Melhor — Transformação Social');
   }, []);
