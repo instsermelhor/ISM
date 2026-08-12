@@ -53,15 +53,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const mustChangePassword = !!user?.forcePasswordChange;
 
-  // RBAC permission helper baseada em papéis formais
-  const can = (action: 'write' | 'admin' | 'analytics' | 'super_admin'): boolean => {
+  // RBAC permission helper baseada em papéis formais e permissões granulares (RBAC-MASTER-001)
+  const can = (action:
+    | 'write' | 'admin' | 'analytics' | 'super_admin'
+    | 'manage_users' | 'elevate_super_admin' | 'view_financial' | 'manage_financial' | 'edit_content' | 'view_audit_logs'
+  ): boolean => {
     if (!user) return false;
     if (user.role === 'SUPER_ADMIN') return true;
-    if (action === 'super_admin') return false;
-    if (user.role === 'ADMIN') return true;
-    if (action === 'write') return ['EDITOR', 'GESTOR'].includes(user.role);
-    if (action === 'analytics') return ['EDITOR', 'ADMIN', 'GESTOR'].includes(user.role);
-    return false;
+
+    switch (action) {
+      case 'super_admin':
+      case 'elevate_super_admin':
+      case 'manage_financial':
+        return false; // Apenas SUPER_ADMIN
+      case 'manage_users':
+      case 'view_financial':
+      case 'view_audit_logs':
+      case 'admin':
+        return user.role === 'ADMIN';
+      case 'edit_content':
+      case 'write':
+        return ['ADMIN', 'EDITOR', 'GESTOR'].includes(user.role);
+      case 'analytics':
+        return ['ADMIN', 'EDITOR', 'GESTOR', 'CONSULTA'].includes(user.role);
+      default:
+        return false; // DENY BY DEFAULT
+    }
   };
 
   return (
