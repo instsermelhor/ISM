@@ -30,6 +30,8 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { AIAssistantWidget } from './components/ui/AIAssistantWidget';
 import { PWAInstallBanner } from './components/ui/PWAInstallBanner';
 import { PerformanceMonitorBadge } from './components/ui/PerformanceMonitorBadge';
+import { CookieConsentBanner } from './components/ui/CookieConsentBanner';
+
 import { SEOHead } from './components/seo/SEOHead';
 import { SEOService } from './services/seoService';
 import { PWARegisterService } from './services/pwaRegisterService';
@@ -603,7 +605,11 @@ function App() {
 
       {/* Indicador de Desempenho Core Web Vitals — F002 */}
       <PerformanceMonitorBadge />
+
+      {/* Banner de Consentimento de Cookies & LGPD — NC-030 */}
+      <CookieConsentBanner />
     </LanguageProvider>
+
   );
 }
 
