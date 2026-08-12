@@ -17,6 +17,14 @@ export const PerformanceMonitorBadge: React.FC = () => {
   const [dismissed, setDismissed] = useState<boolean>(false);
 
   useEffect(() => {
+    // U-005: Exibir apenas em desenvolvimento ou com ?debug=true na URL
+    const isDev = import.meta.env.DEV;
+    const isDebugQuery = typeof window !== 'undefined' && window.location.search.includes('debug=true');
+    if (!isDev && !isDebugQuery) {
+      setDismissed(true);
+      return;
+    }
+
     // Verifica se o usuário já fechou o badge anteriormente
     const alreadyDismissed = localStorage.getItem(DISMISSED_KEY) === 'true';
     if (alreadyDismissed) {
@@ -26,6 +34,7 @@ export const PerformanceMonitorBadge: React.FC = () => {
     WebVitalsService.initPerformanceObservers();
     setSnapshot(WebVitalsService.getSnapshot());
   }, []);
+
 
   const handleDismiss = () => {
     setDismissed(true);
