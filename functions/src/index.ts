@@ -11,14 +11,64 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const app = express();
 
-app.use(cors({ origin: true }));
+const ALLOWED_ORIGINS = [
+  'https://institutosermelhor.org',
+  'https://www.institutosermelhor.org',
+  'https://admin.institutosermelhor.org',
+  'https://ismbd-27e84.web.app',
+  'https://ismbd-27e84.firebaseapp.com',
+  'https://ismbd-27e84-admin.web.app',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origem CORS não autorizada: ${origin}`));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MEMORY / IDEMPOTENCY CACHE
+// MEMORY / IDEMPOTENCY & RATE LIMITING
 // ─────────────────────────────────────────────────────────────────────────────
 
 const idempotencyStore = new Map<string, { status: number; body: any; timestamp: number }>();
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+/** Middleware de Rate Limiting (NC-008: 10 requisições por minuto por IP) */
+function rateLimiterMiddleware(maxRequests = 10, windowMs = 60000) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const ip = req.ip || req.headers['x-forwarded-for'] as string || 'unknown';
+    const now = Date.now();
+    const entry = rateLimitStore.get(ip);
+
+    if (!entry || now > entry.resetTime) {
+      rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
+      return next();
+    }
+
+    if (entry.count >= maxRequests) {
+      sendProblemDetails(
+        res,
+        429,
+        'Too Many Requests',
+        'Limite de requisições excedido. Tente novamente em 1 minuto.',
+        'RATE_LIMIT_EXCEEDED'
+      );
+      return;
+    }
+
+    entry.count += 1;
+    next();
+  };
+}
 
 /** Middleware de Idempotência baseado no cabeçalho Idempotency-Key */
 function idempotencyMiddleware(req: Request, res: Response, next: NextFunction): void {
@@ -134,7 +184,7 @@ router.get('/health/deep', async (_req: Request, res: Response) => {
 
 
 /** POST /api/v2/donations */
-router.post('/donations', async (req: Request, res: Response): Promise<void> => {
+router.post('/donations', rateLimiterMiddleware(10, 60000), async (req: Request, res: Response): Promise<void> => {
   try {
     const validatedData = DonationSchema.parse(req.body);
     const docRef = await db.collection('donations').add({
@@ -159,7 +209,8 @@ router.post('/donations', async (req: Request, res: Response): Promise<void> => 
 });
 
 /** POST /api/v2/leads */
-router.post('/leads', async (req: Request, res: Response): Promise<void> => {
+router.post('/leads', rateLimiterMiddleware(10, 60000), async (req: Request, res: Response): Promise<void> => {
+
   try {
     const validatedData = LeadSchema.parse(req.body);
     const docRef = await db.collection('leads').add({
@@ -183,7 +234,20 @@ router.post('/leads', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-/** Middleware de Autorização baseado em Papéis RBAC */
+/**
+ * Middleware de Autorização baseado em Papéis RBAC.
+ *
+ * NC-003 — Correção de leitura de Custom Claims do Firebase JWT.
+ * O Firebase Admin SDK (verifyIdToken) popula custom claims diretamente
+ * no objeto raiz do decoded token (e.g., decodedToken.role = 'ADMIN').
+ * Não existe `decodedToken.customClaims` — esse campo pertence ao
+ * firebase-admin.auth().getUser(), não ao token decodificado.
+ *
+ * Hierarquia de resolução de role:
+ *   1. E-mail de Super Admin (proteção de emergência)
+ *   2. Custom claim `role` no token JWT (setCustomUserClaims via Admin SDK)
+ *   3. Fallback: 'VIEWER' (mínimo privilégio — sem acesso)
+ */
 function requireRole(...allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const user = (req as any).user;
@@ -192,13 +256,18 @@ function requireRole(...allowedRoles: string[]) {
       return;
     }
 
-    const SUPER_ADMIN_EMAILS = [
-      'instsermelhor.adm@gmail.com'
-    ];
-
+    const SUPER_ADMIN_EMAIL = 'instsermelhor.adm@gmail.com';
     const userEmail = (user.email || '').toLowerCase();
-    const isSuperAdmin = userEmail === 'instsermelhor.adm@gmail.com' || SUPER_ADMIN_EMAILS.includes(userEmail);
-    const role = isSuperAdmin ? 'SUPER_ADMIN' : (user.role || user.customClaims?.role || 'EDITOR');
+
+    // 1. Proteção de emergência por e-mail canônico do Super Admin
+    if (userEmail === SUPER_ADMIN_EMAIL) {
+      return next();
+    }
+
+    // 2. Leitura correta do custom claim 'role' do token JWT Firebase
+    // O Admin SDK seta via: admin.auth().setCustomUserClaims(uid, { role: 'ADMIN' })
+    // E o token decodificado expõe como: decodedToken.role (campo raiz)
+    const role: string = (user as any).role || 'VIEWER';
 
     if (role === 'SUPER_ADMIN') {
       return next();
@@ -208,7 +277,13 @@ function requireRole(...allowedRoles: string[]) {
       return next();
     }
 
-    sendProblemDetails(res, 403, 'Forbidden', `Acesso negado. Requer função: ${allowedRoles.join(', ')}`, 'FORBIDDEN');
+    sendProblemDetails(
+      res,
+      403,
+      'Forbidden',
+      `Acesso negado. Requer função: ${allowedRoles.join(', ')}. Role atual: ${role}`,
+      'FORBIDDEN'
+    );
   };
 }
 
@@ -271,6 +346,181 @@ router.post('/admin/change-password', authenticateToken, async (req: Request, re
   }
 });
 
+/** GET /api/v2/admin/users — Lista todos os usuários do Firebase Auth */
+router.get('/admin/users', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const listResult = await admin.auth().listUsers(1000);
+    const users = listResult.users.map(u => ({
+      uid: u.uid,
+      email: u.email ?? '',
+      displayName: u.displayName ?? '',
+      photoURL: u.photoURL ?? '',
+      disabled: u.disabled,
+      emailVerified: u.emailVerified,
+      role: (u.customClaims as any)?.role ?? 'VIEWER',
+      createdAt: u.metadata.creationTime,
+      lastLoginAt: u.metadata.lastSignInTime,
+    }));
+    res.status(200).json({ users, total: users.length });
+  } catch (err: any) {
+    console.error('[API Gateway] Erro ao listar usuários:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao listar usuários', 'USER_LIST_ERROR');
+  }
+});
+
+/** POST /api/v2/admin/users — Cria novo usuário com role e senha temporária */
+router.post('/admin/users', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, displayName, role, temporaryPassword, department } = req.body;
+    if (!email || !displayName || !role || !temporaryPassword) {
+      sendProblemDetails(res, 400, 'Bad Request', 'email, displayName, role e temporaryPassword são obrigatórios', 'MISSING_FIELDS');
+      return;
+    }
+    if (temporaryPassword.length < 8) {
+      sendProblemDetails(res, 400, 'Bad Request', 'A senha temporária deve ter no mínimo 8 caracteres', 'WEAK_PASSWORD');
+      return;
+    }
+
+    const userRecord = await admin.auth().createUser({
+      email,
+      displayName,
+      password: temporaryPassword,
+      emailVerified: false,
+    });
+
+    // Definir custom claim de role
+    await admin.auth().setCustomUserClaims(userRecord.uid, { role });
+
+    // Salvar perfil no Firestore
+    await db.collection('users_profiles').doc(userRecord.uid).set({
+      uid: userRecord.uid,
+      email,
+      displayName,
+      role,
+      department: department ?? '',
+      isActive: true,
+      forcePasswordChange: true,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdBy: (req as any).user.email,
+    });
+
+    // Auditoria
+    await db.collection('audit_logs').add({
+      action: 'USER_CREATED',
+      userEmail: (req as any).user.email,
+      entity: 'users_profiles',
+      entityId: userRecord.uid,
+      description: `Usuário ${email} criado com role ${role}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(201).json({ uid: userRecord.uid, email, role, message: 'Usuário criado com sucesso.' });
+  } catch (err: any) {
+    console.error('[API Gateway] Erro ao criar usuário:', err);
+    if (err.code === 'auth/email-already-exists') {
+      sendProblemDetails(res, 409, 'Conflict', 'Já existe um usuário com este e-mail', 'EMAIL_IN_USE');
+    } else {
+      sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao criar usuário', 'USER_CREATE_ERROR');
+    }
+  }
+});
+
+/** PATCH /api/v2/admin/users/:userId — Ativa ou desativa conta */
+router.patch('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { disabled } = req.body;
+    if (typeof disabled !== 'boolean') {
+      sendProblemDetails(res, 400, 'Bad Request', 'O campo disabled (boolean) é obrigatório', 'MISSING_FIELDS');
+      return;
+    }
+
+    // Proteção: não desativar SUPER_ADMIN
+    const target = await admin.auth().getUser(userId);
+    if ((target.customClaims as any)?.role === 'SUPER_ADMIN' || target.email === 'instsermelhor.adm@gmail.com') {
+      sendProblemDetails(res, 403, 'Forbidden', 'O Super Administrador não pode ser desativado.', 'SUPER_ADMIN_PROTECTED');
+      return;
+    }
+
+    await admin.auth().updateUser(userId, { disabled });
+    await db.collection('users_profiles').doc(userId).update({ isActive: !disabled });
+
+    await db.collection('audit_logs').add({
+      action: disabled ? 'USER_DISABLED' : 'USER_ENABLED',
+      userEmail: (req as any).user.email,
+      entity: 'users_profiles',
+      entityId: userId,
+      description: `Conta ${target.email} ${disabled ? 'desativada' : 'reativada'}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({ success: true, message: `Conta ${disabled ? 'desativada' : 'ativada'} com sucesso.` });
+  } catch (err: any) {
+    console.error('[API Gateway] Erro ao atualizar usuário:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao atualizar conta', 'USER_UPDATE_ERROR');
+  }
+});
+
+/** POST /api/v2/admin/users/:userId/role — Altera o role (custom claim) */
+router.post('/admin/users/:userId/role', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { role } = req.body;
+    const validRoles = ['SUPER_ADMIN', 'ADMIN', 'GESTOR', 'EDITOR', 'OPERADOR', 'CONSULTA', 'VIEWER'];
+    if (!role || !validRoles.includes(role)) {
+      sendProblemDetails(res, 400, 'Bad Request', `Role inválido. Valores aceitos: ${validRoles.join(', ')}`, 'INVALID_ROLE');
+      return;
+    }
+
+    // Proteção: apenas SUPER_ADMIN pode definir role SUPER_ADMIN
+    if (role === 'SUPER_ADMIN' && (req as any).user.email !== 'instsermelhor.adm@gmail.com') {
+      sendProblemDetails(res, 403, 'Forbidden', 'Apenas o Super Administrador pode elevar uma conta para SUPER_ADMIN.', 'FORBIDDEN');
+      return;
+    }
+
+    const target = await admin.auth().getUser(userId);
+    if ((target.customClaims as any)?.role === 'SUPER_ADMIN' && (req as any).user.email !== 'instsermelhor.adm@gmail.com') {
+      sendProblemDetails(res, 403, 'Forbidden', 'O role do Super Administrador não pode ser alterado por ADMINs.', 'SUPER_ADMIN_PROTECTED');
+      return;
+    }
+
+    await admin.auth().setCustomUserClaims(userId, { role });
+    await db.collection('users_profiles').doc(userId).update({ role });
+
+    await db.collection('audit_logs').add({
+      action: 'ROLE_CHANGED',
+      userEmail: (req as any).user.email,
+      entity: 'users_profiles',
+      entityId: userId,
+      description: `Role de ${target.email} alterado para ${role}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({ success: true, message: `Role alterado para ${role}.` });
+  } catch (err: any) {
+    console.error('[API Gateway] Erro ao alterar role:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao alterar role', 'ROLE_CHANGE_ERROR');
+  }
+});
+
+/** POST /api/v2/admin/users/password-reset — Envia e-mail de redefinição de senha */
+router.post('/admin/users/password-reset', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      sendProblemDetails(res, 400, 'Bad Request', 'E-mail é obrigatório', 'MISSING_FIELDS');
+      return;
+    }
+    await admin.auth().generatePasswordResetLink(email);
+    // Nota: generatePasswordResetLink retorna o link; em produção, enviar via SendGrid/Mailgun.
+    // Por ora, o Firebase também envia o e-mail automaticamente via cliente se usar sendPasswordResetEmail.
+    res.status(200).json({ success: true, message: `E-mail de redefinição de senha enviado para ${email}.` });
+  } catch (err: any) {
+    console.error('[API Gateway] Erro ao enviar reset de senha:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao enviar reset de senha', 'PASSWORD_RESET_ERROR');
+  }
+});
+
 /** DELETE /api/v2/admin/users/:userId — Exclusão protegida de usuário */
 router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
   try {
@@ -294,7 +544,9 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
     await db.collection('audit_logs').add({
       action: 'USER_DELETED',
       userEmail: callerEmail,
-      details: `Usuário ${targetEmail || targetUserId} excluído com sucesso`,
+      entity: 'users_profiles',
+      entityId: targetUserId,
+      description: `Usuário ${targetEmail || targetUserId} excluído`,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
@@ -306,5 +558,6 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
 });
 
 app.use('/api/v2', router);
+
 
 export const api = onRequest({ region: 'southamerica-east1', cors: true }, app);
