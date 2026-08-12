@@ -1,26 +1,60 @@
 {
+  "id": "/",
   "name": "Instituto Ser Melhor — Sapere Aude",
   "short_name": "Ser Melhor",
   "description": "Organização Não Governamental voltada ao impacto educacional, social, ambiental e cultural.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
   "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/logo-ism.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/logo-ism.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-ism.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Fazer uma Doação",
+      "short_name": "Doação",
+      "description": "Apoie o Instituto Ser Melhor com uma doação",
+      "url": "/#donate",
+      "icons": [{ "src": "/logo-ism.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nossos Projetos",
+      "short_name": "Projetos",
+      "description": "Conheça os projetos em andamento",
+      "url": "/#programs",
+      "icons": [{ "src": "/logo-ism.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Transparência",
+      "short_name": "Transparência",
+      "description": "Relatórios e prestação de contas",
+      "url": "/#transparency",
+      "icons": [{ "src": "/logo-ism.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["social", "education", "non-profit"],
-  "lang": "pt-BR"
+  "related_applications": [],
+  "prefer_related_applications": false
 }
