@@ -313,10 +313,26 @@ export const MUNICIPALITIES: Municipality[] = [
 
 export const AtuacaoMapService = {
 
-  /** Retorna todos os municípios */
+  /** Retorna todos os municípios de forma síncrona (fallback) */
   getAll(): Municipality[] {
     return MUNICIPALITIES;
   },
+
+  /** Retorna todos os municípios buscando do Firestore com fallback para lista padrão (NC-013) */
+  async getAllAsync(): Promise<Municipality[]> {
+    try {
+      const { collection, getDocs, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase');
+      const q = query(collection(db, 'atuacao_map'), orderBy('name', 'asc'));
+      const snap = await getDocs(q);
+      if (snap.empty) return MUNICIPALITIES;
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as Municipality));
+    } catch (err) {
+      console.warn('[AtuacaoMapService] Firestore indisponível, usando fallback:', err);
+      return MUNICIPALITIES;
+    }
+  },
+
 
   /** Filtra por pilar de impacto */
   filterByPillar(pillar: ImpactPillar | 'ALL'): Municipality[] {
