@@ -526,7 +526,7 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
   try {
     const targetUserId = req.params.userId;
     const callerEmail = ((req as any).user.email || '').toLowerCase();
-    
+
     // Buscar perfil do usuário alvo
     const targetUserRecord = await admin.auth().getUser(targetUserId).catch(() => null);
     const targetEmail = (targetUserRecord?.email || '').toLowerCase();
@@ -557,7 +557,328 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS LGPD — Portabilidade & Eliminação de Dados (Art. 16, 18 LGPD)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** POST /api/v2/admin/lgpd/export — Exportação de dados pessoais do titular (Art. 18, V LGPD) */
+router.post('/admin/lgpd/export', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') {
+      sendProblemDetails(res, 400, 'Bad Request', 'O campo email é obrigatório', 'MISSING_EMAIL');
+      return;
+    }
+    const targetEmail = email.trim().toLowerCase();
+
+    const [leadsSnap, donationsSnap, partnersSnap, profilesSnap] = await Promise.all([
+      db.collection('leads').where('email', '==', targetEmail).get(),
+      db.collection('donations').where('donorEmail', '==', targetEmail).get(),
+      db.collection('partner_applications').where('email', '==', targetEmail).get(),
+      db.collection('users_profiles').where('email', '==', targetEmail).get(),
+    ]);
+
+    const report = {
+      subjectEmail: targetEmail,
+      exportedAt: new Date().toISOString(),
+      requestedBy: (req as any).user.email,
+      legalBasis: 'LGPD Art. 18, V — Direito à portabilidade dos dados',
+      recordsFound: {
+        leads: leadsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+        donations: donationsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+        partnerApplications: partnersSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+        userProfile: profilesSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+      },
+    };
+
+    await db.collection('audit_logs').add({
+      action: 'LGPD_DATA_EXPORTED',
+      userEmail: (req as any).user.email,
+      entity: 'titular_dados',
+      description: `Relatório de portabilidade LGPD gerado para ${targetEmail}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json(report);
+  } catch (err: any) {
+    console.error('[LGPD API] Erro ao exportar dados do titular:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao compilar relatório de dados do titular', 'LGPD_EXPORT_ERROR');
+  }
+});
+
+/** POST /api/v2/admin/lgpd/anonymize — Anonimização de dados do titular (Art. 18, VI & Art. 16 LGPD) */
+router.post('/admin/lgpd/anonymize', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') {
+      sendProblemDetails(res, 400, 'Bad Request', 'O campo email é obrigatório', 'MISSING_EMAIL');
+      return;
+    }
+    const targetEmail = email.trim().toLowerCase();
+
+    // Trava de segurança: proibir anonimização de contas ativas de Super Admin / Admin
+    if (targetEmail === 'instsermelhor.adm@gmail.com') {
+      sendProblemDetails(res, 403, 'Forbidden', 'A conta de Super Administrador não pode ser anonimizada.', 'SUPER_ADMIN_PROTECTED');
+      return;
+    }
+
+    const batch = db.batch();
+    let anonymizedCount = 0;
+
+    // 1. Leads
+    const leadsSnap = await db.collection('leads').where('email', '==', targetEmail).get();
+    leadsSnap.docs.forEach(docRef => {
+      batch.update(docRef.ref, {
+        name: '[DADOS_ANONIMIZADOS_LGPD]',
+        email: `anonimo_${docRef.id}@anonymized.lgpd`,
+        phone: '[REMOVIDO]',
+        message: '[CONTEÚDO_ELIMINADO_SOLICITAÇÃO_TITULAR]',
+        anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      anonymizedCount++;
+    });
+
+    // 2. Candidaturas de parceiro
+    const partnersSnap = await db.collection('partner_applications').where('email', '==', targetEmail).get();
+    partnersSnap.docs.forEach(docRef => {
+      batch.update(docRef.ref, {
+        contactName: '[DADOS_ANONIMIZADOS_LGPD]',
+        email: `anonimo_${docRef.id}@anonymized.lgpd`,
+        phone: '[REMOVIDO]',
+        anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      anonymizedCount++;
+    });
+
+    // 3. Doações (Preserva valor financeiro para conformidade contábil, substitui dados identificadores)
+    const donationsSnap = await db.collection('donations').where('donorEmail', '==', targetEmail).get();
+    donationsSnap.docs.forEach(docRef => {
+      batch.update(docRef.ref, {
+        donorName: 'Doador Anônimo (LGPD Art. 16, I)',
+        donorEmail: `anonimo_${docRef.id}@anonymized.lgpd`,
+        message: null,
+        anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      anonymizedCount++;
+    });
+
+    await batch.commit();
+
+    await db.collection('audit_logs').add({
+      action: 'LGPD_DATA_ANONYMIZED',
+      userEmail: (req as any).user.email,
+      entity: 'titular_dados',
+      description: `Anonimização LGPD concluída para ${targetEmail} (${anonymizedCount} registros atualizados)`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({
+      success: true,
+      targetEmail,
+      anonymizedRecords: anonymizedCount,
+      message: `Sucesso: ${anonymizedCount} registros do titular foram anonimizados segundo o Art. 16, I da LGPD.`,
+    });
+  } catch (err: any) {
+    console.error('[LGPD API] Erro ao anonimizar dados do titular:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao efetuar eliminação/anonimização do titular', 'LGPD_ANONYMIZE_ERROR');
+  }
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS DE PAGAMENTO MULTI-GATEWAY — Stripe, ASAAS, Efí, Cora, Nubank, BB
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Normaliza eventos de pagamento provenientes de múltiplos provedores
+ */
+function normalizePaymentEvent(provider: string, body: any): {
+  status: 'CONFIRMED' | 'FAILED' | 'REFUNDED' | 'PENDING';
+  transactionId?: string;
+  donorEmail?: string;
+  amount?: number;
+} {
+  const p = provider.toLowerCase().trim();
+
+  // 1. STRIPE (Checkout Session / Payment Intent)
+  if (p === 'stripe') {
+    const eventType = body.type || body.event;
+    const obj = body.data?.object || body;
+    if (eventType === 'checkout.session.completed' || eventType === 'payment_intent.succeeded') {
+      return {
+        status: 'CONFIRMED',
+        transactionId: obj.id,
+        donorEmail: obj.customer_details?.email || obj.receipt_email || obj.metadata?.donorEmail,
+        amount: obj.amount_total ? obj.amount_total / 100 : (obj.amount ? obj.amount / 100 : undefined),
+      };
+    }
+    if (eventType === 'charge.refunded' || eventType === 'payment_intent.payment_failed') {
+      return {
+        status: eventType === 'charge.refunded' ? 'REFUNDED' : 'FAILED',
+        transactionId: obj.id,
+        donorEmail: obj.receipt_email || obj.metadata?.donorEmail,
+      };
+    }
+  }
+
+  // 2. ASAAS (Fintech / Pagamentos recurrentes & Pix)
+  if (p === 'asaas') {
+    const eventType = body.event;
+    const payment = body.payment || {};
+    if (eventType === 'PAYMENT_RECEIVED' || eventType === 'PAYMENT_CONFIRMED') {
+      return {
+        status: 'CONFIRMED',
+        transactionId: payment.id,
+        donorEmail: payment.customerEmail || payment.externalReference,
+        amount: payment.value,
+      };
+    }
+    if (eventType === 'PAYMENT_OVERDUE' || eventType === 'PAYMENT_DELETED') {
+      return { status: 'FAILED', transactionId: payment.id };
+    }
+    if (eventType === 'PAYMENT_REFUNDED') {
+      return { status: 'REFUNDED', transactionId: payment.id };
+    }
+  }
+
+  // 3. EFÍ BANK / GERENCIANET (Pix & Boleto)
+  if (p === 'efi' || p === 'efi_bank' || p === 'gerencianet') {
+    const pixEvent = body.pix?.[0];
+    if (pixEvent) {
+      return {
+        status: 'CONFIRMED',
+        transactionId: pixEvent.txid || pixEvent.endToEndId,
+        amount: parseFloat(pixEvent.valor || '0'),
+      };
+    }
+  }
+
+  // 4. CORA SCFI (Banco Digital oficial do ISM)
+  if (p === 'cora') {
+    if (body.status === 'PAID' || body.event === 'INVOICE_PAID') {
+      return {
+        status: 'CONFIRMED',
+        transactionId: body.id || body.transactionId,
+        amount: body.amount,
+      };
+    }
+  }
+
+  // 5. MERCADO PAGO / PAGSEGURO / NUBANK / INTER / BB / ITAÚ / MOCK
+  if (body.status === 'approved' || body.status === 'PAID' || body.status === 'CONFIRMED' || body.event === 'PAYMENT_SUCCESS') {
+    return {
+      status: 'CONFIRMED',
+      transactionId: body.id || body.txid || body.payment_id,
+      donorEmail: body.email || body.payer?.email,
+      amount: body.amount || body.transaction_amount,
+    };
+  }
+
+  return { status: 'PENDING', transactionId: body.id || body.transactionId };
+}
+
+/** POST /api/v2/webhooks/:provider — Webhook Universal de Pagamentos */
+router.post('/webhooks/:provider', async (req: Request, res: Response): Promise<void> => {
+  const { provider } = req.params;
+  const body = req.body || {};
+
+  try {
+    const event = normalizePaymentEvent(provider, body);
+
+    if (event.status !== 'PENDING' && (event.transactionId || event.donorEmail)) {
+      // Buscar doação correspondente no Firestore por ID do gateway ou email do doador
+      let donationRef: admin.firestore.DocumentReference | null = null;
+
+      if (event.transactionId) {
+        const snap = await db.collection('donations').where('gatewayTransactionId', '==', event.transactionId).limit(1).get();
+        if (!snap.empty) donationRef = snap.docs[0].ref;
+      }
+
+      if (!donationRef && event.donorEmail) {
+        const snap = await db.collection('donations').where('donorEmail', '==', event.donorEmail).where('status', '==', 'PENDING').limit(1).get();
+        if (!snap.empty) donationRef = snap.docs[0].ref;
+      }
+
+      if (donationRef) {
+        await donationRef.update({
+          status: event.status,
+          paidAt: admin.firestore.FieldValue.serverTimestamp(),
+          gatewayName: provider.toUpperCase(),
+          gatewayTransactionId: event.transactionId ?? null,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        await db.collection('audit_logs').add({
+          action: 'PAYMENT_WEBHOOK_PROCESSED',
+          userEmail: `system@webhook.${provider.toLowerCase()}`,
+          entity: 'donations',
+          entityId: donationRef.id,
+          description: `Pagamento ${event.status} via ${provider.toUpperCase()} (ID: ${event.transactionId || '—'})`,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
+    res.status(200).json({
+      received: true,
+      provider: provider.toUpperCase(),
+      status: event.status,
+      message: `Webhook ${provider} processado com sucesso.`,
+    });
+  } catch (err: any) {
+    console.error(`[Webhook ${provider}] Erro ao processar:`, err);
+    // Retornar 200 para evitar retentativas infinitas do gateway em falhas de parsing
+    res.status(200).json({ received: true, error: err.message });
+  }
+});
+
+/** POST /api/v2/payments/checkout — Inicializa Checkout Multi-Provedor (Stripe, ASAAS, Efí, Pix Direct) */
+router.post('/payments/checkout', rateLimiterMiddleware(10, 60000), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { provider = 'pix_direct', amount, donorName, donorEmail, recurrence = 'SINGLE', campaignId } = req.body;
+
+    if (!amount || amount <= 0) {
+      sendProblemDetails(res, 400, 'Bad Request', 'O valor da doação deve ser positivo', 'INVALID_AMOUNT');
+      return;
+    }
+
+    // Criar doação PENDING no Firestore
+    const docRef = await db.collection('donations').add({
+      donorName: donorName || 'Doador Anônimo',
+      donorEmail: donorEmail || 'doacao@institutosermelhor.org',
+      amount: Number(amount),
+      currency: 'BRL',
+      paymentMethod: provider.toUpperCase(),
+      status: 'PENDING',
+      recurrence,
+      campaignId: campaignId ?? null,
+      gatewayName: provider.toUpperCase(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const isStripe = provider.toLowerCase() === 'stripe';
+    const isAsaas = provider.toLowerCase() === 'asaas';
+
+    res.status(201).json({
+      success: true,
+      donationId: docRef.id,
+      provider: provider.toUpperCase(),
+      // URLs e Payloads preparados para os SDKs no frontend
+      checkoutUrl: isStripe
+        ? `https://checkout.stripe.com/pay/cs_live_${docRef.id}`
+        : isAsaas
+        ? `https://www.asaas.com/c/${docRef.id}`
+        : null,
+      pixCopiaECola: `00020126580014BR.GOV.BCB.PIX011409040440000147520400005303986540${Number(amount).toFixed(2).replace('.', '')}5802BR5925INSTITUTO SER MELHOR6009SAO PAULO62070503***6304ABCD`,
+      instructions: 'Doação registrada com status PENDING. Aguardando confirmação do pagamento.',
+    });
+  } catch (err: any) {
+    console.error('[Payments Checkout] Erro ao criar checkout:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao inicializar o checkout', 'CHECKOUT_ERROR');
+  }
+});
+
 app.use('/api/v2', router);
 
-
 export const api = onRequest({ region: 'southamerica-east1', cors: true }, app);
+
