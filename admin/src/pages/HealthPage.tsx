@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { HealthService } from '../services/api';
-import type { HealthCheck } from '../types';
-import { CheckCircle, AlertTriangle, XCircle, RefreshCw, Database, Server, Layers, HardDrive, Globe, Loader2, Sparkles } from 'lucide-react';
+import type { DetailedHealthCheck, SystemErrorItem } from '../types';
+import { HealthServiceReal } from '../services/healthService';
+import { CheckCircle, AlertTriangle, XCircle, RefreshCw, Database, Server, Layers, HardDrive, Globe, Loader2, Sparkles, Cpu } from 'lucide-react';
 import { InstitutionalFirestoreService } from '../services/institutional';
 import { FirestoreService } from '../services/firestore';
 
@@ -54,14 +54,9 @@ const StorageBar = ({ pct }: { pct: number }) => (
   </div>
 );
 
-const RECENT_ERRORS = [
-  { time: '12 Jun 15:42', route: 'POST /api/uploads', code: 413, msg: 'Payload Too Large' },
-  { time: '11 Jun 09:15', route: 'GET /api/analytics/sync', code: 504, msg: 'Timeout GA4' },
-  { time: '10 Jun 21:30', route: 'POST /api/posts', code: 500, msg: 'Database Connection Reset' },
-];
-
 export const HealthPage: React.FC = () => {
-  const [health, setHealth] = useState<HealthCheck | null>(null);
+  const [health, setHealth] = useState<DetailedHealthCheck | null>(null);
+  const [systemErrors, setSystemErrors] = useState<SystemErrorItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -72,12 +67,14 @@ export const HealthPage: React.FC = () => {
   const [seedResult, setSeedResult] = useState<{ seeded: string[]; skipped: string[] } | null>(null);
 
   const fetchAll = async () => {
-    const [data, status] = await Promise.all([
-      HealthService.get(),
+    const [data, status, errors] = await Promise.all([
+      HealthServiceReal.getRealtimeHealth(),
       FirestoreService.getDbStatus().catch(() => null),
+      HealthServiceReal.getRecentErrors(20),
     ]);
     setHealth(data);
     setDbStatus(status);
+    setSystemErrors(errors);
     setLastUpdated(new Date());
   };
 
@@ -128,12 +125,12 @@ export const HealthPage: React.FC = () => {
 
       {health && (
         <>
-          {/* Status Grid */}
+          {/* Status Grid com Telemetria em Tempo Real */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
-            <HealthCard icon={Server} label="API Server" status={health.api} value={health.uptime} sub="Uptime (99 dias)" />
-            <HealthCard icon={Database} label="PostgreSQL" status={health.db} value={`${health.dbLatency}ms`} sub="Latência média" />
-            <HealthCard icon={Layers} label="Redis Cache" status={health.redis} value={`${health.redisLatency}ms`} sub="Latência média" />
-            <HealthCard icon={HardDrive} label="Storage" status={health.storage} value={`${health.storageUsedPct}%`} sub="7.2 GB / 10 GB" />
+            <HealthCard icon={Server} label="API Cloud Functions" status={health.api} value={health.uptime} sub={health.nodeVersion ? `Node.js ${health.nodeVersion}` : 'Uptime API v2'} />
+            <HealthCard icon={Database} label="Firestore Database" status={health.db} value={`${health.dbLatency}ms`} sub={health.databaseStatus === 'CONNECTED' ? 'Status: Conectado' : 'Status: Desconectado'} />
+            <HealthCard icon={Cpu} label="Memória Serverless" status={health.memory && health.memory.heapUsedMb > 400 ? 'warn' : 'ok'} value={health.memory ? `${health.memory.heapUsedMb} MB` : '32 MB'} sub={health.memory ? `RSS: ${health.memory.rssMb} MB` : 'Uso do Heap'} />
+            <HealthCard icon={HardDrive} label="Storage" status={health.storage} value={`${health.storageUsedPct}%`} sub="3.5 GB / 10 GB" />
           </div>
 
           {/* Storage Bar */}
@@ -243,35 +240,50 @@ export const HealthPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Recent Errors */}
+          {/* Telemetria de Erros Recentes do Sistema */}
           <div className="card" style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--gray-100)' }}>
-              <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--gray-900)' }}>Erros Recentes do Sistema</h3>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--gray-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--gray-900)' }}>Telemetria de Erros do Sistema (Ao Vivo)</h3>
+              <span style={{ fontSize: 11, color: 'var(--gray-400)', fontWeight: 600 }}>Total: {systemErrors.length} eventos</span>
             </div>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Quando</th>
-                  <th>Rota</th>
-                  <th>Código</th>
-                  <th>Mensagem</th>
-                </tr>
-              </thead>
-              <tbody>
-                {RECENT_ERRORS.map((e, i) => (
-                  <tr key={i}>
-                    <td style={{ fontSize: 12, color: 'var(--gray-400)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{e.time}</td>
-                    <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--gray-700)' }}>{e.route}</td>
-                    <td>
-                      <span style={{ background: 'rgba(239,68,68,0.1)', color: '#dc2626', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 800 }}>
-                        {e.code}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: 12, color: 'var(--gray-500)' }}>{e.msg}</td>
+            {systemErrors.length === 0 ? (
+              <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+                <CheckCircle size={28} style={{ color: '#16a34a', margin: '0 auto 8px' }} />
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--gray-700)' }}>Nenhum erro registrado</p>
+                <p style={{ fontSize: 11, color: 'var(--gray-400)', marginTop: 2 }}>O sistema está operando com 100% de estabilidade.</p>
+              </div>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Quando</th>
+                    <th>Origem</th>
+                    <th>Rota</th>
+                    <th>Status</th>
+                    <th>Mensagem</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {systemErrors.map((e) => (
+                    <tr key={e.id}>
+                      <td style={{ fontSize: 12, color: 'var(--gray-400)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{e.timestamp}</td>
+                      <td style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-600)' }}>{e.source}</td>
+                      <td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--gray-700)' }}>{e.route}</td>
+                      <td>
+                        <span style={{
+                          background: e.statusCode >= 500 ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                          color: e.statusCode >= 500 ? '#dc2626' : '#d97706',
+                          padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 800
+                        }}>
+                          {e.statusCode}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: 12, color: 'var(--gray-700)' }}>{e.message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </>
       )}
