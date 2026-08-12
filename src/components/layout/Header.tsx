@@ -131,59 +131,68 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
         </a>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {navItems.map((item) => (
-            <div
-              key={item.label}
-              className="relative"
-              onMouseEnter={() => handleMouseEnter(item.label)}
-              onMouseLeave={handleMouseLeave}
-            >
-              <a
-                href={item.href || '#'}
-                className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest py-4 px-3 transition-colors duration-200 rounded-lg ${
-                  isScrolled
-                    ? 'text-secondary-700 hover:text-brand-600 hover:bg-brand-50/50'
-                    : 'text-white/90 hover:text-white hover:bg-white/10'
-                }`}
+        <nav className="hidden lg:flex items-center gap-1" aria-label="Navegação principal">
+          {navItems.map((item) => {
+            const dropdownId = `dropdown-${item.label.toLowerCase().replace(/\s+/g, '-')}`;
+            const isExpanded = activeDropdown === item.label;
+            return (
+              <div
+                key={item.label}
+                className="relative"
+                onMouseEnter={() => handleMouseEnter(item.label)}
+                onMouseLeave={handleMouseLeave}
               >
-                {item.label}
-                {item.subItems && (
-                  <ChevronDown
-                    size={13}
-                    className={`transition-transform duration-200 ${activeDropdown === item.label ? 'rotate-180 text-brand-600' : ''}`}
-                  />
-                )}
-              </a>
-
-              {/* Dropdown Desktop */}
-              {item.subItems && (
-                <div
-                  className={`absolute top-full left-0 w-56 bg-white rounded-xl shadow-2xl shadow-black/10 border border-gray-100 overflow-hidden transition-all duration-200 origin-top ${
-                    activeDropdown === item.label
-                      ? 'opacity-100 translate-y-0 pointer-events-auto'
-                      : 'opacity-0 -translate-y-2 pointer-events-none'
+                <a
+                  href={item.href || '#'}
+                  className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest py-4 px-3 transition-colors duration-200 rounded-lg ${
+                    isScrolled
+                      ? 'text-secondary-700 hover:text-brand-600 hover:bg-brand-50/50'
+                      : 'text-white/90 hover:text-white hover:bg-white/10'
                   }`}
+                  aria-haspopup={item.subItems ? 'true' : undefined}
+                  aria-expanded={item.subItems ? isExpanded : undefined}
+                  aria-controls={item.subItems ? dropdownId : undefined}
                 >
-                  <div className="h-0.5 w-full bg-gradient-to-r from-brand-400 to-brand-600" />
-                  <ul className="py-2">
-                    {item.subItems.map((sub) => (
-                      <li key={sub.label}>
-                        <a
-                          href={sub.href}
-                          className="flex items-center gap-2 px-5 py-2.5 text-sm text-secondary-600 hover:bg-brand-50 hover:text-brand-700 transition-colors duration-150 group"
-                          onClick={handleNavClick}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-brand-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          {sub.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ))}
+                  {item.label}
+                  {item.subItems && (
+                    <ChevronDown
+                      size={13}
+                      aria-hidden="true"
+                      className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-brand-600' : ''}`}
+                    />
+                  )}
+                </a>
+
+                {/* Dropdown Desktop */}
+                {item.subItems && (
+                  <div
+                    id={dropdownId}
+                    className={`absolute top-full left-0 w-56 bg-white rounded-xl shadow-2xl shadow-black/10 border border-gray-100 overflow-hidden transition-all duration-200 origin-top ${
+                      isExpanded
+                        ? 'opacity-100 translate-y-0 pointer-events-auto'
+                        : 'opacity-0 -translate-y-2 pointer-events-none'
+                    }`}
+                  >
+                    <div className="h-0.5 w-full bg-gradient-to-r from-brand-400 to-brand-600" aria-hidden="true" />
+                    <ul className="py-2" role="list">
+                      {item.subItems.map((sub) => (
+                        <li key={sub.label}>
+                          <a
+                            href={sub.href}
+                            className="flex items-center gap-2 px-5 py-2.5 text-sm text-secondary-600 hover:bg-brand-50 hover:text-brand-700 transition-colors duration-150 group"
+                            onClick={handleNavClick}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-brand-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true" />
+                            {sub.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* CTAs Desktop */}
@@ -215,30 +224,34 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
             isScrolled ? 'text-secondary-800 hover:bg-gray-100' : 'text-white hover:bg-white/10'
           }`}
           onClick={() => setIsOpen(!isOpen)}
-          aria-label={isOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-label={isOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
           aria-expanded={isOpen}
+          aria-controls="mobile-nav-menu"
         >
           <span
             className={`absolute transition-all duration-200 ${isOpen ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'}`}
+            aria-hidden="true"
           >
-            <X size={24} />
+            <X size={24} aria-hidden="true" />
           </span>
           <span
             className={`absolute transition-all duration-200 ${isOpen ? 'opacity-0 -rotate-90' : 'opacity-100 rotate-0'}`}
+            aria-hidden="true"
           >
-            <Menu size={24} />
+            <Menu size={24} aria-hidden="true" />
           </span>
         </button>
       </div>
 
       {/* Mobile Nav Overlay */}
       <div
+        id="mobile-nav-menu"
         className={`lg:hidden fixed inset-0 z-40 transition-all duration-300 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         style={{ background: 'rgba(255,255,255,0.98)', backdropFilter: 'blur(20px)' }}
       >
-        <nav className="flex flex-col h-full pt-24 pb-10 px-6 overflow-y-auto">
+        <nav className="flex flex-col h-full pt-24 pb-10 px-6 overflow-y-auto" aria-label="Navegação mobile">
           <div className="flex-grow space-y-1">
             {navItems.map((item) => (
               <div key={item.label} className="border-b border-gray-100">
