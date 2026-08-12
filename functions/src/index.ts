@@ -150,16 +150,55 @@ const LeadSchema = z.object({
   message: z.string().min(5).max(5000),
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TELEMETRIA E OBSERVABILIDADE ESTRUTURADA (GCP Cloud Logging & System Errors)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Helper para log estruturado JSON compatível com GCP Cloud Logging */
+function logStructured(severity: 'INFO' | 'WARNING' | 'ERROR', message: string, context?: Record<string, any>): void {
+  const payload = {
+    severity,
+    message,
+    component: 'functions-v2',
+    timestamp: new Date().toISOString(),
+    ...context,
+  };
+  if (severity === 'ERROR') {
+    console.error(JSON.stringify(payload));
+  } else if (severity === 'WARNING') {
+    console.warn(JSON.stringify(payload));
+  } else {
+    console.log(JSON.stringify(payload));
+  }
+}
+
+/** Registra erro no log estruturado e persiste na coleção system_errors do Firestore */
+async function reportSystemError(source: string, message: string, route?: string, statusCode = 500, stack?: string): Promise<void> {
+  logStructured('ERROR', `[${source}] ${message}`, { route, statusCode, stack });
+  try {
+    await db.collection('system_errors').add({
+      source,
+      message: message || 'Erro não especificado',
+      route: route || 'INTERNAL',
+      statusCode,
+      stack: stack ? stack.substring(0, 2000) : null,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('[Telemetry] Falha ao gravar no Firestore system_errors:', err);
+  }
+}
+
 /** GET /api/v2/health — Liveness Probe */
 router.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', apiVersion: 'v2.0', mode: 'Liveness', timestamp: new Date().toISOString() });
 });
 
-/** GET /api/v2/health/deep — Readiness Probe (Testa conexão com o Firestore) */
+/** GET /api/v2/health/deep — Readiness Probe Expandido com Telemetria */
 router.get('/health/deep', async (_req: Request, res: Response) => {
   const startTime = Date.now();
+  const mem = process.memoryUsage();
   try {
-    // Teste atômico de leitura no Firestore para confirmar integridade do banco
     await db.collection('settings').limit(1).get();
     const latency = Date.now() - startTime;
     res.status(200).json({
@@ -168,9 +207,17 @@ router.get('/health/deep', async (_req: Request, res: Response) => {
       mode: 'Readiness',
       database: 'CONNECTED',
       dbLatencyMs: latency,
+      uptimeSeconds: Math.floor(process.uptime()),
+      memory: {
+        rssMb: Math.round(mem.rss / 1024 / 1024),
+        heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
+        heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+      },
+      nodeVersion: process.version,
       timestamp: new Date().toISOString()
     });
   } catch (err: any) {
+    await reportSystemError('HealthProbe', err.message, '/api/v2/health/deep', 503, err.stack);
     res.status(503).json({
       status: 'UNHEALTHY',
       apiVersion: 'v2.0',
@@ -681,6 +728,64 @@ router.post('/admin/lgpd/anonymize', authenticateToken, requireRole('SUPER_ADMIN
   } catch (err: any) {
     console.error('[LGPD API] Erro ao anonimizar dados do titular:', err);
     sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao efetuar eliminação/anonimização do titular', 'LGPD_ANONYMIZE_ERROR');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS DE TELEMETRIA E ERROS DO SISTEMA
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ClientTelemetrySchema = z.object({
+  source: z.string().max(100).default('Frontend'),
+  message: z.string().min(1).max(2000),
+  route: z.string().max(300).optional(),
+  statusCode: z.number().optional(),
+  stack: z.string().max(3000).optional(),
+  userAgent: z.string().max(500).optional(),
+});
+
+/** POST /api/v2/telemetry/errors — Coleta pública de erros de clientes frontend (rate-limited) */
+router.post('/telemetry/errors', rateLimiterMiddleware(20, 60000), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validated = ClientTelemetrySchema.parse(req.body);
+    await reportSystemError(
+      validated.source,
+      validated.message,
+      validated.route || 'CLIENT_RUNTIME',
+      validated.statusCode || 400,
+      validated.stack
+    );
+    res.status(201).json({ success: true, message: 'Telemetria de erro registrada.' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: 'Formato de telemetria inválido.' });
+  }
+});
+
+/** GET /api/v2/admin/system/errors — Consulta dos últimos erros do sistema (ADMIN+) */
+router.get('/admin/system/errors', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const snap = await db.collection('system_errors')
+      .orderBy('timestamp', 'desc')
+      .limit(100)
+      .get();
+
+    const errors = snap.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        source: data.source || 'SISTEMA',
+        message: data.message || 'Sem mensagem',
+        route: data.route || 'N/A',
+        statusCode: data.statusCode || 500,
+        stack: data.stack || null,
+        timestamp: data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate().toISOString() : data.timestamp) : new Date().toISOString(),
+      };
+    });
+
+    res.status(200).json({ errors, total: errors.length });
+  } catch (err: any) {
+    console.error('[Telemetry API] Erro ao buscar system_errors:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao buscar log de erros do sistema', 'SYSTEM_ERRORS_FETCH_ERROR');
   }
 });
 
