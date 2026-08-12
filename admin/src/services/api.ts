@@ -22,11 +22,6 @@ const SUPER_ADMIN_EMAILS = [
   'instsermelhor.adm@gmail.com'
 ];
 
-/** Estado em memória da obrigatoriedade de troca de senha no primeiro acesso */
-const forcedPasswordChangeMap = new Map<string, boolean>([
-  ['instsermelhor.adm@gmail.com', true]
-]);
-
 /** Mapeia objeto FirebaseUser para a interface interna User da aplicação */
 export function mapFirebaseUserToUser(fbUser: FirebaseUser, roleOverride?: Role): User {
   const email = (fbUser.email || '').toLowerCase();
@@ -49,88 +44,48 @@ export function mapFirebaseUserToUser(fbUser: FirebaseUser, roleOverride?: Role)
 }
 
 export const AuthService = {
+  /**
+   * Autentica o usuário exclusivamente via Firebase Auth.
+   * Nenhum bypass ou credencial hardcoded é aceito.
+   * NC-002 — credencial provisória "teste" removida por segurança.
+   */
   login: async (email: string, password: string): Promise<User> => {
     const normalizedEmail = email.trim().toLowerCase();
-    
-    // Tratamento seguro de credencial provisória de bootstrap
-    if (normalizedEmail === 'instsermelhor.adm@gmail.com') {
-      const forceChange = forcedPasswordChangeMap.get(normalizedEmail) ?? true;
-      
-      // Se ainda for a senha provisória "teste"
-      if (password === 'teste') {
-        if (!forceChange) {
-          throw new Error('A credencial provisória "teste" expirou e não pode mais ser utilizada. Utilize sua nova senha.');
-        }
-        return {
-          id: 'super_admin_universal_id',
-          name: 'Super Administrador',
-          email: 'instsermelhor.adm@gmail.com',
-          role: 'SUPER_ADMIN',
-          avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString(),
-          forcePasswordChange: true,
-          temporaryPassword: true,
-        };
-      }
-    }
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       return mapFirebaseUserToUser(userCredential.user);
     } catch (err: any) {
       console.error('[AuthService] Erro no login via Firebase Auth:', err.code, err.message);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password'
+      ) {
         throw new Error('Credenciais inválidas. Verifique seu e-mail e senha.');
       } else if (err.code === 'auth/too-many-requests') {
         throw new Error('Muitas tentativas malsucedidas. Tente novamente mais tarde.');
       } else if (err.code === 'auth/user-disabled') {
         throw new Error('Esta conta foi desativada. Contate o administrador.');
       }
-      // Se estiver rodando offline/sem backend Firebase ativo para mock local
-      if (normalizedEmail === 'instsermelhor.adm@gmail.com' && password !== 'teste') {
-        // Valida se a senha já foi alterada para a nova senha
-        return {
-          id: 'super_admin_universal_id',
-          name: 'Super Administrador',
-          email: 'instsermelhor.adm@gmail.com',
-          role: 'SUPER_ADMIN',
-          avatarUrl: 'https://ui-avatars.com/api/?name=Super+Admin&background=16a34a&color=fff&bold=true&size=80',
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString(),
-          forcePasswordChange: false,
-          temporaryPassword: false,
-        };
-      }
       throw new Error(err.message || 'Falha na autenticação. Verifique suas credenciais.');
     }
   },
 
-  changePassword: async (email: string, oldPassword: string, newPassword: string): Promise<void> => {
-    const normalizedEmail = email.trim().toLowerCase();
-    
+  changePassword: async (_email: string, oldPassword: string, newPassword: string): Promise<void> => {
     // Política de validação da nova senha
     if (newPassword.length < 8) {
       throw new Error('A nova senha deve ter no mínimo 8 caracteres.');
     }
     if (newPassword === oldPassword) {
-      throw new Error('A nova senha deve ser diferente da senha provisória/atual.');
-    }
-    if (oldPassword === 'teste' && normalizedEmail === 'instsermelhor.adm@gmail.com') {
-      // Invalida permanentemente a credencial provisória "teste"
-      forcedPasswordChangeMap.set(normalizedEmail, false);
-      return;
+      throw new Error('A nova senha deve ser diferente da senha atual.');
     }
 
-    if (auth.currentUser && auth.currentUser.email?.toLowerCase() === normalizedEmail) {
-      const { updatePassword } = await import('firebase/auth');
-      await updatePassword(auth.currentUser, newPassword);
-      forcedPasswordChangeMap.set(normalizedEmail, false);
-    } else {
-      forcedPasswordChangeMap.set(normalizedEmail, false);
+    if (!auth.currentUser) {
+      throw new Error('Nenhuma sessão ativa. Faça login novamente.');
     }
+    const { updatePassword } = await import('firebase/auth');
+    await updatePassword(auth.currentUser, newPassword);
   },
 
   logout: async (): Promise<void> => {
