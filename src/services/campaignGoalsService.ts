@@ -69,10 +69,29 @@ const FALLBACK_CAMPAIGNS: CampaignGoal[] = [
 ];
 
 export const CampaignGoalsService = {
-  /** Busca todas as campanhas de captação ativas e concluídas */
+  /** Busca todas as campanhas de captação ativas e concluídas do Firestore.
+   *  NC-014/021: fundraising_campaigns agora gerenciada pelo painel admin.
+   *  Fallback resiliente: se a coleção estiver vazia ou inacessível, usa os dados de exemplo.
+   */
   async getCampaigns(): Promise<CampaignGoal[]> {
-    return FALLBACK_CAMPAIGNS;
+    try {
+      const { collection, getDocs, query, where, orderBy } = await import('firebase/firestore');
+      const { db } = await import('../lib/firebase');
+      const q = query(
+        collection(db, 'fundraising_campaigns'),
+        where('status', '!=', 'ARCHIVED'),
+        orderBy('status'),
+        orderBy('endDate', 'asc')
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) return FALLBACK_CAMPAIGNS;
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as CampaignGoal));
+    } catch (err) {
+      console.warn('[CampaignGoalsService] Firestore indisponível, usando fallback:', err);
+      return FALLBACK_CAMPAIGNS;
+    }
   },
+
 
   /** Calcula percentual atingido (0–100%+) */
   calculateProgressPct(raised: number, target: number): number {
