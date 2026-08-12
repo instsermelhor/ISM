@@ -163,11 +163,34 @@ h1, h2, h3, h4, h5, h6 {
   color: #ffffff;
 }
 
-/* ── Focus Ring (WCAG 2.1 AAA Compliance) ─────────────────────────── */
+/* ── Focus Ring (WCAG 2.1 AA Compliance) ──────────────────────────── */
 :focus-visible {
   outline: 3px solid #22c55e;
   outline-offset: 3px;
   border-radius: 6px;
+}
+
+/* ── Skip Navigation Link (WCAG 2.4.1-A) ─────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: #16a34a;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top 0.2s ease;
+  white-space: nowrap;
+}
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
 }
 
 /* ── Utilities ─────────────────────────────────────────────────────── */
