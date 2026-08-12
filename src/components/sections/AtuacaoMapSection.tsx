@@ -209,17 +209,37 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ municipality, onClose }) => {
 export const AtuacaoMapSection: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterPillar>('ALL');
   const [selected, setSelected] = useState<Municipality | null>(null);
+  const [municipalities, setMunicipalities] = useState<Municipality[]>(AtuacaoMapService.getAll());
 
-  const stats = useMemo(() => AtuacaoMapService.getStats(), []);
-  const filtered = useMemo(
-    () => AtuacaoMapService.filterByPillar(activeFilter === 'ALL' ? 'ALL' : activeFilter),
-    [activeFilter]
-  );
+  useEffect(() => {
+    AtuacaoMapService.getAllAsync().then(setMunicipalities);
+  }, []);
+
+  const stats = useMemo(() => {
+    const total = municipalities;
+    return {
+      totalMunicipalities: total.length,
+      totalStates: new Set(total.map((m) => m.stateAbbr)).size,
+      totalBeneficiaries: total.reduce((acc, m) => acc + m.beneficiaries, 0),
+      totalProjects: total.reduce((acc, m) => acc + m.projects, 0),
+      avgSROI: parseFloat(
+        (total.reduce((acc, m) => acc + m.sroi, 0) / (total.length || 1)).toFixed(2)
+      ),
+      regions: [...new Set(total.map((m) => m.region))].length,
+    };
+  }, [municipalities]);
+
+  const filtered = useMemo(() => {
+    if (activeFilter === 'ALL') return municipalities;
+    return municipalities.filter((m) => m.pillars.includes(activeFilter));
+  }, [municipalities, activeFilter]);
+
   const filteredIds = new Set(filtered.map((m) => m.id));
 
   const handlePinClick = (m: Municipality) => {
     setSelected((prev) => (prev?.id === m.id ? null : m));
   };
+
 
   return (
     <section
@@ -398,7 +418,7 @@ export const AtuacaoMapSection: React.FC = () => {
 
             {/* Pins dos municípios */}
             <g filter="url(#pin-glow)">
-              {MUNICIPALITIES.map((m) => (
+              {municipalities.map((m) => (
                 <MapPin2
                   key={m.id}
                   municipality={m}
@@ -410,7 +430,7 @@ export const AtuacaoMapSection: React.FC = () => {
             </g>
 
             {/* Labels dos pins visíveis */}
-            {MUNICIPALITIES.filter((m) => filteredIds.has(m.id)).map((m) => {
+            {municipalities.filter((m) => filteredIds.has(m.id)).map((m) => {
               const cfg = PILLAR_CONFIG[m.primaryPillar];
               const isSelected = selected?.id === m.id;
               return (
@@ -423,6 +443,7 @@ export const AtuacaoMapSection: React.FC = () => {
                   fontSize={isSelected ? 11 : 9}
                   fontWeight={isSelected ? 700 : 500}
                   fontFamily="Inter, system-ui, sans-serif"
+
                   style={{ pointerEvents: 'none', transition: 'all 0.2s' }}
                 >
                   {m.name}
