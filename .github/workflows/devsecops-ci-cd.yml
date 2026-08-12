@@ -1,4 +1,4 @@
-name: DevSecOps CI/CD Pipeline & Automated Security Audit
+name: 🚀 ISM — CI/CD Pipeline Enterprise
 
 on:
   push:
@@ -10,15 +10,20 @@ on:
 permissions:
   contents: read
   security-events: write
+  pull-requests: write
 
+# Cancela execuções anteriores do mesmo branch ao fazer novo push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 1 — SECRET SCANNING (Gitleaks)
+# ─────────────────────────────────────────────────────────────────────────────
 jobs:
-  # ───────────────────────────────────────────────────────────────────────────
-  # JOB 1: VARREDURA DE SEGREDOS & VULNERABILIDADES DE CÓDIGO (GITLEAKS & TRUFFLEHOG)
-  # ───────────────────────────────────────────────────────────────────────────
   secret-scan:
     name: 🔒 Secret Scanning (Gitleaks)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -27,16 +32,17 @@ jobs:
 
       - name: Install Gitleaks
         run: |
-          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/main/scripts/install.sh | sh -s -- -b /usr/local/bin v8.18.4
+          curl -sSfL https://raw.githubusercontent.com/gitleaks/gitleaks/main/scripts/install.sh \
+            | sh -s -- -b /usr/local/bin v8.18.4
 
       - name: Run Gitleaks Secret Scan
-        run: gitleaks detect --source . --verbose --log-level warn --no-git || true
+        run: gitleaks detect --source . --verbose --log-level warn --no-git
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # JOB 2: ANÁLISE ESTÁTICA DE CÓDIGO & LINTING (SAST)
-  # ───────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 2 — QUALIDADE & SAST (TypeScript + ESLint nos 3 subprojetos)
+# ─────────────────────────────────────────────────────────────────────────────
   quality-and-sast:
-    name: 🔍 Lint, Type Check & SAST Analysis
+    name: 🔍 Lint, Type Check & SAST
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -48,34 +54,45 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Install Main Dependencies
+      # ── ROOT ──
+      - name: Install Root Dependencies
         run: npm ci
 
-      - name: Run ESLint
+      - name: Lint Root Project
         run: npm run lint --if-present
 
       - name: Type Check Root Project
         run: npx tsc --noEmit
 
+      # ── ADMIN ──
+      - name: Install Admin Dependencies
+        working-directory: admin
+        run: npm ci
+
+      - name: Lint Admin Project
+        working-directory: admin
+        run: npm run lint --if-present
+
       - name: Type Check Admin Project
-        run: |
-          cd admin
-          npm ci
-          npx tsc --noEmit
+        working-directory: admin
+        run: npx tsc --noEmit
 
-      - name: Type Check Serverless Cloud Functions
-        run: |
-          cd functions
-          npm ci
-          npx tsc --noEmit
+      # ── FUNCTIONS ──
+      - name: Install Functions Dependencies
+        working-directory: functions
+        run: npm ci
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # JOB 3: TESTES UNITÁRIOS E DE INTEGRAÇÃO (VITEST)
-  # ───────────────────────────────────────────────────────────────────────────
-  unit-and-integration-tests:
+      - name: Type Check Cloud Functions
+        working-directory: functions
+        run: npx tsc --noEmit
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 3 — TESTES UNITÁRIOS E DE INTEGRAÇÃO (Vitest + Coverage)
+# ─────────────────────────────────────────────────────────────────────────────
+  unit-tests:
     name: 🧪 Unit & Integration Tests (Vitest)
     runs-on: ubuntu-latest
-    needs: [quality-and-sast]
+    needs: [ quality-and-sast ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -89,16 +106,24 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Vitest Suite
-        run: npx vitest run
+      - name: Run Vitest Suite with Coverage
+        run: npx vitest run --coverage
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # JOB 4: TESTES END-TO-END (E2E PLAYWRIGHT)
-  # ───────────────────────────────────────────────────────────────────────────
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 4 — TESTES E2E (Playwright)
+# ─────────────────────────────────────────────────────────────────────────────
   e2e-tests:
-    name: 🎭 E2E Automated Tests (Playwright)
+    name: 🎭 E2E Smoke Tests (Playwright)
     runs-on: ubuntu-latest
-    needs: [unit-and-integration-tests]
+    needs: [ unit-tests ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -108,23 +133,41 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps || true
+        run: npx playwright install --with-deps chromium
 
-      - name: Run E2E Smoke Tests
-        run: npx playwright test || echo "Sem suíte Playwright configurada. Pulando."
+      - name: Run E2E Tests
+        run: |
+          if [ -f "playwright.config.ts" ] || [ -f "playwright.config.js" ]; then
+            npx playwright test
+          else
+            echo "⚠️  Nenhum playwright.config encontrado. Pulando E2E por ora."
+          fi
 
-  # ───────────────────────────────────────────────────────────────────────────
-  # JOB 5: DEPLOY E ROLLBACK AUTOMÁTICO (FIREBASE HOSTING & FUNCTIONS)
-  # ───────────────────────────────────────────────────────────────────────────
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JOB 5 — BUILD & DEPLOY (Firebase Hosting + Cloud Functions)
+# Roda apenas em push para main ou staging — nunca em PRs
+# ─────────────────────────────────────────────────────────────────────────────
   deploy:
-    name: 🚀 Build, Deploy & Multi-Environment Release
+    name: 🚀 Build & Deploy — Firebase
     runs-on: ubuntu-latest
-    needs: [secret-scan, quality-and-sast, unit-and-integration-tests]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging'
+    needs: [ secret-scan, quality-and-sast, unit-tests ]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      url: ${{ github.ref == 'refs/heads/main' && 'https://institutosermelhor.org' || 'https://ismbd-27e84.web.app' }}
 
     steps:
       - name: Checkout Code
@@ -136,7 +179,8 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Build Site Principal
+      # ── BUILD ROOT (site institucional) ──
+      - name: Build Site Institucional
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
@@ -144,30 +188,41 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          NODE_ENV: production
         run: |
           npm ci
           npm run build
+          echo "✅ Site institucional: dist/ gerado"
+          ls -lh dist/
 
+      # ── BUILD ADMIN (painel administrativo) ──
       - name: Build Painel Admin
         env:
-          VITE_SITE_URL: https://institutosermelhor.org
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_SITE_URL: https://institutosermelhor.org
+          NODE_ENV: production
+        working-directory: admin
         run: |
-          cd admin
           npm ci
           npm run build
+          echo "✅ Painel Admin: admin/dist/ gerado"
+          ls -lh dist/
 
-      - name: Build Cloud Functions Backend
+      # ── BUILD FUNCTIONS (Cloud Functions backend) ──
+      - name: Build Cloud Functions
+        working-directory: functions
         run: |
-          cd functions
           npm ci
           npm run build
+          echo "✅ Cloud Functions: functions/lib/ gerado"
+          ls -lh lib/
 
+      # ── DEPLOY FIREBASE ──
       - name: Deploy to Firebase Hosting & Cloud Functions
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -175,4 +230,45 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_ISMBD_27E84 }}'
           channelId: live
           projectId: ismbd-27e84
-        continue-on-error: true
+
+      # ── SMOKE TEST PÓS-DEPLOY ──
+      - name: Smoke Test — API Health Check
+        run: |
+          echo "🔍 Aguardando propagação do deploy (30s)..."
+          sleep 30
+
+          HEALTH_URL="https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api/api/v2/health"
+          MAX_RETRIES=5
+          RETRY_DELAY=15
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Tentativa $i/$MAX_RETRIES: GET $HEALTH_URL"
+            HTTP_STATUS=$(curl -s -o /tmp/health_response.json -w "%{http_code}" --max-time 30 "$HEALTH_URL")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ API saudável (HTTP 200):"
+              cat /tmp/health_response.json
+              exit 0
+            else
+              echo "⚠️  HTTP $HTTP_STATUS — aguardando ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "❌ Smoke test falhou após $MAX_RETRIES tentativas."
+          exit 1
+
+      # ── DEPLOY SUMMARY ──
+      - name: Deploy Summary
+        if: success()
+        run: |
+          echo "## 🚀 Deploy Concluído" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Destino | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Site Institucional | https://institutosermelhor.org |" >> $GITHUB_STEP_SUMMARY
+          echo "| Painel Admin | https://ismbd-27e84-admin.web.app |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Functions | https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Ambiente | ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }} |" >> $GITHUB_STEP_SUMMARY
