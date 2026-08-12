@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { AuditService } from '../services/api';
-import type { AuditLog } from '../types';
+import { AuditLogService, type AuditLogEntry } from '../services/auditLogService';
 import { Activity, Filter } from 'lucide-react';
+
 
 const ACTION_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   CREATE:  { label: 'Criou', bg: 'rgba(34,197,94,0.1)', color: '#16a34a' },
@@ -13,7 +13,7 @@ const ACTION_CONFIG: Record<string, { label: string; bg: string; color: string }
 };
 
 export const AuditPage: React.FC = () => {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -22,11 +22,11 @@ export const AuditPage: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    AuditService.getLogs(page, LIMIT).then(({ data, total }) => {
+    AuditLogService.getPage(page, LIMIT, filterAction).then(({ data, total }) => {
       setLogs(data);
       setTotal(total);
     }).finally(() => setLoading(false));
-  }, [page]);
+  }, [page, filterAction]);
 
   const filtered = filterAction === 'ALL' ? logs : logs.filter(l => l.action === filterAction);
   const totalPages = Math.ceil(total / LIMIT);
