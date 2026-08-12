@@ -519,14 +519,24 @@ router.post('/admin/users/:userId/role', authenticateToken, requireRole('SUPER_A
       return;
     }
 
+    const callerRole = (req as any).user.role || 'VIEWER';
+    const callerEmail = ((req as any).user.email || '').toLowerCase();
+    const isCallerSuperAdmin = callerEmail === 'instsermelhor.adm@gmail.com' || callerRole === 'SUPER_ADMIN';
+
+    // SoD Protection: Usuários administradores comuns não podem alterar a própria função
+    if ((req as any).user.uid === userId && !isCallerSuperAdmin) {
+      sendProblemDetails(res, 403, 'Forbidden', 'Você não pode alterar a sua própria função de acesso.', 'SELF_ROLE_CHANGE_FORBIDDEN');
+      return;
+    }
+
     // Proteção: apenas SUPER_ADMIN pode definir role SUPER_ADMIN
-    if (role === 'SUPER_ADMIN' && (req as any).user.email !== 'instsermelhor.adm@gmail.com') {
-      sendProblemDetails(res, 403, 'Forbidden', 'Apenas o Super Administrador pode elevar uma conta para SUPER_ADMIN.', 'FORBIDDEN');
+    if (role === 'SUPER_ADMIN' && !isCallerSuperAdmin) {
+      sendProblemDetails(res, 403, 'Forbidden', 'Apenas o Super Administrador pode elevar uma conta para SUPER_ADMIN.', 'SUPER_ADMIN_PROTECTED');
       return;
     }
 
     const target = await admin.auth().getUser(userId);
-    if ((target.customClaims as any)?.role === 'SUPER_ADMIN' && (req as any).user.email !== 'instsermelhor.adm@gmail.com') {
+    if ((target.customClaims as any)?.role === 'SUPER_ADMIN' && !isCallerSuperAdmin) {
       sendProblemDetails(res, 403, 'Forbidden', 'O role do Super Administrador não pode ser alterado por ADMINs.', 'SUPER_ADMIN_PROTECTED');
       return;
     }
@@ -573,6 +583,8 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
   try {
     const targetUserId = req.params.userId;
     const callerEmail = ((req as any).user.email || '').toLowerCase();
+    const callerRole = (req as any).user.role || 'VIEWER';
+    const isCallerSuperAdmin = callerEmail === 'instsermelhor.adm@gmail.com' || callerRole === 'SUPER_ADMIN';
 
     // Buscar perfil do usuário alvo
     const targetUserRecord = await admin.auth().getUser(targetUserId).catch(() => null);
@@ -580,7 +592,7 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
 
     // Trava de Segurança: Impedir exclusão de SUPER_ADMIN por administradores normais
     if (targetEmail === 'instsermelhor.adm@gmail.com' || targetUserRecord?.customClaims?.role === 'SUPER_ADMIN') {
-      if (callerEmail !== 'instsermelhor.adm@gmail.com') {
+      if (!isCallerSuperAdmin) {
         sendProblemDetails(res, 403, 'Forbidden', 'Operação bloqueada pelo backend. O Super Administrador não pode ser excluído por usuários delegados.', 'SUPER_ADMIN_PROTECTED');
         return;
       }
