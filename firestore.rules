@@ -46,6 +46,46 @@ service cloud.firestore {
       );
     }
 
+    /**
+     * NC-007 — GESTOR: Gestão de projetos, impacto e métricas.
+     * Acesso de LEITURA em coleções editoriais e métricas.
+     * Sem acesso a dados financeiros ou logs de auditoria.
+     * Hierarquia: GESTOR < EDITOR < ADMIN < SUPER_ADMIN
+     */
+    function isGestor() {
+      return isEditor() || (
+        isAuthenticated() &&
+        request.auth.token.role == 'GESTOR'
+      );
+    }
+
+    /**
+     * NC-007 — OPERADOR: Operações de atendimento e leads.
+     * Pode ler/atualizar leads e candidaturas de parceria.
+     * Sem acesso a conteúdo editorial, financeiro ou configurações.
+     * Hierarquia: OPERADOR < GESTOR
+     */
+    function isOperador() {
+      return isGestor() || (
+        isAuthenticated() &&
+        request.auth.token.role == 'OPERADOR'
+      );
+    }
+
+    /**
+     * NC-007 — CONSULTA / VIEWER: Acesso somente-leitura.
+     * Visualiza conteúdo publicado e dashboards.
+     * Sem acesso a dados sensíveis, financeiros ou de auditoria.
+     * Hierarquia: VIEWER/CONSULTA < OPERADOR
+     */
+    function isViewer() {
+      return isOperador() || (
+        isAuthenticated() &&
+        (request.auth.token.role == 'CONSULTA' || request.auth.token.role == 'VIEWER')
+      );
+    }
+
+
     // ─────────────────────────────────────────────────────────────────────────
     // 1. FORMULÁRIOS DE ENTRADA
     //    Leitura restrita a Admin/Editor, Criação pública validada
@@ -53,20 +93,24 @@ service cloud.firestore {
 
     match /partner_applications/{docId} {
       allow create: if isValidPartnerApplication(request.resource.data);
-      allow read: if isEditor();
-      allow update, delete: if isAdmin();
+      // OPERADOR pode ler e atualizar status (ex: triagem inicial)
+      allow read, update: if isOperador();
+      allow delete: if isAdmin();
     }
 
     match /donations/{docId} {
       allow create: if isValidDonation(request.resource.data);
-      allow read: if isEditor();
+      // OPERADOR pode ler doações para conciliação básica
+      allow read: if isOperador();
       allow update, delete: if isAdmin();
     }
 
     match /leads/{docId} {
       allow create: if isValidLead(request.resource.data);
-      allow read: if isEditor();
-      allow update, delete: if isAdmin();
+      // OPERADOR pode ler e atualizar status de leads (atendimento)
+      allow read: if isOperador();
+      allow update: if isOperador();
+      allow delete: if isAdmin();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -110,13 +154,15 @@ service cloud.firestore {
 
     match /impact_metrics/{docId} {
       allow read: if true;
-      allow create, update: if isEditor() && isValidImpactMetric(request.resource.data);
+      // GESTOR pode criar/editar métricas de impacto (sua área de atuação)
+      allow create, update: if isGestor() && isValidImpactMetric(request.resource.data);
       allow delete: if isAdmin();
     }
 
     match /pillars/{docId} {
       allow read: if true;
-      allow create, update: if isEditor() && isValidPillar(request.resource.data);
+      // GESTOR pode gerenciar pilares
+      allow create, update: if isGestor() && isValidPillar(request.resource.data);
       allow delete: if isAdmin();
     }
 
@@ -254,16 +300,48 @@ service cloud.firestore {
     }
 
     match /pipeline_cards/{docId} {
-      allow read: if isEditor();
+      // GESTOR pode ler cards do pipeline para acompanhar status de conteúdo
+      allow read: if isGestor();
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
 
     match /pipeline_tasks/{docId} {
-      allow read: if isEditor();
+      allow read: if isGestor();
       allow create, update: if isEditor();
       allow delete: if isAdmin();
     }
+
+    match /bpm_tasks/{docId} {
+      allow read: if isGestor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /bpm_processes/{docId} {
+      allow read: if isGestor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /bpm_approvals/{docId} {
+      allow read: if isGestor();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /bpm_logs/{docId} {
+      allow read: if isGestor();
+      allow create: if isEditor();
+      allow update, delete: if false; // Audit imutável
+    }
+
+    match /atuacao_map/{docId} {
+      allow read: if true;
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
 
     // ─────────────────────────────────────────────────────────────────────────
     // NOTA LGPD: Coleções clínicas/EHR (beneficiaries, patient_records,
