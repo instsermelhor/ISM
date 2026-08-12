@@ -5,7 +5,7 @@
  * Educação, Cultural). Filtros interativos, painel de detalhes e estatísticas.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MapPin, Filter, X, ChevronRight, Users, Briefcase, TrendingUp, Calendar } from 'lucide-react';
 import {
   AtuacaoMapService,
