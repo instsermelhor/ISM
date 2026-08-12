@@ -113,6 +113,19 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /volunteer_applications/{docId} {
+      allow create: if request.resource.data.email is string && request.resource.data.name is string;
+      allow read, update: if isOperador();
+      allow delete: if isAdmin();
+    }
+
+    match /beneficiary_applications/{docId} {
+      allow create: if request.resource.data.cpf is string && request.resource.data.responsibleName is string;
+      allow read, update: if isOperador();
+      allow delete: if isAdmin();
+    }
+
+
     // ─────────────────────────────────────────────────────────────────────────
     // 2. CONFIGURAÇÕES GLOBAIS & SEO
     //    Leitura pública, Escrita restrita a Admin
