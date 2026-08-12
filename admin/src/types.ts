@@ -240,6 +240,27 @@ export interface HealthCheck {
   uptime: string;
 }
 
+export interface DetailedHealthCheck extends HealthCheck {
+  memory?: {
+    rssMb: number;
+    heapTotalMb: number;
+    heapUsedMb: number;
+  };
+  uptimeSeconds?: number;
+  nodeVersion?: string;
+  databaseStatus?: 'CONNECTED' | 'DISCONNECTED';
+}
+
+export interface SystemErrorItem {
+  id: string;
+  source: string;
+  message: string;
+  route: string;
+  statusCode: number;
+  stack: string | null;
+  timestamp: string;
+}
+
 export interface SiteSetting {
   key: string;
   value: string;
