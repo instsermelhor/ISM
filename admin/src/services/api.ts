@@ -27,7 +27,8 @@ export function mapFirebaseUserToUser(fbUser: FirebaseUser, roleOverride?: Role)
   const email = (fbUser.email || '').toLowerCase();
   const isSuperAdmin = email === 'instsermelhor.adm@gmail.com' || SUPER_ADMIN_EMAILS.includes(email);
   const role: Role = isSuperAdmin ? 'SUPER_ADMIN' : (roleOverride || 'EDITOR');
-  const forceChange = forcedPasswordChangeMap.get(email) ?? false;
+  const forceChange = false;
+
 
   return {
     id: fbUser.uid,
