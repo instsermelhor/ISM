@@ -17,3 +17,17 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+
+// A11y/PWA: Registra o Service Worker apenas em produção (WCAG — não interfere em dev/HMR)
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .then((registration) => {
+        console.info('[PWA] Service Worker registrado com sucesso.', registration.scope);
+      })
+      .catch((err) => {
+        console.warn('[PWA] Falha ao registrar Service Worker:', err);
+      });
+  });
+}
