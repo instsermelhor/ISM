@@ -88,7 +88,7 @@ describe('Suíte Obrigatória de Testes de Segurança e Autenticação (SIL-ISM 
   });
 
   it('Teste 08: Auto-promoção para SUPER_ADMIN pelo ADMIN é bloqueada pela lógica RBAC', () => {
-    const caller = { role: 'ADMIN' as const };
+    const caller = { role: 'ADMIN' as string };
     const attemptSelfPromotion = (targetRole: string) => {
       if (caller.role !== 'SUPER_ADMIN' && targetRole === 'SUPER_ADMIN') {
         throw new Error('Acesso negado: Usuários delegados não têm permissão para atribuir a função SUPER_ADMIN.');
@@ -98,7 +98,7 @@ describe('Suíte Obrigatória de Testes de Segurança e Autenticação (SIL-ISM 
   });
 
   it('Teste 09: ADMIN não pode elevar seus próprios privilégios', () => {
-    const callerRole = 'ADMIN';
+    const callerRole: string = 'ADMIN';
     const canAssignSuperAdmin = callerRole === 'SUPER_ADMIN';
     expect(canAssignSuperAdmin).toBe(false);
   });
