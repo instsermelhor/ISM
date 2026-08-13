@@ -273,3 +273,31 @@ h1, h2, h3, h4, h5, h6 {
 .skip-link:focus {
   top: 0;
 }
+
+/* ── PERF-001 — Core Web Vitals & Content Visibility Optimizations ── */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
+.cv-auto-short {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+}
+
+.cv-auto-tall {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 1000px;
+}
+
+/* Zero-CLS Skeleton placeholder styling */
+.perf-skeleton {
+  background: linear-gradient(90deg, #f4f4f5 25%, #e4e4e7 50%, #f4f4f5 75%);
+  background-size: 200% 100%;
+  animation: perf-shimmer 1.5s infinite;
+}
+
+@keyframes perf-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

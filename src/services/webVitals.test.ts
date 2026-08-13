@@ -1,13 +1,13 @@
 /**
- * webVitals.test.ts — F002: Otimização de Core Web Vitals & Carregamento Preditivo
+ * webVitals.test.ts — PERF-001: Otimização de Core Web Vitals & Carregamento Preditivo
  * ─────────────────────────────────────────────────────────────────────────────────────────────
- * Suíte de testes unitários para o Serviço de Medição de Core Web Vitals.
+ * Suíte de testes unitários para o Serviço de Medição e Telemetria de Core Web Vitals.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WebVitalsService } from './webVitalsService';
 
-describe('F002 — WebVitalsService (Core Web Vitals Telemetry)', () => {
+describe('PERF-001 — WebVitalsService (Core Web Vitals Telemetry & RUM)', () => {
 
   describe('LCP Rating (Largest Contentful Paint)', () => {
     it('classifica <= 2500ms como GOOD', () => {
@@ -54,8 +54,44 @@ describe('F002 — WebVitalsService (Core Web Vitals Telemetry)', () => {
     });
   });
 
-  describe('getSnapshot', () => {
+  describe('FCP Rating (First Contentful Paint)', () => {
+    it('classifica <= 1800ms como GOOD', () => {
+      expect(WebVitalsService.rateFCP(800)).toBe('GOOD');
+      expect(WebVitalsService.rateFCP(1800)).toBe('GOOD');
+    });
+
+    it('classifica > 1800ms e <= 3000ms como NEEDS_IMPROVEMENT', () => {
+      expect(WebVitalsService.rateFCP(2400)).toBe('NEEDS_IMPROVEMENT');
+    });
+
+    it('classifica > 3000ms como POOR', () => {
+      expect(WebVitalsService.rateFCP(3500)).toBe('POOR');
+    });
+  });
+
+  describe('TTFB Rating (Time to First Byte)', () => {
+    it('classifica <= 800ms como GOOD', () => {
+      expect(WebVitalsService.rateTTFB(200)).toBe('GOOD');
+      expect(WebVitalsService.rateTTFB(800)).toBe('GOOD');
+    });
+
+    it('classifica > 800ms e <= 1800ms como NEEDS_IMPROVEMENT', () => {
+      expect(WebVitalsService.rateTTFB(1200)).toBe('NEEDS_IMPROVEMENT');
+    });
+
+    it('classifica > 1800ms como POOR', () => {
+      expect(WebVitalsService.rateTTFB(2200)).toBe('POOR');
+    });
+  });
+
+  describe('recordMetric & getSnapshot', () => {
     it('gera snapshot com todas as 5 métricas essenciais (LCP, INP, CLS, FCP, TTFB)', () => {
+      WebVitalsService.recordMetric('lcp', 1400);
+      WebVitalsService.recordMetric('inp', 75);
+      WebVitalsService.recordMetric('cls', 0.015);
+      WebVitalsService.recordMetric('fcp', 850);
+      WebVitalsService.recordMetric('ttfb', 190);
+
       const snap = WebVitalsService.getSnapshot();
 
       expect(snap.lcp.name).toBe('LCP');
@@ -67,6 +103,31 @@ describe('F002 — WebVitalsService (Core Web Vitals Telemetry)', () => {
       expect(snap.lcp.rating).toBe('GOOD');
       expect(snap.overallRating).toBe('GOOD');
       expect(snap.measuredAt).toBeTruthy();
+    });
+
+    it('identifica overallRating como NEEDS_IMPROVEMENT quando uma métrica decai', () => {
+      WebVitalsService.recordMetric('lcp', 3200); // Needs improvement
+      WebVitalsService.recordMetric('inp', 75);
+      WebVitalsService.recordMetric('cls', 0.01);
+      WebVitalsService.recordMetric('fcp', 800);
+      WebVitalsService.recordMetric('ttfb', 200);
+
+      const snap = WebVitalsService.getSnapshot();
+      expect(snap.lcp.rating).toBe('NEEDS_IMPROVEMENT');
+      expect(snap.overallRating).toBe('NEEDS_IMPROVEMENT');
+    });
+
+    it('identifica overallRating como POOR quando uma métrica atinge nível crítico', () => {
+      WebVitalsService.recordMetric('lcp', 5000); // Poor
+      const snap = WebVitalsService.getSnapshot();
+      expect(snap.lcp.rating).toBe('POOR');
+      expect(snap.overallRating).toBe('POOR');
+    });
+  });
+
+  describe('initPerformanceObservers', () => {
+    it('executa sem lançar exceções em qualquer ambiente', () => {
+      expect(() => WebVitalsService.initPerformanceObservers()).not.toThrow();
     });
   });
 });

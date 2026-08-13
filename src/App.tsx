@@ -1,33 +1,33 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, Suspense, lazy } from 'react';
 
-// Layout
+// Layout Crítico (Above the Fold — Eager)
 import { InstitutionalWrapper } from './components/layout/InstitutionalWrapper';
-
-// Sections
 import { HeroInstitutional } from './components/sections/HeroInstitutional';
 import { ImpactMetrics } from './components/sections/ImpactMetrics';
 import { MissionVisionValues } from './components/sections/MissionVisionValues';
-import { TimelineSection } from './components/sections/TimelineSection';
-import { IdentityAndNetwork } from './components/sections/IdentityAndNetwork';
 import { ValuesSection } from './components/sections/ValuesSection';
-import { GovernanceStructure } from './components/sections/GovernanceStructure';
-import { TransparencyReport } from './components/sections/TransparencyReport';
-import { PartnerSection } from './components/sections/PartnerSection';
-import { PartnersESGSection } from './components/sections/PartnersESGSection';
-import { CampaignGoalsSection } from './components/sections/CampaignGoalsSection';
-import { AtuacaoMapSection } from './components/sections/AtuacaoMapSection';
-import { DonationSection } from './components/sections/DonationSection';
 import { ProgramsSection } from './components/sections/ProgramsSection';
 import { PillarsSection } from './components/sections/PillarsSection';
-import { NewsSection } from './components/sections/NewsSection';
-import { SROICalculator } from './components/sections/SROICalculator';
+import { DonationSection } from './components/sections/DonationSection';
 
-// UI & Legal
+// Seções Below the Fold & Componentes Interativos (Lazy Loaded — PERF-001)
+const SROICalculator = lazy(() => import('./components/sections/SROICalculator').then(m => ({ default: m.SROICalculator })));
+const TimelineSection = lazy(() => import('./components/sections/TimelineSection').then(m => ({ default: m.TimelineSection })));
+const IdentityAndNetwork = lazy(() => import('./components/sections/IdentityAndNetwork').then(m => ({ default: m.IdentityAndNetwork })));
+const GovernanceStructure = lazy(() => import('./components/sections/GovernanceStructure').then(m => ({ default: m.GovernanceStructure })));
+const TransparencyReport = lazy(() => import('./components/sections/TransparencyReport').then(m => ({ default: m.TransparencyReport })));
+const NewsSection = lazy(() => import('./components/sections/NewsSection').then(m => ({ default: m.NewsSection })));
+const PartnerSection = lazy(() => import('./components/sections/PartnerSection').then(m => ({ default: m.PartnerSection })));
+const PartnersESGSection = lazy(() => import('./components/sections/PartnersESGSection').then(m => ({ default: m.PartnersESGSection })));
+const AtuacaoMapSection = lazy(() => import('./components/sections/AtuacaoMapSection').then(m => ({ default: m.AtuacaoMapSection })));
+const CampaignGoalsSection = lazy(() => import('./components/sections/CampaignGoalsSection').then(m => ({ default: m.CampaignGoalsSection })));
+
+// UI & Legal (Lazy Loaded — PERF-001)
 import { Modal } from './components/ui/Modal';
-import { PrivacyPolicy } from './components/legal/PrivacyPolicy';
-import { TermsOfUse } from './components/legal/TermsOfUse';
+const PrivacyPolicy = lazy(() => import('./components/legal/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfUse = lazy(() => import('./components/legal/TermsOfUse').then(m => ({ default: m.TermsOfUse })));
 import { LanguageProvider } from './contexts/LanguageContext';
-import { AIAssistantWidget } from './components/ui/AIAssistantWidget';
+const AIAssistantWidget = lazy(() => import('./components/ui/AIAssistantWidget').then(m => ({ default: m.AIAssistantWidget })));
 import { PWAInstallBanner } from './components/ui/PWAInstallBanner';
 import { PerformanceMonitorBadge } from './components/ui/PerformanceMonitorBadge';
 import { CookieConsentBanner } from './components/ui/CookieConsentBanner';
@@ -37,12 +37,19 @@ import { SEOService } from './services/seoService';
 import { PWARegisterService } from './services/pwaRegisterService';
 import { AnalyticsService } from './services/analyticsService';
 import { TelemetryService } from './services/telemetryService';
-import { BeneficiaryPortalModal } from './components/beneficiary/BeneficiaryPortalModal';
-import { VolunteerPortalModal } from './components/volunteer/VolunteerPortalModal';
+const BeneficiaryPortalModal = lazy(() => import('./components/beneficiary/BeneficiaryPortalModal').then(m => ({ default: m.BeneficiaryPortalModal })));
+const VolunteerPortalModal = lazy(() => import('./components/volunteer/VolunteerPortalModal').then(m => ({ default: m.VolunteerPortalModal })));
 
 // Data & Types
 import { InstitutionalService } from './services/data';
 import { AppData } from './types';
+
+// Zero-CLS Section Fallback (PERF-001)
+const SectionSkeleton: React.FC<{ height?: string }> = ({ height = "h-80" }) => (
+  <div className={`w-full ${height} flex items-center justify-center p-6`} aria-hidden="true">
+    <div className="w-full max-w-6xl h-full rounded-2xl perf-skeleton opacity-60 border border-zinc-200" />
+  </div>
+);
 
 // Realtime hooks (onSnapshot — atualização em < 1s quando admin publica)
 import {
@@ -440,7 +447,11 @@ function App() {
           <ImpactMetrics items={activeMetrics} />
 
           {/* Calculadora SROI Automatizada — lê de sroi_config/main (realtime) */}
-          <SROICalculator sroiData={realtimeSROI} />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <SROICalculator sroiData={realtimeSROI} />
+            </div>
+          </Suspense>
 
           {/* Missão / Visão / Valores — lê de institutional_page/main (realtime) */}
           <MissionVisionValues data={activePageAttrs as any} />
@@ -459,85 +470,123 @@ function App() {
           <PillarsSection pillars={activePillars} />
 
           {/* Timeline — lê de timeline_milestones (realtime) */}
-          <TimelineSection milestones={activeTimeline as any} />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <TimelineSection milestones={activeTimeline as any} />
+            </div>
+          </Suspense>
 
           {/* Identidade & Rede — lê de institutional_page/main + services_page/main */}
-          <IdentityAndNetwork
-            pageData={activePageAttrs as any}
-            networkCards={activeServices?.networkCards}
-          />
+          <Suspense fallback={<SectionSkeleton height="h-80" />}>
+            <div className="cv-auto-short">
+              <IdentityAndNetwork
+                pageData={activePageAttrs as any}
+                networkCards={activeServices?.networkCards}
+              />
+            </div>
+          </Suspense>
 
           {/* Governança — lê de governance_instances + governance_members (realtime) */}
-          <GovernanceStructure
-            intro={activePageAttrs?.governanceIntro}
-            instances={activeGovInst as any}
-            members={activeGovMem as any}
-          />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <GovernanceStructure
+                intro={activePageAttrs?.governanceIntro}
+                instances={activeGovInst as any}
+                members={activeGovMem as any}
+              />
+            </div>
+          </Suspense>
 
           {/* Transparência — lê de services_page/main (realtime) */}
-          <TransparencyReport
-            intro={activeServices?.transparencyIntro || activePageAttrs?.transparencyIntro}
-            documents={
-              activeServices?.transparencyDocuments?.length
-                ? activeServices.transparencyDocuments
-                : activePageAttrs?.transparencyDocuments
-            }
-            financials={data?.financials ?? []}
-            efficiencyPct={activeServices?.efficiencyPct}
-            integrityPillars={activeServices?.integrityPillars}
-          />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <TransparencyReport
+                intro={activeServices?.transparencyIntro || activePageAttrs?.transparencyIntro}
+                documents={
+                  activeServices?.transparencyDocuments?.length
+                    ? activeServices.transparencyDocuments
+                    : activePageAttrs?.transparencyDocuments
+                }
+                financials={data?.financials ?? []}
+                efficiencyPct={activeServices?.efficiencyPct}
+                integrityPillars={activeServices?.integrityPillars}
+              />
+            </div>
+          </Suspense>
 
           {/* Blog/Notícias — lê de blog_posts (realtime, filtro PUBLISHED) */}
-          <NewsSection posts={activeBlog} />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <NewsSection posts={activeBlog} />
+            </div>
+          </Suspense>
 
           {/* Parceiros — lê de partners (realtime, filtro isPublished) + formulário de candidatura */}
-          <PartnerSection
-            servicesPage={activeServices}
-            partners={activePartners}
-          />
+          <Suspense fallback={<SectionSkeleton height="h-80" />}>
+            <div className="cv-auto-short">
+              <PartnerSection
+                servicesPage={activeServices}
+                partners={activePartners}
+              />
+            </div>
+          </Suspense>
 
           {/* Portal de Parceiros & Co-benefícios ESG — E002 */}
-          <PartnersESGSection />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <PartnersESGSection />
+            </div>
+          </Suspense>
 
           {/* Mapa Interativo de Atuação por Município e Pilar — G001 */}
-          <AtuacaoMapSection />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <AtuacaoMapSection />
+            </div>
+          </Suspense>
 
           {/* Painel Público de Metas e Termômetro de Captação em Tempo Real — E004 */}
-          <CampaignGoalsSection />
+          <Suspense fallback={<SectionSkeleton height="h-96" />}>
+            <div className="cv-auto">
+              <CampaignGoalsSection />
+            </div>
+          </Suspense>
 
           {/* Doações — lê de donation_section/main (realtime) */}
           <DonationSection donationData={activeDonation} />
         </main>
       </InstitutionalWrapper>
 
-      {/* Legal Modals */}
-      <Modal
-        isOpen={isPrivacyOpen}
-        onClose={() => setState(s => ({ ...s, isPrivacyOpen: false }))}
-        title="Política de Privacidade"
-      >
-        <PrivacyPolicy />
-      </Modal>
+      {/* Legal Modals (Lazy Loaded) */}
+      <Suspense fallback={null}>
+        <Modal
+          isOpen={isPrivacyOpen}
+          onClose={() => setState(s => ({ ...s, isPrivacyOpen: false }))}
+          title="Política de Privacidade"
+        >
+          <PrivacyPolicy />
+        </Modal>
 
-      <Modal
-        isOpen={isTermsOpen}
-        onClose={() => setState(s => ({ ...s, isTermsOpen: false }))}
-        title="Termos de Uso"
-      >
-        <TermsOfUse />
-      </Modal>
+        <Modal
+          isOpen={isTermsOpen}
+          onClose={() => setState(s => ({ ...s, isTermsOpen: false }))}
+          title="Termos de Uso"
+        >
+          <TermsOfUse />
+        </Modal>
 
-      {/* Portal do Beneficiário & Famílias Assistidas — G002 */}
-      <BeneficiaryPortalModal
-        isOpen={state.isBeneficiaryPortalOpen}
-        onClose={() => setState(s => ({ ...s, isBeneficiaryPortalOpen: false }))}
-      />
+        {/* Portal do Beneficiário & Famílias Assistidas — G002 */}
+        <BeneficiaryPortalModal
+          isOpen={state.isBeneficiaryPortalOpen}
+          onClose={() => setState(s => ({ ...s, isBeneficiaryPortalOpen: false }))}
+        />
 
-      {/* Portal de Voluntários & Registro de Horas — G003 */}
-      <VolunteerPortalModal
-        isOpen={state.isVolunteerPortalOpen}
-        onClose={() => setState(s => ({ ...s, isVolunteerPortalOpen: false }))}
-      />
+        {/* Portal de Voluntários & Registro de Horas — G003 */}
+        <VolunteerPortalModal
+          isOpen={state.isVolunteerPortalOpen}
+          onClose={() => setState(s => ({ ...s, isVolunteerPortalOpen: false }))}
+        />
+      </Suspense>
 
       {/* Botões de Acesso Rápido (Portal Família & Portal Voluntário) — Posicionados à esquerda para não sobrepor o Assistente ISM */}
       <div
@@ -599,8 +648,10 @@ function App() {
         </button>
       </div>
 
-      {/* Agente IA de Atendimento Flutuante — D001 */}
-      <AIAssistantWidget />
+      {/* Agente IA de Atendimento Flutuante — D001 (Lazy Loaded) */}
+      <Suspense fallback={null}>
+        <AIAssistantWidget />
+      </Suspense>
 
       {/* Banner de Instalação PWA — F001 */}
       <PWAInstallBanner />
