@@ -154,8 +154,8 @@ describe('WebVitalsService — Classificação de métricas (CWV)', () => {
 
     it('é silencioso quando window é undefined (SSR)', () => {
       const originalWindow = global.window;
-      // @ts-expect-error — simula SSR
-      delete global.window;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (global as any).window;
       expect(() => WebVitalsService.initPerformanceObservers()).not.toThrow();
       global.window = originalWindow;
     });
