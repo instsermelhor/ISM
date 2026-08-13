@@ -94,13 +94,6 @@
       "collectionGroup": "programs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "slug", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "programs",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "category", "order": "ASCENDING" },
         { "fieldPath": "order", "order": "ASCENDING" }
       ]
@@ -143,20 +136,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "isPublished", "order": "ASCENDING" },
-        { "fieldPath": "order", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "pillars",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "order", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "impact_metrics",
-      "queryScope": "COLLECTION",
-      "fields": [
         { "fieldPath": "order", "order": "ASCENDING" }
       ]
     },
