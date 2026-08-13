@@ -7,7 +7,7 @@ import {
   Users, Globe, ChevronDown, LogOut, Menu, X, Zap,
   DollarSign, CreditCard, Landmark, Target, UserCheck,
   Heart, Monitor, Settings, Star, Shield, Clock, FileText, TrendingUp, Bot,
-  HeartHandshake, MapPin
+  HeartHandshake, MapPin, Building2
 } from 'lucide-react';
 
 interface NavGroup {
@@ -79,9 +79,10 @@ const NAV: NavGroup[] = [
     ]
   },
   {
-    label: 'Sistema',
+    label: 'Sistema & Multi-Tenancy',
     items: [
-      { to: '/usuarios', label: 'Usuários', Icon: Users, roles: ['ADMIN'] },
+      { to: '/usuarios', label: 'Usuários & Permissões', Icon: Users, roles: ['ADMIN'] },
+      { to: '/tenants', label: 'Tenants & Isolamento', Icon: Building2, roles: ['ADMIN'], badge: 'MT-001' },
       { to: '/auditoria', label: 'Auditoria', Icon: Activity, roles: ['ADMIN'] },
       { to: '/auditoria/lgpd', label: 'Copiloto LGPD', Icon: Shield, roles: ['ADMIN'], badge: 'D004' },
       { to: '/health', label: 'Health Check', Icon: HeartPulse },
