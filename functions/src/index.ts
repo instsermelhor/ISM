@@ -33,7 +33,33 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
+
+// Proteção contra fingerprinting do framework
+app.disable('x-powered-by');
+
+app.use(express.json({ limit: '1mb' }));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MIDDLEWARE DE SEGURANÇA HTTP (Hardening — Fase 15)
+// Injeta cabeçalhos de segurança em TODAS as respostas da API
+// ─────────────────────────────────────────────────────────────────────────────
+app.use((_req: Request, res: Response, next: NextFunction): void => {
+  // HSTS: forçar HTTPS por 2 anos com preload
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  // Prevenir MIME-sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Proibir embedding em iframes externos
+  res.setHeader('X-Frame-Options', 'DENY');
+  // Controlar informações enviadas no Referer
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // APIs não devem ser cacheadas em proxies intermediários
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  // CORP para APIs JSON
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MEMORY / IDEMPOTENCY & RATE LIMITING
