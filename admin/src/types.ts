@@ -39,6 +39,76 @@ export interface Donor {
   createdAt: string;
 }
 
+// ── MULTI-TENANCY ENTERPRISE (MT-001) ────────────────────────────
+export type TenantType = 
+  | 'INSTITUTION_HQ'       // Sede / Instituto Ser Melhor Matriz (Tenant Global)
+  | 'CORPORATE_SPONSOR'    // Patrocinador Corporativo
+  | 'NGO_PARTNER'          // ONG / OSC Parceira
+  | 'PUBLIC_AGENCY'        // Órgão Público / Secretaria
+  | 'REGIONAL_HUB';        // Polo Regional Descentralizado
+
+export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'ONBOARDING' | 'ARCHIVED';
+
+export type TenantRole = 'TENANT_ADMIN' | 'TENANT_GESTOR' | 'TENANT_OPERADOR' | 'TENANT_VIEWER';
+
+export interface TenantSettings {
+  primaryColor?: string;
+  logoUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  allowedDomains?: string[];
+  maxUsers?: number;
+  dataRetentionDays?: number;
+  enableAuditStreaming?: boolean;
+  webhookUrl?: string;
+  features?: {
+    customBranding?: boolean;
+    crmLeads?: boolean;
+    donationsManagement?: boolean;
+    bpmWorkflows?: boolean;
+    financialReports?: boolean;
+    biAnalytics?: boolean;
+  };
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  type: TenantType;
+  status: TenantStatus;
+  documentNumber?: string;
+  domain?: string;
+  settings: TenantSettings;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+}
+
+export interface TenantMembership {
+  id: string;
+  userId: string;
+  userEmail: string;
+  tenantId: string;
+  role: TenantRole;
+  isDefault: boolean;
+  isActive: boolean;
+  grantedBy: string;
+  grantedAt: string;
+  expiresAt?: string;
+}
+
+export interface TenantContextState {
+  activeTenantId: string;
+  activeTenant: Tenant | null;
+  userRoleInTenant: TenantRole | 'SUPER_ADMIN' | null;
+  isSuperAdmin: boolean;
+  availableTenants: Tenant[];
+  switchTenant: (tenantId: string) => Promise<void>;
+  isLoading: boolean;
+}
+
 export interface Donation {
   id: string;
   donor: Pick<Donor, 'id' | 'name' | 'email' | 'avatarUrl' | 'tier' | 'isAnonymous'>;
@@ -47,6 +117,7 @@ export interface Donation {
   method: DonationMethod;
   status: DonationStatus;
   recurrence: RecurrenceType;
+  tenantId?: string; // MT-001
   campaignId?: string;
   campaignName?: string;
   description?: string;
@@ -60,6 +131,7 @@ export interface Donation {
 }
 
 export interface FinancialSummary {
+  tenantId?: string; // MT-001
   totalReceived: number;
   totalReceived30d: number;
   totalReceived12m: number;
@@ -87,6 +159,7 @@ export interface MonthlyFinancial {
 
 export interface BankConnection {
   id: string;
+  tenantId?: string; // MT-001
   bankName: string;
   bankCode: string;
   accountName: string;
@@ -104,6 +177,7 @@ export interface BankConnection {
 
 export interface BankTransaction {
   id: string;
+  tenantId?: string; // MT-001
   bankConnectionId: string;
   type: TransactionType;
   amount: number;
@@ -117,6 +191,7 @@ export interface BankTransaction {
 
 export interface FinancialGoal {
   id: string;
+  tenantId?: string; // MT-001
   title: string;
   description?: string;
   targetAmount: number;
@@ -132,6 +207,8 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  tenantId?: string; // MT-001: Tenant principal ou ativo
+  allowedTenants?: string[]; // MT-001: Lista de tenants acessíveis
   avatarUrl?: string;
   isActive: boolean;
   lastLoginAt?: string;
@@ -194,6 +271,7 @@ export interface TeamMember {
 
 export interface ContactLead {
   id: string;
+  tenantId?: string; // MT-001
   name: string;
   email: string;
   phone?: string;
@@ -207,6 +285,7 @@ export interface ContactLead {
 
 export interface PipelineCard {
   id: string;
+  tenantId?: string; // MT-001
   title: string;
   description?: string;
   stage: PipelineStage;
@@ -218,10 +297,11 @@ export interface PipelineCard {
 
 export interface AuditLog {
   id: string;
+  tenantId?: string; // MT-001
   userId: string;
   userName: string;
   userAvatar?: string;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'PUBLISH' | 'ARCHIVE';
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'PUBLISH' | 'ARCHIVE' | 'TENANT_SWITCH' | 'ACCESS_DENIED';
   entity: string;
   entityId?: string;
   description: string;
@@ -253,6 +333,7 @@ export interface DetailedHealthCheck extends HealthCheck {
 
 export interface SystemErrorItem {
   id: string;
+  tenantId?: string; // MT-001
   source: string;
   message: string;
   route: string;
@@ -270,6 +351,7 @@ export interface SiteSetting {
 }
 
 export interface AnalyticsSummary {
+  tenantId?: string; // MT-001
   pageviews30d: number;
   uniqueVisitors30d: number;
   bounceRate: number;
