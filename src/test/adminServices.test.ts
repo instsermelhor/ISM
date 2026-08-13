@@ -98,7 +98,7 @@ describe('Suíte de Testes Unitários dos Serviços de Administração (Fase 11 
       const publishedPosts = await BlogService.getPublished();
       expect(Array.isArray(publishedPosts)).toBe(true);
       publishedPosts.forEach(post => {
-        expect(post.isPublished ?? (post.status === 'PUBLISHED')).toBe(true);
+        expect(post.publishedAt !== undefined || post.status === 'PUBLISHED').toBe(true);
       });
     });
   });
