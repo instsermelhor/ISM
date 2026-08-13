@@ -777,6 +777,13 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    res.status(200).json({ success: true, message: 'Usuário excluído com sucesso' });
+  } catch (error: any) {
+    logStructured('ERROR', 'Falha ao excluir usuário', { error: error.message });
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao excluir usuário', 'USER_DELETE_ERROR');
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ENDPOINTS MULTI-TENANCY ENTERPRISE (MT-001)
 // ─────────────────────────────────────────────────────────────────────────────
