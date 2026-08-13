@@ -308,18 +308,57 @@ router.post('/leads', rateLimiterMiddleware(10, 60000), async (req: Request, res
 });
 
 /**
- * Middleware de Autorização baseado em Papéis RBAC.
+ * Middleware de Resolução de Contexto de Multi-Tenancy (MT-001)
  *
- * NC-003 — Correção de leitura de Custom Claims do Firebase JWT.
- * O Firebase Admin SDK (verifyIdToken) popula custom claims diretamente
- * no objeto raiz do decoded token (e.g., decodedToken.role = 'ADMIN').
- * Não existe `decodedToken.customClaims` — esse campo pertence ao
- * firebase-admin.auth().getUser(), não ao token decodificado.
- *
- * Hierarquia de resolução de role:
- *   1. E-mail de Super Admin (proteção de emergência)
- *   2. Custom claim `role` no token JWT (setCustomUserClaims via Admin SDK)
- *   3. Fallback: 'VIEWER' (mínimo privilégio — sem acesso)
+ * Princípio Zero Trust:
+ * 1. O frontend NUNCA dita isolamento arbitrariamente.
+ * 2. O tenantId é resolvido a partir do token JWT assinado (Custom Claims) ou perfil autorizado.
+ * 3. SUPER_ADMIN global pode explicitar tenant de trabalho (via header x-tenant-id), com auditoria integral.
+ * 4. Tentativas de acesso cross-tenant por usuários delegados são bloqueadas com 403 FORBIDDEN.
+ */
+async function resolveTenantContext(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const user = (req as any).user;
+  if (!user) {
+    (req as any).tenantId = 'tenant-ism-hq';
+    return next();
+  }
+
+  const SUPER_ADMIN_EMAIL = 'instsermelhor.adm@gmail.com';
+  const userEmail = (user.email || '').toLowerCase();
+  const userRole = (user as any).role || 'VIEWER';
+  const isSuperAdmin = userEmail === SUPER_ADMIN_EMAIL || userRole === 'SUPER_ADMIN';
+
+  const requestedTenant = (req.headers['x-tenant-id'] as string || req.query.tenantId as string || '').trim();
+
+  if (isSuperAdmin) {
+    (req as any).tenantId = requestedTenant || 'tenant-ism-hq';
+    (req as any).isSuperAdmin = true;
+    return next();
+  }
+
+  // Obter tenants autorizados para o usuário a partir do token ou Firestore
+  const tokenTenantId = (user as any).tenantId || (user as any).tenant_id || 'tenant-ism-hq';
+  const userAllowedTenants: string[] = Array.isArray((user as any).tenants)
+    ? (user as any).tenants
+    : [tokenTenantId];
+
+  if (requestedTenant && !userAllowedTenants.includes(requestedTenant)) {
+    logStructured('WARNING', `[MT-001] Tentativa de acesso cross-tenant bloqueada: Usuário ${user.email} tentou acessar ${requestedTenant}`, {
+      userEmail: user.email,
+      attemptedTenant: requestedTenant,
+      authorizedTenants: userAllowedTenants,
+    });
+    sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Você não possui autorização para operar neste Tenant.', 'CROSS_TENANT_ACCESS_DENIED');
+    return;
+  }
+
+  (req as any).tenantId = requestedTenant || tokenTenantId;
+  (req as any).isSuperAdmin = false;
+  next();
+}
+
+/**
+ * Middleware de Autorização baseado em Papéis RBAC e Escopo de Tenant.
  */
 function requireRole(...allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -337,10 +376,7 @@ function requireRole(...allowedRoles: string[]) {
       return next();
     }
 
-    // 2. Leitura correta do custom claim 'role' do token JWT Firebase
-    // O Admin SDK seta via: admin.auth().setCustomUserClaims(uid, { role: 'ADMIN' })
-    // E o token decodificado expõe como: decodedToken.role (campo raiz)
-    const role: string = (user as any).role || 'VIEWER';
+    const role: string = (user as any).role || (user as any).tenantRole || 'VIEWER';
 
     if (role === 'SUPER_ADMIN') {
       return next();
@@ -359,6 +395,37 @@ function requireRole(...allowedRoles: string[]) {
     );
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCHEMAS DE MULTI-TENANCY (MT-001)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TenantCreateSchema = z.object({
+  name: z.string().min(2, 'Nome do tenant deve ter no mínimo 2 caracteres').max(200),
+  slug: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minúsculas, números e hífens'),
+  type: z.enum(['INSTITUTION_HQ', 'CORPORATE_SPONSOR', 'NGO_PARTNER', 'PUBLIC_AGENCY', 'REGIONAL_HUB']).default('NGO_PARTNER'),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'ONBOARDING', 'ARCHIVED']).default('ACTIVE'),
+  documentNumber: z.string().max(30).optional(),
+  domain: z.string().max(200).optional(),
+  settings: z.record(z.any()).optional(),
+  metadata: z.record(z.any()).optional(),
+});
+
+const TenantUpdateSchema = z.object({
+  name: z.string().min(2).max(200).optional(),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'ONBOARDING', 'ARCHIVED']).optional(),
+  documentNumber: z.string().max(30).optional(),
+  domain: z.string().max(200).optional(),
+  settings: z.record(z.any()).optional(),
+  metadata: z.record(z.any()).optional(),
+});
+
+const TenantMemberSchema = z.object({
+  userId: z.string().min(1, 'userId é obrigatório'),
+  userEmail: z.string().email('E-mail inválido'),
+  role: z.enum(['TENANT_ADMIN', 'TENANT_GESTOR', 'TENANT_OPERADOR', 'TENANT_VIEWER']),
+  isDefault: z.boolean().default(false),
+});
 
 /** PUT /api/v2/admin/cms/institutional */
 router.put('/admin/cms/institutional', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN', 'EDITOR'), async (req: Request, res: Response): Promise<void> => {
@@ -635,10 +702,263 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    res.status(200).json({ success: true, message: 'Usuário excluído com sucesso.' });
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS MULTI-TENANCY ENTERPRISE (MT-001)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/v2/admin/tenants — Lista tenants autorizados para o usuário */
+router.get('/admin/tenants', authenticateToken, resolveTenantContext, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const isSuper = (req as any).isSuperAdmin;
+    const currentTenantId = (req as any).tenantId;
+
+    if (isSuper) {
+      const snap = await db.collection('tenants').orderBy('createdAt', 'desc').limit(100).get();
+      const tenants = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.status(200).json({ tenants, total: tenants.length });
+      return;
+    }
+
+    // Usuário regular: apenas o seu próprio tenant autorizado
+    const snap = await db.collection('tenants').doc(currentTenantId).get();
+    if (!snap.exists) {
+      // Fallback para tenant institucional mestre padrão
+      res.status(200).json({
+        tenants: [{
+          id: 'tenant-ism-hq',
+          name: 'Instituto Ser Melhor — Sede Matriz',
+          slug: 'ism-matriz',
+          type: 'INSTITUTION_HQ',
+          status: 'ACTIVE',
+        }],
+        total: 1,
+      });
+      return;
+    }
+
+    res.status(200).json({ tenants: [{ id: snap.id, ...snap.data() }], total: 1 });
   } catch (err: any) {
-    console.error('[API Gateway] Erro ao excluir usuário:', err);
-    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao excluir usuário', 'USER_DELETE_ERROR');
+    console.error('[MT-001] Erro ao listar tenants:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao consultar lista de tenants', 'TENANT_LIST_ERROR');
+  }
+});
+
+/** POST /api/v2/admin/tenants — Criação de novo Tenant (Exclusivo SUPER_ADMIN) */
+router.post('/admin/tenants', authenticateToken, requireRole('SUPER_ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const validated = TenantCreateSchema.parse(req.body);
+    const tenantId = `tenant-${validated.slug}`;
+
+    // Verificar se slug já existe
+    const existing = await db.collection('tenants').doc(tenantId).get();
+    if (existing.exists) {
+      sendProblemDetails(res, 409, 'Conflict', `Já existe um tenant cadastrado com o slug "${validated.slug}"`, 'TENANT_ALREADY_EXISTS');
+      return;
+    }
+
+    const newTenant = {
+      id: tenantId,
+      name: validated.name,
+      slug: validated.slug,
+      type: validated.type,
+      status: validated.status,
+      documentNumber: validated.documentNumber || null,
+      domain: validated.domain || null,
+      settings: validated.settings || {
+        primaryColor: '#0A4D68',
+        features: {
+          customBranding: true,
+          crmLeads: true,
+          donationsManagement: true,
+          bpmWorkflows: true,
+          financialReports: true,
+          biAnalytics: true,
+        },
+      },
+      metadata: validated.metadata || {},
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdBy: (req as any).user.email,
+    };
+
+    await db.collection('tenants').doc(tenantId).set(newTenant);
+
+    // Auditoria
+    await db.collection('audit_logs').add({
+      action: 'TENANT_CREATED',
+      userEmail: (req as any).user.email,
+      entity: 'tenants',
+      entityId: tenantId,
+      description: `Novo tenant criado: ${validated.name} (${tenantId})`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      tenantId: 'tenant-ism-hq',
+    });
+
+    res.status(201).json({ success: true, tenant: newTenant, message: 'Tenant criado com sucesso.' });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
+    } else {
+      console.error('[MT-001] Erro ao criar tenant:', err);
+      sendProblemDetails(res, 500, 'Internal Server Error', 'Falha interna ao provisionar o tenant', 'TENANT_CREATE_ERROR');
+    }
+  }
+});
+
+/** GET /api/v2/admin/tenants/:tenantId — Consulta dados de um Tenant específico com validação de isolamento */
+router.get('/admin/tenants/:tenantId', authenticateToken, resolveTenantContext, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tenantId } = req.params;
+    const isSuper = (req as any).isSuperAdmin;
+    const currentTenant = (req as any).tenantId;
+
+    if (!isSuper && currentTenant !== tenantId) {
+      logStructured('WARNING', `[IDOR Protection] Tentativa de acesso cross-tenant bloqueada no endpoint /admin/tenants/:tenantId`, {
+        user: (req as any).user.email,
+        attemptedTenant: tenantId,
+        authorizedTenant: currentTenant,
+      });
+      sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Você não possui autorização para consultar este tenant.', 'CROSS_TENANT_ACCESS_DENIED');
+      return;
+    }
+
+    const docSnap = await db.collection('tenants').doc(tenantId).get();
+    if (!docSnap.exists) {
+      sendProblemDetails(res, 404, 'Not Found', 'Tenant não encontrado', 'TENANT_NOT_FOUND');
+      return;
+    }
+
+    res.status(200).json({ tenant: { id: docSnap.id, ...docSnap.data() } });
+  } catch (err: any) {
+    console.error('[MT-001] Erro ao buscar tenant:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao buscar tenant', 'TENANT_FETCH_ERROR');
+  }
+});
+
+/** PATCH /api/v2/admin/tenants/:tenantId — Atualização de configurações do Tenant */
+router.patch('/admin/tenants/:tenantId', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tenantId } = req.params;
+    const isSuper = (req as any).isSuperAdmin;
+    const currentTenant = (req as any).tenantId;
+
+    if (!isSuper && currentTenant !== tenantId) {
+      sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida alteração de configurações de outros tenants.', 'CROSS_TENANT_ACCESS_DENIED');
+      return;
+    }
+
+    const validated = TenantUpdateSchema.parse(req.body);
+    await db.collection('tenants').doc(tenantId).set({
+      ...validated,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: (req as any).user.email,
+    }, { merge: true });
+
+    await db.collection('audit_logs').add({
+      action: 'TENANT_UPDATED',
+      userEmail: (req as any).user.email,
+      entity: 'tenants',
+      entityId: tenantId,
+      description: `Configurações do tenant ${tenantId} atualizadas`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      tenantId,
+    });
+
+    res.status(200).json({ success: true, message: 'Tenant atualizado com sucesso.' });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
+    } else {
+      console.error('[MT-001] Erro ao atualizar tenant:', err);
+      sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao atualizar configurações do tenant', 'TENANT_UPDATE_ERROR');
+    }
+  }
+});
+
+/** GET /api/v2/admin/tenants/:tenantId/members — Membros vinculados ao Tenant */
+router.get('/admin/tenants/:tenantId/members', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tenantId } = req.params;
+    const isSuper = (req as any).isSuperAdmin;
+    const currentTenant = (req as any).tenantId;
+
+    if (!isSuper && currentTenant !== tenantId) {
+      sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida consulta a membros de outros tenants.', 'CROSS_TENANT_ACCESS_DENIED');
+      return;
+    }
+
+    const snap = await db.collection('user_tenants').where('tenantId', '==', tenantId).get();
+    const members = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    res.status(200).json({ members, total: members.length });
+  } catch (err: any) {
+    console.error('[MT-001] Erro ao buscar membros do tenant:', err);
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao consultar membros do tenant', 'TENANT_MEMBERS_ERROR');
+  }
+});
+
+/** POST /api/v2/admin/tenants/:tenantId/members — Vínculo explícito de Usuário a um Tenant */
+router.post('/admin/tenants/:tenantId/members', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { tenantId } = req.params;
+    const isSuper = (req as any).isSuperAdmin;
+    const currentTenant = (req as any).tenantId;
+
+    if (!isSuper && currentTenant !== tenantId) {
+      sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida adição de membros em outro tenant.', 'CROSS_TENANT_ACCESS_DENIED');
+      return;
+    }
+
+    const validated = TenantMemberSchema.parse(req.body);
+    const membershipId = `${validated.userId}_${tenantId}`;
+
+    const membershipData = {
+      id: membershipId,
+      userId: validated.userId,
+      userEmail: validated.userEmail,
+      tenantId,
+      role: validated.role,
+      isDefault: validated.isDefault,
+      isActive: true,
+      grantedBy: (req as any).user.email,
+      grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    await db.collection('user_tenants').doc(membershipId).set(membershipData, { merge: true });
+
+    // Atualiza custom claim no Firebase Auth para refletir tenantId
+    const userRecord = await admin.auth().getUser(validated.userId);
+    const existingClaims = userRecord.customClaims || {};
+    const existingTenants: string[] = Array.isArray(existingClaims.tenants) ? existingClaims.tenants : [];
+    if (!existingTenants.includes(tenantId)) {
+      existingTenants.push(tenantId);
+    }
+
+    await admin.auth().setCustomUserClaims(validated.userId, {
+      ...existingClaims,
+      tenantId: validated.isDefault ? tenantId : (existingClaims.tenantId || tenantId),
+      tenantRole: validated.role,
+      tenants: existingTenants,
+    });
+
+    await db.collection('audit_logs').add({
+      action: 'TENANT_MEMBER_ADDED',
+      userEmail: (req as any).user.email,
+      entity: 'user_tenants',
+      entityId: membershipId,
+      description: `Usuário ${validated.userEmail} vinculado ao tenant ${tenantId} com role ${validated.role}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      tenantId,
+    });
+
+    res.status(201).json({ success: true, membership: membershipData, message: 'Usuário vinculado ao tenant com sucesso.' });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
+    } else {
+      console.error('[MT-001] Erro ao vincular membro ao tenant:', err);
+      sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao vincular usuário ao tenant', 'TENANT_MEMBER_ADD_ERROR');
+    }
   }
 });
 
