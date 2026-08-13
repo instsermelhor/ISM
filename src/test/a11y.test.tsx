@@ -15,6 +15,15 @@ import * as matchers from 'vitest-axe/matchers';
 // Extende os matchers do Vitest com toHaveNoViolations
 expect.extend(matchers);
 
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toHaveNoViolations(): T;
+  }
+  interface AsymmetricMatchersContaining {
+    toHaveNoViolations(): void;
+  }
+}
+
 // ─── Mocks de dependências ────────────────────────────────────────────────────
 
 vi.mock('../contexts/LanguageContext', () => ({
