@@ -99,6 +99,19 @@ export const DonorSubscriptionPortalModal: React.FC<DonorSubscriptionPortalModal
     }
   };
 
+  const handleDownloadAnnualTaxStatement = () => {
+    if (!selectedSub || history.length === 0) return;
+    const currentYear = new Date().getFullYear();
+    const stData = ReceiptGeneratorService.buildAnnualTaxStatement({
+      donorName: selectedSub.donorName,
+      donorEmail: selectedSub.donorEmail,
+      donorTaxId: '000.000.000-00',
+      taxYear: currentYear - 1 > 2020 ? currentYear - 1 : currentYear,
+      donations: history.map(h => ({ date: h.date, amount: h.amount })),
+    });
+    ReceiptGeneratorService.printAnnualTaxStatementWindow(stData);
+  };
+
   const handleDownloadPastReceipt = (item: SubscriptionHistoryItem) => {
     if (!selectedSub) return;
     const rData = ReceiptGeneratorService.buildReceiptData({
@@ -289,11 +302,26 @@ export const DonorSubscriptionPortalModal: React.FC<DonorSubscriptionPortalModal
               </div>
             )}
 
-            {/* Past Billing History */}
+            {/* Past Billing History & IRPF */}
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 800, color: '#111827', marginBottom: 12 }}>
-                Histórico de Cobranças &amp; Recibos
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: '#111827', margin: 0 }}>
+                  Histórico de Cobranças &amp; Recibos
+                </h3>
+                {history.length > 0 && (
+                  <button
+                    onClick={handleDownloadAnnualTaxStatement}
+                    style={{
+                      background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb',
+                      padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                    }}
+                    title="Emitir demonstrativo anual consolidado para declaração de IRPF"
+                  >
+                    <Download size={13} /> Declaração Anual IRPF
+                  </button>
+                )}
+              </div>
               <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden' }}>
                 {history.map(item => (
                   <div
