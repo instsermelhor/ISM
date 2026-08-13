@@ -102,12 +102,14 @@ export const PartnerApplicationForm: React.FC = () => {
           {/* Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Tipo de Parceiro *</label>
+              <label htmlFor="partner-type" className={labelClass}>Tipo de Parceiro *</label>
               <div className="relative">
                 <select
+                  id="partner-type"
                   name="type"
                   value={formData.type}
                   onChange={handleChange}
+                  aria-required="true"
                   className={`${inputClass} appearance-none pr-10`}
                 >
                   <option value="Corporativo">Corporativo</option>
@@ -115,18 +117,20 @@ export const PartnerApplicationForm: React.FC = () => {
                   <option value="Pesquisa/Academia">Pesquisa / Academia</option>
                   <option value="Individual">Grande Doador (Individual)</option>
                 </select>
-                <Briefcase size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" />
+                <Briefcase size={15} aria-hidden="true" className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 pointer-events-none" />
               </div>
             </div>
             <div>
-              <label className={labelClass}>Organização *</label>
+              <label htmlFor="partner-company" className={labelClass}>Organização *</label>
               <input
+                id="partner-company"
                 type="text"
                 name="companyName"
                 value={formData.companyName || ''}
                 placeholder="Nome da Empresa / Instituto"
                 className={inputClass}
                 onChange={handleChange}
+                aria-required="true"
               />
             </div>
           </div>
@@ -134,28 +138,32 @@ export const PartnerApplicationForm: React.FC = () => {
           {/* Row 2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Nome do Contato *</label>
+              <label htmlFor="partner-contact-name" className={labelClass}>Nome do Contato *</label>
               <div className="relative">
-                <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
+                <User size={15} aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
                 <input
+                  id="partner-contact-name"
                   type="text"
                   name="contactName"
                   value={formData.contactName || ''}
                   placeholder="Seu nome completo"
                   className={inputWithIconClass}
                   onChange={handleChange}
+                  aria-required="true"
                 />
               </div>
             </div>
             <div>
-              <label className={labelClass}>Cargo / Título *</label>
+              <label htmlFor="partner-contact-title" className={labelClass}>Cargo / Título *</label>
               <input
+                id="partner-contact-title"
                 type="text"
                 name="contactTitle"
                 value={formData.contactTitle || ''}
                 placeholder="Ex: Diretor de ESG"
                 className={inputClass}
                 onChange={handleChange}
+                aria-required="true"
               />
             </div>
           </div>
@@ -163,24 +171,27 @@ export const PartnerApplicationForm: React.FC = () => {
           {/* Row 3 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>E-mail Corporativo *</label>
+              <label htmlFor="partner-email" className={labelClass}>E-mail Corporativo *</label>
               <div className="relative">
-                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
+                <Mail size={15} aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
                 <input
+                  id="partner-email"
                   type="email"
                   name="email"
                   value={formData.email || ''}
                   placeholder="nome@empresa.com"
                   className={inputWithIconClass}
                   onChange={handleChange}
+                  aria-required="true"
                 />
               </div>
             </div>
             <div>
-              <label className={labelClass}>Telefone</label>
+              <label htmlFor="partner-phone" className={labelClass}>Telefone</label>
               <div className="relative">
-                <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
+                <Phone size={15} aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-secondary-400" />
                 <input
+                  id="partner-phone"
                   type="tel"
                   name="phone"
                   value={formData.phone || ''}
@@ -194,8 +205,9 @@ export const PartnerApplicationForm: React.FC = () => {
 
           {/* Área de Interesse */}
           <div>
-            <label className={labelClass}>Área de Interesse *</label>
+            <label htmlFor="partner-interest" className={labelClass}>Área de Interesse *</label>
             <input
+              id="partner-interest"
               type="text"
               name="areaOfInterest"
               value={formData.areaOfInterest || ''}

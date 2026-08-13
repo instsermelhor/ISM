@@ -7,6 +7,7 @@
  * - Nomes acessíveis para botões e links
  * - Rótulos de formulário e atributos ARIA
  * - Contraste e acessibilidade de diálogos modais
+ * - Controles interativos (calculadoras, formulários de doação e parceria)
  */
 
 import React from 'react';
@@ -22,6 +23,11 @@ import { PillarsSection } from '../components/sections/PillarsSection';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Modal } from '../components/ui/Modal';
+import { ContactForm } from '../components/forms/ContactForm';
+import { PartnerApplicationForm } from '../components/forms/PartnerApplicationForm';
+import { DonationForm } from '../components/payment/DonationForm';
+import { SROICalculator } from '../components/sections/SROICalculator';
+import { CampaignGoalsSection } from '../components/sections/CampaignGoalsSection';
 import { LanguageProvider } from '../contexts/LanguageContext';
 
 describe('A11Y-001 — Auditoria de Acessibilidade Enterprise (WCAG 2.1 AA)', () => {
@@ -102,6 +108,36 @@ describe('A11Y-001 — Auditoria de Acessibilidade Enterprise (WCAG 2.1 AA)', ()
         <p>Conteúdo de teste acessível para validação de leitor de telas.</p>
       </Modal>
     );
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
+
+  it('A11Y-009: ContactForm implementa rótulos explícitos e estados de alerta acessíveis', async () => {
+    const { container } = render(<ContactForm />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
+
+  it('A11Y-010: PartnerApplicationForm possui campos com id/for e aria-required', async () => {
+    const { container } = render(<PartnerApplicationForm />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
+
+  it('A11Y-011: DonationForm possui controles acessíveis, botões com aria-pressed e formulário rotulado', async () => {
+    const { container } = render(<DonationForm />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
+
+  it('A11Y-012: SROICalculator possui métricas com role="meter", inputs com aria-describedby e aria-live', async () => {
+    const { container } = render(<SROICalculator />);
+    const results = await axe(container);
+    expect(results.violations).toHaveLength(0);
+  });
+
+  it('A11Y-013: CampaignGoalsSection possui termômetros de captação acessíveis', async () => {
+    const { container } = render(<CampaignGoalsSection />);
     const results = await axe(container);
     expect(results.violations).toHaveLength(0);
   });
