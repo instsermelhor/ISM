@@ -833,28 +833,52 @@ export const VolunteerPortalModal: React.FC<VolunteerPortalModalProps> = ({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <QrCode size={40} color="#0f172a" />
-                  <span style={{ fontSize: 10, color: '#16a34a', fontWeight: 700 }}>
-                    VALIDADO DIGITALMENTE
-                  </span>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, display: 'block' }}>
+                      VALIDADO DIGITALMENTE
+                    </span>
+                    <span style={{ fontSize: 9, color: '#64748b', fontFamily: 'monospace' }}>
+                      {profile.qrToken}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <button
-                onClick={() => setShowCertificateModal(false)}
-                style={{
-                  marginTop: 24,
-                  background: '#9333ea',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 10,
-                  padding: '10px 24px',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
-                Fechar Certificado
-              </button>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 24 }}>
+                <button
+                  onClick={() => window.print()}
+                  style={{
+                    background: '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '10px 20px',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <FileCheck size={16} /> Imprimir / Salvar PDF
+                </button>
+                <button
+                  onClick={() => setShowCertificateModal(false)}
+                  style={{
+                    background: '#e2e8f0',
+                    color: '#334155',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '10px 20px',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
           </div>
         )}
