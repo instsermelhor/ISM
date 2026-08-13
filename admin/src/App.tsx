@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { TenantProvider } from './contexts/TenantContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 // Importações dinâmicas oficiais ISM (Code Splitting / Lazy Loading)
@@ -34,6 +35,7 @@ const ExecutiveReportPage = lazy(() => import('./pages/ExecutiveReportPage').the
 const BIAnalyticsDashboardPage = lazy(() => import('./pages/BIAnalyticsDashboardPage').then(m => ({ default: m.BIAnalyticsDashboardPage })));
 const GovernanceAuditPage = lazy(() => import('./pages/GovernanceAuditPage').then(m => ({ default: m.GovernanceAuditPage })));
 const CommunityExpansionPage = lazy(() => import('./pages/CommunityExpansionPage').then(m => ({ default: m.CommunityExpansionPage })));
+const TenantsManagerPage = lazy(() => import('./pages/TenantsManagerPage').then(m => ({ default: m.TenantsManagerPage })));
 
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300, color: 'var(--brand-600)' }}>
@@ -44,63 +46,66 @@ const LoadingSpinner = () => (
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Public */}
-            <Route path="/login" element={<LoginPage />} />
+      <TenantProvider>
+        <BrowserRouter>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Public */}
+              <Route path="/login" element={<LoginPage />} />
 
-            {/* Protected - Dashboard Layout */}
-            <Route element={<DashboardLayout />}>
-              <Route index element={<DashboardPage />} />
+              {/* Protected - Dashboard Layout */}
+              <Route element={<DashboardLayout />}>
+                <Route index element={<DashboardPage />} />
 
-              {/* Editor do Site (Módulo Separado) */}
-              <Route path="site" element={<SiteEditorPage />} />
-              <Route path="site/hero" element={<Navigate to="/configuracoes?tab=hero" replace />} />
-              <Route path="site/institucional" element={<AboutTeamPage />} />
-              <Route path="site/projetos" element={<ServicesPage />} />
-              <Route path="site/doacoes" element={<DonationEditorPage />} />
-              <Route path="site/seo" element={<CMSSeoManagerPage />} />
-              <Route path="site/metricas" element={<ImpactMetricsPage />} />
-              <Route path="site/pilares" element={<PillarsEditorPage />} />
-              <Route path="site/navegacao" element={<NavigationEditorPage />} />
-              <Route path="site/valores" element={<ValuesEditorPage />} />
-              <Route path="site/governanca" element={<GovernanceEditorPage />} />
-              <Route path="site/timeline" element={<TimelineEditorPage />} />
-              <Route path="site/transparencia" element={<TransparencyEditorPage />} />
-              <Route path="site/sroi" element={<SROICalculatorPage />} />
-              <Route path="site/ia" element={<AIAgentManagerPage />} />
-              <Route path="site/relatorios" element={<ExecutiveReportPage />} />
-              <Route path="configuracoes" element={<SiteConfigPage />} />
+                {/* Editor do Site (Módulo Separado) */}
+                <Route path="site" element={<SiteEditorPage />} />
+                <Route path="site/hero" element={<Navigate to="/configuracoes?tab=hero" replace />} />
+                <Route path="site/institucional" element={<AboutTeamPage />} />
+                <Route path="site/projetos" element={<ServicesPage />} />
+                <Route path="site/doacoes" element={<DonationEditorPage />} />
+                <Route path="site/seo" element={<CMSSeoManagerPage />} />
+                <Route path="site/metricas" element={<ImpactMetricsPage />} />
+                <Route path="site/pilares" element={<PillarsEditorPage />} />
+                <Route path="site/navegacao" element={<NavigationEditorPage />} />
+                <Route path="site/valores" element={<ValuesEditorPage />} />
+                <Route path="site/governanca" element={<GovernanceEditorPage />} />
+                <Route path="site/timeline" element={<TimelineEditorPage />} />
+                <Route path="site/transparencia" element={<TransparencyEditorPage />} />
+                <Route path="site/sroi" element={<SROICalculatorPage />} />
+                <Route path="site/ia" element={<AIAgentManagerPage />} />
+                <Route path="site/relatorios" element={<ExecutiveReportPage />} />
+                <Route path="configuracoes" element={<SiteConfigPage />} />
 
-              {/* Gestão da Instituição */}
-              <Route path="blog" element={<BlogPage />} />
-              <Route path="leads" element={<LeadsPage />} />
-              <Route path="parceiros" element={<PartnersPage />} />
-              <Route path="pipeline" element={<PipelinePage />} />
+                {/* Gestão da Instituição */}
+                <Route path="blog" element={<BlogPage />} />
+                <Route path="leads" element={<LeadsPage />} />
+                <Route path="parceiros" element={<PartnersPage />} />
+                <Route path="pipeline" element={<PipelinePage />} />
 
-              {/* Financeiro — cada sub-rota abre uma aba específica */}
-              <Route path="financeiro"          element={<FinancialPage initialTab="overview" />} />
-              <Route path="financeiro/doacoes"  element={<FinancialPage initialTab="donations" />} />
-              <Route path="financeiro/doadores" element={<FinancialPage initialTab="donors" />} />
-              <Route path="financeiro/bancario" element={<FinancialPage initialTab="banking" />} />
-              <Route path="financeiro/metas"    element={<FinancialPage initialTab="goals" />} />
+                {/* Financeiro — cada sub-rota abre uma aba específica */}
+                <Route path="financeiro"          element={<FinancialPage initialTab="overview" />} />
+                <Route path="financeiro/doacoes"  element={<FinancialPage initialTab="donations" />} />
+                <Route path="financeiro/doadores" element={<FinancialPage initialTab="donors" />} />
+                <Route path="financeiro/bancario" element={<FinancialPage initialTab="banking" />} />
+                <Route path="financeiro/metas"    element={<FinancialPage initialTab="goals" />} />
 
-              {/* Sistema & Analytics */}
-              <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="analytics/bi" element={<BIAnalyticsDashboardPage />} />
-              <Route path="auditoria" element={<AuditPage />} />
-              <Route path="auditoria/lgpd" element={<GovernanceAuditPage />} />
-              <Route path="health" element={<HealthPage />} />
-              <Route path="usuarios" element={<UsersPage />} />
-              <Route path="comunidade" element={<CommunityExpansionPage />} />
+                {/* Sistema, Governança & Multi-Tenancy */}
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="analytics/bi" element={<BIAnalyticsDashboardPage />} />
+                <Route path="auditoria" element={<AuditPage />} />
+                <Route path="auditoria/lgpd" element={<GovernanceAuditPage />} />
+                <Route path="health" element={<HealthPage />} />
+                <Route path="usuarios" element={<UsersPage />} />
+                <Route path="tenants" element={<TenantsManagerPage />} />
+                <Route path="comunidade" element={<CommunityExpansionPage />} />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </TenantProvider>
     </AuthProvider>
   );
 }
