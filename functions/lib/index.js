@@ -1405,5 +1405,7 @@ Sitemap: https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api/api/v2/si
     res.status(200).send(robotsTxt);
 });
 app.use('/api/v2', router);
+app.use('/api', router);
+app.use('/', router);
 exports.api = (0, https_1.onRequest)({ region: 'southamerica-east1', cors: true }, app);
 //# sourceMappingURL=index.js.map
