@@ -36,6 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.api = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const admin = __importStar(require("firebase-admin"));
 const express_1 = __importDefault(require("express"));
@@ -728,659 +729,666 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
             description: `Usuário ${targetEmail || targetUserId} excluído`,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
-        // ─────────────────────────────────────────────────────────────────────────────
-        // ENDPOINTS MULTI-TENANCY ENTERPRISE (MT-001)
-        // ─────────────────────────────────────────────────────────────────────────────
-        /** GET /api/v2/admin/tenants — Lista tenants autorizados para o usuário */
-        router.get('/admin/tenants', authenticateToken, resolveTenantContext, async (req, res) => {
-            try {
-                const isSuper = req.isSuperAdmin;
-                const currentTenantId = req.tenantId;
-                if (isSuper) {
-                    const snap = await db.collection('tenants').orderBy('createdAt', 'desc').limit(100).get();
-                    const tenants = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    res.status(200).json({ tenants, total: tenants.length });
-                    return;
-                }
-                // Usuário regular: apenas o seu próprio tenant autorizado
-                const snap = await db.collection('tenants').doc(currentTenantId).get();
-                if (!snap.exists) {
-                    // Fallback para tenant institucional mestre padrão
-                    res.status(200).json({
-                        tenants: [{
-                                id: 'tenant-ism-hq',
-                                name: 'Instituto Ser Melhor — Sede Matriz',
-                                slug: 'ism-matriz',
-                                type: 'INSTITUTION_HQ',
-                                status: 'ACTIVE',
-                            }],
-                        total: 1,
-                    });
-                    return;
-                }
-                res.status(200).json({ tenants: [{ id: snap.id, ...snap.data() }], total: 1 });
-            }
-            catch (err) {
-                console.error('[MT-001] Erro ao listar tenants:', err);
-                sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao consultar lista de tenants', 'TENANT_LIST_ERROR');
-            }
-        });
-        /** POST /api/v2/admin/tenants — Criação de novo Tenant (Exclusivo SUPER_ADMIN) */
-        router.post('/admin/tenants', authenticateToken, requireRole('SUPER_ADMIN'), async (req, res) => {
-            try {
-                const validated = TenantCreateSchema.parse(req.body);
-                const tenantId = `tenant-${validated.slug}`;
-                // Verificar se slug já existe
-                const existing = await db.collection('tenants').doc(tenantId).get();
-                if (existing.exists) {
-                    sendProblemDetails(res, 409, 'Conflict', `Já existe um tenant cadastrado com o slug "${validated.slug}"`, 'TENANT_ALREADY_EXISTS');
-                    return;
-                }
-                const newTenant = {
-                    id: tenantId,
-                    name: validated.name,
-                    slug: validated.slug,
-                    type: validated.type,
-                    status: validated.status,
-                    documentNumber: validated.documentNumber || null,
-                    domain: validated.domain || null,
-                    settings: validated.settings || {
-                        primaryColor: '#0A4D68',
-                        features: {
-                            customBranding: true,
-                            crmLeads: true,
-                            donationsManagement: true,
-                            bpmWorkflows: true,
-                            financialReports: true,
-                            biAnalytics: true,
-                        },
-                    },
-                    metadata: validated.metadata || {},
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    createdBy: req.user.email,
-                };
-                await db.collection('tenants').doc(tenantId).set(newTenant);
-                // Auditoria
-                await db.collection('audit_logs').add({
-                    action: 'TENANT_CREATED',
-                    userEmail: req.user.email,
-                    entity: 'tenants',
-                    entityId: tenantId,
-                    description: `Novo tenant criado: ${validated.name} (${tenantId})`,
-                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                    tenantId: 'tenant-ism-hq',
-                });
-                res.status(201).json({ success: true, tenant: newTenant, message: 'Tenant criado com sucesso.' });
-            }
-            catch (err) {
-                if (err instanceof zod_1.z.ZodError) {
-                    sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
-                }
-                else {
-                    console.error('[MT-001] Erro ao criar tenant:', err);
-                    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha interna ao provisionar o tenant', 'TENANT_CREATE_ERROR');
-                }
-            }
-        });
-        /** GET /api/v2/admin/tenants/:tenantId — Consulta dados de um Tenant específico com validação de isolamento */
-        router.get('/admin/tenants/:tenantId', authenticateToken, resolveTenantContext, async (req, res) => {
-            try {
-                const { tenantId } = req.params;
-                const isSuper = req.isSuperAdmin;
-                const currentTenant = req.tenantId;
-                if (!isSuper && currentTenant !== tenantId) {
-                    logStructured('WARNING', `[IDOR Protection] Tentativa de acesso cross-tenant bloqueada no endpoint /admin/tenants/:tenantId`, {
-                        user: req.user.email,
-                        attemptedTenant: tenantId,
-                        authorizedTenant: currentTenant,
-                    });
-                    sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Você não possui autorização para consultar este tenant.', 'CROSS_TENANT_ACCESS_DENIED');
-                    return;
-                }
-                const docSnap = await db.collection('tenants').doc(tenantId).get();
-                if (!docSnap.exists) {
-                    sendProblemDetails(res, 404, 'Not Found', 'Tenant não encontrado', 'TENANT_NOT_FOUND');
-                    return;
-                }
-                res.status(200).json({ tenant: { id: docSnap.id, ...docSnap.data() } });
-            }
-            catch (err) {
-                console.error('[MT-001] Erro ao buscar tenant:', err);
-                sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao buscar tenant', 'TENANT_FETCH_ERROR');
-            }
-        });
-        /** PATCH /api/v2/admin/tenants/:tenantId — Atualização de configurações do Tenant */
-        router.patch('/admin/tenants/:tenantId', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req, res) => {
-            try {
-                const { tenantId } = req.params;
-                const isSuper = req.isSuperAdmin;
-                const currentTenant = req.tenantId;
-                if (!isSuper && currentTenant !== tenantId) {
-                    sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida alteração de configurações de outros tenants.', 'CROSS_TENANT_ACCESS_DENIED');
-                    return;
-                }
-                const validated = TenantUpdateSchema.parse(req.body);
-                await db.collection('tenants').doc(tenantId).set({
-                    ...validated,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    updatedBy: req.user.email,
-                }, { merge: true });
-                await db.collection('audit_logs').add({
-                    action: 'TENANT_UPDATED',
-                    userEmail: req.user.email,
-                    entity: 'tenants',
-                    entityId: tenantId,
-                    description: `Configurações do tenant ${tenantId} atualizadas`,
-                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                    tenantId,
-                });
-                res.status(200).json({ success: true, message: 'Tenant atualizado com sucesso.' });
-            }
-            catch (err) {
-                if (err instanceof zod_1.z.ZodError) {
-                    sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
-                }
-                else {
-                    console.error('[MT-001] Erro ao atualizar tenant:', err);
-                    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao atualizar configurações do tenant', 'TENANT_UPDATE_ERROR');
-                }
-            }
-        });
-        /** GET /api/v2/admin/tenants/:tenantId/members — Membros vinculados ao Tenant */
-        router.get('/admin/tenants/:tenantId/members', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req, res) => {
-            try {
-                const { tenantId } = req.params;
-                const isSuper = req.isSuperAdmin;
-                const currentTenant = req.tenantId;
-                if (!isSuper && currentTenant !== tenantId) {
-                    sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida consulta a membros de outros tenants.', 'CROSS_TENANT_ACCESS_DENIED');
-                    return;
-                }
-                const snap = await db.collection('user_tenants').where('tenantId', '==', tenantId).get();
-                const members = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                res.status(200).json({ members, total: members.length });
-            }
-            catch (err) {
-                console.error('[MT-001] Erro ao buscar membros do tenant:', err);
-                sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao consultar membros do tenant', 'TENANT_MEMBERS_ERROR');
-            }
-        });
-        /** POST /api/v2/admin/tenants/:tenantId/members — Vínculo explícito de Usuário a um Tenant */
-        router.post('/admin/tenants/:tenantId/members', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req, res) => {
-            try {
-                const { tenantId } = req.params;
-                const isSuper = req.isSuperAdmin;
-                const currentTenant = req.tenantId;
-                if (!isSuper && currentTenant !== tenantId) {
-                    sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida adição de membros em outro tenant.', 'CROSS_TENANT_ACCESS_DENIED');
-                    return;
-                }
-                const validated = TenantMemberSchema.parse(req.body);
-                const membershipId = `${validated.userId}_${tenantId}`;
-                const membershipData = {
-                    id: membershipId,
-                    userId: validated.userId,
-                    userEmail: validated.userEmail,
-                    tenantId,
-                    role: validated.role,
-                    isDefault: validated.isDefault,
-                    isActive: true,
-                    grantedBy: req.user.email,
-                    grantedAt: admin.firestore.FieldValue.serverTimestamp(),
-                };
-                await db.collection('user_tenants').doc(membershipId).set(membershipData, { merge: true });
-                // Atualiza custom claim no Firebase Auth para refletir tenantId
-                const userRecord = await admin.auth().getUser(validated.userId);
-                const existingClaims = userRecord.customClaims || {};
-                const existingTenants = Array.isArray(existingClaims.tenants) ? existingClaims.tenants : [];
-                if (!existingTenants.includes(tenantId)) {
-                    existingTenants.push(tenantId);
-                }
-                await admin.auth().setCustomUserClaims(validated.userId, {
-                    ...existingClaims,
-                    tenantId: validated.isDefault ? tenantId : (existingClaims.tenantId || tenantId),
-                    tenantRole: validated.role,
-                    tenants: existingTenants,
-                });
-                await db.collection('audit_logs').add({
-                    action: 'TENANT_MEMBER_ADDED',
-                    userEmail: req.user.email,
-                    entity: 'user_tenants',
-                    entityId: membershipId,
-                    description: `Usuário ${validated.userEmail} vinculado ao tenant ${tenantId} com role ${validated.role}`,
-                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                    tenantId,
-                });
-                res.status(201).json({ success: true, membership: membershipData, message: 'Usuário vinculado ao tenant com sucesso.' });
-            }
-            catch (err) {
-                if (err instanceof zod_1.z.ZodError) {
-                    sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
-                }
-                else {
-                    console.error('[MT-001] Erro ao vincular membro ao tenant:', err);
-                    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao vincular usuário ao tenant', 'TENANT_MEMBER_ADD_ERROR');
-                }
-            }
-        });
-        // ─────────────────────────────────────────────────────────────────────────────
-        // ENDPOINTS LGPD — Portabilidade & Eliminação de Dados (Art. 16, 18 LGPD)
-        // ─────────────────────────────────────────────────────────────────────────────
-        /** POST /api/v2/admin/lgpd/export — Exportação de dados pessoais do titular (Art. 18, V LGPD) */
-        router.post('/admin/lgpd/export', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
-            try {
-                const { email } = req.body;
-                if (!email || typeof email !== 'string') {
-                    sendProblemDetails(res, 400, 'Bad Request', 'O campo email é obrigatório', 'MISSING_EMAIL');
-                    return;
-                }
-                const targetEmail = email.trim().toLowerCase();
-                const [leadsSnap, donationsSnap, partnersSnap, profilesSnap] = await Promise.all([
-                    db.collection('leads').where('email', '==', targetEmail).get(),
-                    db.collection('donations').where('donorEmail', '==', targetEmail).get(),
-                    db.collection('partner_applications').where('email', '==', targetEmail).get(),
-                    db.collection('users_profiles').where('email', '==', targetEmail).get(),
-                ]);
-                const report = {
-                    subjectEmail: targetEmail,
-                    exportedAt: new Date().toISOString(),
-                    requestedBy: req.user.email,
-                    legalBasis: 'LGPD Art. 18, V — Direito à portabilidade dos dados',
-                    recordsFound: {
-                        leads: leadsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-                        donations: donationsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-                        partnerApplications: partnersSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-                        userProfile: profilesSnap.docs.map(d => ({ id: d.id, ...d.data() })),
-                    },
-                };
-                await db.collection('audit_logs').add({
-                    action: 'LGPD_DATA_EXPORTED',
-                    userEmail: req.user.email,
-                    entity: 'titular_dados',
-                    description: `Relatório de portabilidade LGPD gerado para ${targetEmail}`,
-                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                });
-                res.status(200).json(report);
-            }
-            catch (err) {
-                console.error('[LGPD API] Erro ao exportar dados do titular:', err);
-                sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao compilar relatório de dados do titular', 'LGPD_EXPORT_ERROR');
-            }
-        });
-        /** POST /api/v2/admin/lgpd/anonymize — Anonimização de dados do titular (Art. 18, VI & Art. 16 LGPD) */
-        router.post('/admin/lgpd/anonymize', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
-            try {
-                const { email } = req.body;
-                if (!email || typeof email !== 'string') {
-                    sendProblemDetails(res, 400, 'Bad Request', 'O campo email é obrigatório', 'MISSING_EMAIL');
-                    return;
-                }
-                const targetEmail = email.trim().toLowerCase();
-                // Trava de segurança: proibir anonimização de contas ativas de Super Admin / Admin
-                if (targetEmail === 'instsermelhor.adm@gmail.com') {
-                    sendProblemDetails(res, 403, 'Forbidden', 'A conta de Super Administrador não pode ser anonimizada.', 'SUPER_ADMIN_PROTECTED');
-                    return;
-                }
-                const batch = db.batch();
-                let anonymizedCount = 0;
-                // 1. Leads
-                const leadsSnap = await db.collection('leads').where('email', '==', targetEmail).get();
-                leadsSnap.docs.forEach(docRef => {
-                    batch.update(docRef.ref, {
-                        name: '[DADOS_ANONIMIZADOS_LGPD]',
-                        email: `anonimo_${docRef.id}@anonymized.lgpd`,
-                        phone: '[REMOVIDO]',
-                        message: '[CONTEÚDO_ELIMINADO_SOLICITAÇÃO_TITULAR]',
-                        anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    });
-                    anonymizedCount++;
-                });
-                // 2. Candidaturas de parceiro
-                const partnersSnap = await db.collection('partner_applications').where('email', '==', targetEmail).get();
-                partnersSnap.docs.forEach(docRef => {
-                    batch.update(docRef.ref, {
-                        contactName: '[DADOS_ANONIMIZADOS_LGPD]',
-                        email: `anonimo_${docRef.id}@anonymized.lgpd`,
-                        phone: '[REMOVIDO]',
-                        anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    });
-                    anonymizedCount++;
-                });
-                // 3. Doações (Preserva valor financeiro para conformidade contábil, substitui dados identificadores)
-                const donationsSnap = await db.collection('donations').where('donorEmail', '==', targetEmail).get();
-                donationsSnap.docs.forEach(docRef => {
-                    batch.update(docRef.ref, {
-                        donorName: 'Doador Anônimo (LGPD Art. 16, I)',
-                        donorEmail: `anonimo_${docRef.id}@anonymized.lgpd`,
-                        message: null,
-                        anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    });
-                    anonymizedCount++;
-                });
-                await batch.commit();
-                await db.collection('audit_logs').add({
-                    action: 'LGPD_DATA_ANONYMIZED',
-                    userEmail: req.user.email,
-                    entity: 'titular_dados',
-                    description: `Anonimização LGPD concluída para ${targetEmail} (${anonymizedCount} registros atualizados)`,
-                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                });
-                res.status(200).json({
-                    success: true,
-                    targetEmail,
-                    anonymizedRecords: anonymizedCount,
-                    message: `Sucesso: ${anonymizedCount} registros do titular foram anonimizados segundo o Art. 16, I da LGPD.`,
-                });
-            }
-            catch (err) {
-                console.error('[LGPD API] Erro ao anonimizar dados do titular:', err);
-                sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao efetuar eliminação/anonimização do titular', 'LGPD_ANONYMIZE_ERROR');
-            }
-        });
-        // ─────────────────────────────────────────────────────────────────────────────
-        // ENDPOINTS DE TELEMETRIA E ERROS DO SISTEMA
-        // ─────────────────────────────────────────────────────────────────────────────
-        const ClientTelemetrySchema = zod_1.z.object({
-            source: zod_1.z.string().max(100).default('Frontend'),
-            message: zod_1.z.string().min(1).max(2000),
-            route: zod_1.z.string().max(300).optional(),
-            statusCode: zod_1.z.number().optional(),
-            stack: zod_1.z.string().max(3000).optional(),
-            userAgent: zod_1.z.string().max(500).optional(),
-        });
-        /** POST /api/v2/telemetry/errors — Coleta pública de erros de clientes frontend (rate-limited) */
-        router.post('/telemetry/errors', rateLimiterMiddleware(20, 60000), async (req, res) => {
-            try {
-                const validated = ClientTelemetrySchema.parse(req.body);
-                await reportSystemError(validated.source, validated.message, validated.route || 'CLIENT_RUNTIME', validated.statusCode || 400, validated.stack);
-                res.status(201).json({ success: true, message: 'Telemetria de erro registrada.' });
-            }
-            catch (err) {
-                res.status(400).json({ success: false, error: 'Formato de telemetria inválido.' });
-            }
-        });
-        /** GET /api/v2/admin/system/errors — Consulta dos últimos erros do sistema (ADMIN+) */
-        router.get('/admin/system/errors', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (_req, res) => {
-            try {
-                const snap = await db.collection('system_errors')
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
-                    .get();
-                const errors = snap.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        source: data.source || 'SISTEMA',
-                        message: data.message || 'Sem mensagem',
-                        route: data.route || 'N/A',
-                        statusCode: data.statusCode || 500,
-                        stack: data.stack || null,
-                        timestamp: data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate().toISOString() : data.timestamp) : new Date().toISOString(),
-                    };
-                });
-                res.status(200).json({ errors, total: errors.length });
-            }
-            catch (err) {
-                console.error('[Telemetry API] Erro ao buscar system_errors:', err);
-                sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao buscar log de erros do sistema', 'SYSTEM_ERRORS_FETCH_ERROR');
-            }
-        });
-        // ─────────────────────────────────────────────────────────────────────────────
-        // TELEMETRIA DE CORE WEB VITALS — Fase 12 / PERF-003
-        // ─────────────────────────────────────────────────────────────────────────────
-        const WebVitalSchema = zod_1.z.object({
-            name: zod_1.z.enum(['LCP', 'INP', 'CLS', 'FCP', 'TTFB']),
-            value: zod_1.z.number().nonnegative(),
-            rating: zod_1.z.enum(['good', 'needs-improvement', 'poor']),
-            delta: zod_1.z.number(),
-            id: zod_1.z.string().max(128),
-            url: zod_1.z.string().max(512),
-            timestamp: zod_1.z.number().positive(),
-        });
-        /** POST /api/v2/telemetry/web-vitals — Recebe métricas CWV do frontend (sendBeacon) */
-        router.post('/telemetry/web-vitals', rateLimiterMiddleware(60, 60000), async (req, res) => {
-            try {
-                const validated = WebVitalSchema.parse(req.body);
-                // Persiste assincronamente — não bloqueia a resposta
-                db.collection('cwv_metrics').add({
-                    ...validated,
-                    receivedAt: new Date().toISOString(),
-                }).catch((err) => {
-                    logStructured('WARNING', '[WebVitals] Falha ao persistir métrica CWV', { error: err.message });
-                });
-                res.status(202).json({ success: true });
-            }
-            catch {
-                res.status(400).json({ success: false, error: 'Payload de métrica inválido.' });
-            }
-        });
-        // ─────────────────────────────────────────────────────────────────────────────
-        /**
-         * Normaliza eventos de pagamento provenientes de múltiplos provedores
-         */
-        function normalizePaymentEvent(provider, body) {
-            const p = provider.toLowerCase().trim();
-            // 1. STRIPE (Checkout Session / Payment Intent)
-            if (p === 'stripe') {
-                const eventType = body.type || body.event;
-                const obj = body.data?.object || body;
-                if (eventType === 'checkout.session.completed' || eventType === 'payment_intent.succeeded') {
-                    return {
-                        status: 'CONFIRMED',
-                        transactionId: obj.id,
-                        donorEmail: obj.customer_details?.email || obj.receipt_email || obj.metadata?.donorEmail,
-                        amount: obj.amount_total ? obj.amount_total / 100 : (obj.amount ? obj.amount / 100 : undefined),
-                    };
-                }
-                if (eventType === 'charge.refunded' || eventType === 'payment_intent.payment_failed') {
-                    return {
-                        status: eventType === 'charge.refunded' ? 'REFUNDED' : 'FAILED',
-                        transactionId: obj.id,
-                        donorEmail: obj.receipt_email || obj.metadata?.donorEmail,
-                    };
-                }
-            }
-            // 2. ASAAS (Fintech / Pagamentos recurrentes & Pix)
-            if (p === 'asaas') {
-                const eventType = body.event;
-                const payment = body.payment || {};
-                if (eventType === 'PAYMENT_RECEIVED' || eventType === 'PAYMENT_CONFIRMED') {
-                    return {
-                        status: 'CONFIRMED',
-                        transactionId: payment.id,
-                        donorEmail: payment.customerEmail || payment.externalReference,
-                        amount: payment.value,
-                    };
-                }
-                if (eventType === 'PAYMENT_OVERDUE' || eventType === 'PAYMENT_DELETED') {
-                    return { status: 'FAILED', transactionId: payment.id };
-                }
-                if (eventType === 'PAYMENT_REFUNDED') {
-                    return { status: 'REFUNDED', transactionId: payment.id };
-                }
-            }
-            // 3. EFÍ BANK / GERENCIANET (Pix & Boleto)
-            if (p === 'efi' || p === 'efi_bank' || p === 'gerencianet') {
-                const pixEvent = body.pix?.[0];
-                if (pixEvent) {
-                    return {
-                        status: 'CONFIRMED',
-                        transactionId: pixEvent.txid || pixEvent.endToEndId,
-                        amount: parseFloat(pixEvent.valor || '0'),
-                    };
-                }
-            }
-            // 4. CORA SCFI (Banco Digital oficial do ISM)
-            if (p === 'cora') {
-                if (body.status === 'PAID' || body.event === 'INVOICE_PAID') {
-                    return {
-                        status: 'CONFIRMED',
-                        transactionId: body.id || body.transactionId,
-                        amount: body.amount,
-                    };
-                }
-            }
-            // 5. MERCADO PAGO / PAGSEGURO / NUBANK / INTER / BB / ITAÚ / MOCK
-            if (body.status === 'approved' || body.status === 'PAID' || body.status === 'CONFIRMED' || body.event === 'PAYMENT_SUCCESS') {
-                return {
-                    status: 'CONFIRMED',
-                    transactionId: body.id || body.txid || body.payment_id,
-                    donorEmail: body.email || body.payer?.email,
-                    amount: body.amount || body.transaction_amount,
-                };
-            }
-            return { status: 'PENDING', transactionId: body.id || body.transactionId };
+        res.status(200).json({ success: true, message: 'Usuário excluído com sucesso' });
+    }
+    catch (error) {
+        logStructured('ERROR', 'Falha ao excluir usuário', { error: error.message });
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao excluir usuário', 'USER_DELETE_ERROR');
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS MULTI-TENANCY ENTERPRISE (MT-001)
+// ─────────────────────────────────────────────────────────────────────────────
+/** GET /api/v2/admin/tenants — Lista tenants autorizados para o usuário */
+router.get('/admin/tenants', authenticateToken, resolveTenantContext, async (req, res) => {
+    try {
+        const isSuper = req.isSuperAdmin;
+        const currentTenantId = req.tenantId;
+        if (isSuper) {
+            const snap = await db.collection('tenants').orderBy('createdAt', 'desc').limit(100).get();
+            const tenants = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            res.status(200).json({ tenants, total: tenants.length });
+            return;
         }
-        /** POST /api/v2/webhooks/:provider — Webhook Universal de Pagamentos */
-        router.post('/webhooks/:provider', async (req, res) => {
-            const { provider } = req.params;
-            const body = req.body || {};
-            try {
-                const event = normalizePaymentEvent(provider, body);
-                if (event.status !== 'PENDING' && (event.transactionId || event.donorEmail)) {
-                    // Buscar doação correspondente no Firestore por ID do gateway ou email do doador
-                    let donationRef = null;
-                    if (event.transactionId) {
-                        const snap = await db.collection('donations').where('gatewayTransactionId', '==', event.transactionId).limit(1).get();
-                        if (!snap.empty)
-                            donationRef = snap.docs[0].ref;
-                    }
-                    if (!donationRef && event.donorEmail) {
-                        const snap = await db.collection('donations').where('donorEmail', '==', event.donorEmail).where('status', '==', 'PENDING').limit(1).get();
-                        if (!snap.empty)
-                            donationRef = snap.docs[0].ref;
-                    }
-                    if (donationRef) {
-                        await donationRef.update({
-                            status: event.status,
-                            paidAt: admin.firestore.FieldValue.serverTimestamp(),
-                            gatewayName: provider.toUpperCase(),
-                            gatewayTransactionId: event.transactionId ?? null,
-                            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                        });
-                        await db.collection('audit_logs').add({
-                            action: 'PAYMENT_WEBHOOK_PROCESSED',
-                            userEmail: `system@webhook.${provider.toLowerCase()}`,
-                            entity: 'donations',
-                            entityId: donationRef.id,
-                            description: `Pagamento ${event.status} via ${provider.toUpperCase()} (ID: ${event.transactionId || '—'})`,
-                            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                        });
-                    }
-                }
-                res.status(200).json({
-                    received: true,
-                    provider: provider.toUpperCase(),
+        // Usuário regular: apenas o seu próprio tenant autorizado
+        const snap = await db.collection('tenants').doc(currentTenantId).get();
+        if (!snap.exists) {
+            // Fallback para tenant institucional mestre padrão
+            res.status(200).json({
+                tenants: [{
+                        id: 'tenant-ism-hq',
+                        name: 'Instituto Ser Melhor — Sede Matriz',
+                        slug: 'ism-matriz',
+                        type: 'INSTITUTION_HQ',
+                        status: 'ACTIVE',
+                    }],
+                total: 1,
+            });
+            return;
+        }
+        res.status(200).json({ tenants: [{ id: snap.id, ...snap.data() }], total: 1 });
+    }
+    catch (err) {
+        console.error('[MT-001] Erro ao listar tenants:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao consultar lista de tenants', 'TENANT_LIST_ERROR');
+    }
+});
+/** POST /api/v2/admin/tenants — Criação de novo Tenant (Exclusivo SUPER_ADMIN) */
+router.post('/admin/tenants', authenticateToken, requireRole('SUPER_ADMIN'), async (req, res) => {
+    try {
+        const validated = TenantCreateSchema.parse(req.body);
+        const tenantId = `tenant-${validated.slug}`;
+        // Verificar se slug já existe
+        const existing = await db.collection('tenants').doc(tenantId).get();
+        if (existing.exists) {
+            sendProblemDetails(res, 409, 'Conflict', `Já existe um tenant cadastrado com o slug "${validated.slug}"`, 'TENANT_ALREADY_EXISTS');
+            return;
+        }
+        const newTenant = {
+            id: tenantId,
+            name: validated.name,
+            slug: validated.slug,
+            type: validated.type,
+            status: validated.status,
+            documentNumber: validated.documentNumber || null,
+            domain: validated.domain || null,
+            settings: validated.settings || {
+                primaryColor: '#0A4D68',
+                features: {
+                    customBranding: true,
+                    crmLeads: true,
+                    donationsManagement: true,
+                    bpmWorkflows: true,
+                    financialReports: true,
+                    biAnalytics: true,
+                },
+            },
+            metadata: validated.metadata || {},
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: req.user.email,
+        };
+        await db.collection('tenants').doc(tenantId).set(newTenant);
+        // Auditoria
+        await db.collection('audit_logs').add({
+            action: 'TENANT_CREATED',
+            userEmail: req.user.email,
+            entity: 'tenants',
+            entityId: tenantId,
+            description: `Novo tenant criado: ${validated.name} (${tenantId})`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            tenantId: 'tenant-ism-hq',
+        });
+        res.status(201).json({ success: true, tenant: newTenant, message: 'Tenant criado com sucesso.' });
+    }
+    catch (err) {
+        if (err instanceof zod_1.z.ZodError) {
+            sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
+        }
+        else {
+            console.error('[MT-001] Erro ao criar tenant:', err);
+            sendProblemDetails(res, 500, 'Internal Server Error', 'Falha interna ao provisionar o tenant', 'TENANT_CREATE_ERROR');
+        }
+    }
+});
+/** GET /api/v2/admin/tenants/:tenantId — Consulta dados de um Tenant específico com validação de isolamento */
+router.get('/admin/tenants/:tenantId', authenticateToken, resolveTenantContext, async (req, res) => {
+    try {
+        const { tenantId } = req.params;
+        const isSuper = req.isSuperAdmin;
+        const currentTenant = req.tenantId;
+        if (!isSuper && currentTenant !== tenantId) {
+            logStructured('WARNING', `[IDOR Protection] Tentativa de acesso cross-tenant bloqueada no endpoint /admin/tenants/:tenantId`, {
+                user: req.user.email,
+                attemptedTenant: tenantId,
+                authorizedTenant: currentTenant,
+            });
+            sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Você não possui autorização para consultar este tenant.', 'CROSS_TENANT_ACCESS_DENIED');
+            return;
+        }
+        const docSnap = await db.collection('tenants').doc(tenantId).get();
+        if (!docSnap.exists) {
+            sendProblemDetails(res, 404, 'Not Found', 'Tenant não encontrado', 'TENANT_NOT_FOUND');
+            return;
+        }
+        res.status(200).json({ tenant: { id: docSnap.id, ...docSnap.data() } });
+    }
+    catch (err) {
+        console.error('[MT-001] Erro ao buscar tenant:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao buscar tenant', 'TENANT_FETCH_ERROR');
+    }
+});
+/** PATCH /api/v2/admin/tenants/:tenantId — Atualização de configurações do Tenant */
+router.patch('/admin/tenants/:tenantId', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req, res) => {
+    try {
+        const { tenantId } = req.params;
+        const isSuper = req.isSuperAdmin;
+        const currentTenant = req.tenantId;
+        if (!isSuper && currentTenant !== tenantId) {
+            sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida alteração de configurações de outros tenants.', 'CROSS_TENANT_ACCESS_DENIED');
+            return;
+        }
+        const validated = TenantUpdateSchema.parse(req.body);
+        await db.collection('tenants').doc(tenantId).set({
+            ...validated,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: req.user.email,
+        }, { merge: true });
+        await db.collection('audit_logs').add({
+            action: 'TENANT_UPDATED',
+            userEmail: req.user.email,
+            entity: 'tenants',
+            entityId: tenantId,
+            description: `Configurações do tenant ${tenantId} atualizadas`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            tenantId,
+        });
+        res.status(200).json({ success: true, message: 'Tenant atualizado com sucesso.' });
+    }
+    catch (err) {
+        if (err instanceof zod_1.z.ZodError) {
+            sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
+        }
+        else {
+            console.error('[MT-001] Erro ao atualizar tenant:', err);
+            sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao atualizar configurações do tenant', 'TENANT_UPDATE_ERROR');
+        }
+    }
+});
+/** GET /api/v2/admin/tenants/:tenantId/members — Membros vinculados ao Tenant */
+router.get('/admin/tenants/:tenantId/members', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req, res) => {
+    try {
+        const { tenantId } = req.params;
+        const isSuper = req.isSuperAdmin;
+        const currentTenant = req.tenantId;
+        if (!isSuper && currentTenant !== tenantId) {
+            sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida consulta a membros de outros tenants.', 'CROSS_TENANT_ACCESS_DENIED');
+            return;
+        }
+        const snap = await db.collection('user_tenants').where('tenantId', '==', tenantId).get();
+        const members = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.status(200).json({ members, total: members.length });
+    }
+    catch (err) {
+        console.error('[MT-001] Erro ao buscar membros do tenant:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao consultar membros do tenant', 'TENANT_MEMBERS_ERROR');
+    }
+});
+/** POST /api/v2/admin/tenants/:tenantId/members — Vínculo explícito de Usuário a um Tenant */
+router.post('/admin/tenants/:tenantId/members', authenticateToken, resolveTenantContext, requireRole('SUPER_ADMIN', 'ADMIN', 'TENANT_ADMIN'), async (req, res) => {
+    try {
+        const { tenantId } = req.params;
+        const isSuper = req.isSuperAdmin;
+        const currentTenant = req.tenantId;
+        if (!isSuper && currentTenant !== tenantId) {
+            sendProblemDetails(res, 403, 'Forbidden', 'Acesso negado: Proibida adição de membros em outro tenant.', 'CROSS_TENANT_ACCESS_DENIED');
+            return;
+        }
+        const validated = TenantMemberSchema.parse(req.body);
+        const membershipId = `${validated.userId}_${tenantId}`;
+        const membershipData = {
+            id: membershipId,
+            userId: validated.userId,
+            userEmail: validated.userEmail,
+            tenantId,
+            role: validated.role,
+            isDefault: validated.isDefault,
+            isActive: true,
+            grantedBy: req.user.email,
+            grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+        await db.collection('user_tenants').doc(membershipId).set(membershipData, { merge: true });
+        // Atualiza custom claim no Firebase Auth para refletir tenantId
+        const userRecord = await admin.auth().getUser(validated.userId);
+        const existingClaims = userRecord.customClaims || {};
+        const existingTenants = Array.isArray(existingClaims.tenants) ? existingClaims.tenants : [];
+        if (!existingTenants.includes(tenantId)) {
+            existingTenants.push(tenantId);
+        }
+        await admin.auth().setCustomUserClaims(validated.userId, {
+            ...existingClaims,
+            tenantId: validated.isDefault ? tenantId : (existingClaims.tenantId || tenantId),
+            tenantRole: validated.role,
+            tenants: existingTenants,
+        });
+        await db.collection('audit_logs').add({
+            action: 'TENANT_MEMBER_ADDED',
+            userEmail: req.user.email,
+            entity: 'user_tenants',
+            entityId: membershipId,
+            description: `Usuário ${validated.userEmail} vinculado ao tenant ${tenantId} com role ${validated.role}`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            tenantId,
+        });
+        res.status(201).json({ success: true, membership: membershipData, message: 'Usuário vinculado ao tenant com sucesso.' });
+    }
+    catch (err) {
+        if (err instanceof zod_1.z.ZodError) {
+            sendProblemDetails(res, 400, 'Bad Request', err.errors.map(e => e.message).join('; '), 'VALIDATION_ERROR');
+        }
+        else {
+            console.error('[MT-001] Erro ao vincular membro ao tenant:', err);
+            sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao vincular usuário ao tenant', 'TENANT_MEMBER_ADD_ERROR');
+        }
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS LGPD — Portabilidade & Eliminação de Dados (Art. 16, 18 LGPD)
+// ─────────────────────────────────────────────────────────────────────────────
+/** POST /api/v2/admin/lgpd/export — Exportação de dados pessoais do titular (Art. 18, V LGPD) */
+router.post('/admin/lgpd/export', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email || typeof email !== 'string') {
+            sendProblemDetails(res, 400, 'Bad Request', 'O campo email é obrigatório', 'MISSING_EMAIL');
+            return;
+        }
+        const targetEmail = email.trim().toLowerCase();
+        const [leadsSnap, donationsSnap, partnersSnap, profilesSnap] = await Promise.all([
+            db.collection('leads').where('email', '==', targetEmail).get(),
+            db.collection('donations').where('donorEmail', '==', targetEmail).get(),
+            db.collection('partner_applications').where('email', '==', targetEmail).get(),
+            db.collection('users_profiles').where('email', '==', targetEmail).get(),
+        ]);
+        const report = {
+            subjectEmail: targetEmail,
+            exportedAt: new Date().toISOString(),
+            requestedBy: req.user.email,
+            legalBasis: 'LGPD Art. 18, V — Direito à portabilidade dos dados',
+            recordsFound: {
+                leads: leadsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+                donations: donationsSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+                partnerApplications: partnersSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+                userProfile: profilesSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+            },
+        };
+        await db.collection('audit_logs').add({
+            action: 'LGPD_DATA_EXPORTED',
+            userEmail: req.user.email,
+            entity: 'titular_dados',
+            description: `Relatório de portabilidade LGPD gerado para ${targetEmail}`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        res.status(200).json(report);
+    }
+    catch (err) {
+        console.error('[LGPD API] Erro ao exportar dados do titular:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao compilar relatório de dados do titular', 'LGPD_EXPORT_ERROR');
+    }
+});
+/** POST /api/v2/admin/lgpd/anonymize — Anonimização de dados do titular (Art. 18, VI & Art. 16 LGPD) */
+router.post('/admin/lgpd/anonymize', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email || typeof email !== 'string') {
+            sendProblemDetails(res, 400, 'Bad Request', 'O campo email é obrigatório', 'MISSING_EMAIL');
+            return;
+        }
+        const targetEmail = email.trim().toLowerCase();
+        // Trava de segurança: proibir anonimização de contas ativas de Super Admin / Admin
+        if (targetEmail === 'instsermelhor.adm@gmail.com') {
+            sendProblemDetails(res, 403, 'Forbidden', 'A conta de Super Administrador não pode ser anonimizada.', 'SUPER_ADMIN_PROTECTED');
+            return;
+        }
+        const batch = db.batch();
+        let anonymizedCount = 0;
+        // 1. Leads
+        const leadsSnap = await db.collection('leads').where('email', '==', targetEmail).get();
+        leadsSnap.docs.forEach(docRef => {
+            batch.update(docRef.ref, {
+                name: '[DADOS_ANONIMIZADOS_LGPD]',
+                email: `anonimo_${docRef.id}@anonymized.lgpd`,
+                phone: '[REMOVIDO]',
+                message: '[CONTEÚDO_ELIMINADO_SOLICITAÇÃO_TITULAR]',
+                anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            anonymizedCount++;
+        });
+        // 2. Candidaturas de parceiro
+        const partnersSnap = await db.collection('partner_applications').where('email', '==', targetEmail).get();
+        partnersSnap.docs.forEach(docRef => {
+            batch.update(docRef.ref, {
+                contactName: '[DADOS_ANONIMIZADOS_LGPD]',
+                email: `anonimo_${docRef.id}@anonymized.lgpd`,
+                phone: '[REMOVIDO]',
+                anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            anonymizedCount++;
+        });
+        // 3. Doações (Preserva valor financeiro para conformidade contábil, substitui dados identificadores)
+        const donationsSnap = await db.collection('donations').where('donorEmail', '==', targetEmail).get();
+        donationsSnap.docs.forEach(docRef => {
+            batch.update(docRef.ref, {
+                donorName: 'Doador Anônimo (LGPD Art. 16, I)',
+                donorEmail: `anonimo_${docRef.id}@anonymized.lgpd`,
+                message: null,
+                anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            anonymizedCount++;
+        });
+        await batch.commit();
+        await db.collection('audit_logs').add({
+            action: 'LGPD_DATA_ANONYMIZED',
+            userEmail: req.user.email,
+            entity: 'titular_dados',
+            description: `Anonimização LGPD concluída para ${targetEmail} (${anonymizedCount} registros atualizados)`,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        res.status(200).json({
+            success: true,
+            targetEmail,
+            anonymizedRecords: anonymizedCount,
+            message: `Sucesso: ${anonymizedCount} registros do titular foram anonimizados segundo o Art. 16, I da LGPD.`,
+        });
+    }
+    catch (err) {
+        console.error('[LGPD API] Erro ao anonimizar dados do titular:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao efetuar eliminação/anonimização do titular', 'LGPD_ANONYMIZE_ERROR');
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// ENDPOINTS DE TELEMETRIA E ERROS DO SISTEMA
+// ─────────────────────────────────────────────────────────────────────────────
+const ClientTelemetrySchema = zod_1.z.object({
+    source: zod_1.z.string().max(100).default('Frontend'),
+    message: zod_1.z.string().min(1).max(2000),
+    route: zod_1.z.string().max(300).optional(),
+    statusCode: zod_1.z.number().optional(),
+    stack: zod_1.z.string().max(3000).optional(),
+    userAgent: zod_1.z.string().max(500).optional(),
+});
+/** POST /api/v2/telemetry/errors — Coleta pública de erros de clientes frontend (rate-limited) */
+router.post('/telemetry/errors', rateLimiterMiddleware(20, 60000), async (req, res) => {
+    try {
+        const validated = ClientTelemetrySchema.parse(req.body);
+        await reportSystemError(validated.source, validated.message, validated.route || 'CLIENT_RUNTIME', validated.statusCode || 400, validated.stack);
+        res.status(201).json({ success: true, message: 'Telemetria de erro registrada.' });
+    }
+    catch (err) {
+        res.status(400).json({ success: false, error: 'Formato de telemetria inválido.' });
+    }
+});
+/** GET /api/v2/admin/system/errors — Consulta dos últimos erros do sistema (ADMIN+) */
+router.get('/admin/system/errors', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (_req, res) => {
+    try {
+        const snap = await db.collection('system_errors')
+            .orderBy('timestamp', 'desc')
+            .limit(100)
+            .get();
+        const errors = snap.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                source: data.source || 'SISTEMA',
+                message: data.message || 'Sem mensagem',
+                route: data.route || 'N/A',
+                statusCode: data.statusCode || 500,
+                stack: data.stack || null,
+                timestamp: data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate().toISOString() : data.timestamp) : new Date().toISOString(),
+            };
+        });
+        res.status(200).json({ errors, total: errors.length });
+    }
+    catch (err) {
+        console.error('[Telemetry API] Erro ao buscar system_errors:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao buscar log de erros do sistema', 'SYSTEM_ERRORS_FETCH_ERROR');
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// TELEMETRIA DE CORE WEB VITALS — Fase 12 / PERF-003
+// ─────────────────────────────────────────────────────────────────────────────
+const WebVitalSchema = zod_1.z.object({
+    name: zod_1.z.enum(['LCP', 'INP', 'CLS', 'FCP', 'TTFB']),
+    value: zod_1.z.number().nonnegative(),
+    rating: zod_1.z.enum(['good', 'needs-improvement', 'poor']),
+    delta: zod_1.z.number(),
+    id: zod_1.z.string().max(128),
+    url: zod_1.z.string().max(512),
+    timestamp: zod_1.z.number().positive(),
+});
+/** POST /api/v2/telemetry/web-vitals — Recebe métricas CWV do frontend (sendBeacon) */
+router.post('/telemetry/web-vitals', rateLimiterMiddleware(60, 60000), async (req, res) => {
+    try {
+        const validated = WebVitalSchema.parse(req.body);
+        // Persiste assincronamente — não bloqueia a resposta
+        db.collection('cwv_metrics').add({
+            ...validated,
+            receivedAt: new Date().toISOString(),
+        }).catch((err) => {
+            logStructured('WARNING', '[WebVitals] Falha ao persistir métrica CWV', { error: err.message });
+        });
+        res.status(202).json({ success: true });
+    }
+    catch {
+        res.status(400).json({ success: false, error: 'Payload de métrica inválido.' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Normaliza eventos de pagamento provenientes de múltiplos provedores
+ */
+function normalizePaymentEvent(provider, body) {
+    const p = provider.toLowerCase().trim();
+    // 1. STRIPE (Checkout Session / Payment Intent)
+    if (p === 'stripe') {
+        const eventType = body.type || body.event;
+        const obj = body.data?.object || body;
+        if (eventType === 'checkout.session.completed' || eventType === 'payment_intent.succeeded') {
+            return {
+                status: 'CONFIRMED',
+                transactionId: obj.id,
+                donorEmail: obj.customer_details?.email || obj.receipt_email || obj.metadata?.donorEmail,
+                amount: obj.amount_total ? obj.amount_total / 100 : (obj.amount ? obj.amount / 100 : undefined),
+            };
+        }
+        if (eventType === 'charge.refunded' || eventType === 'payment_intent.payment_failed') {
+            return {
+                status: eventType === 'charge.refunded' ? 'REFUNDED' : 'FAILED',
+                transactionId: obj.id,
+                donorEmail: obj.receipt_email || obj.metadata?.donorEmail,
+            };
+        }
+    }
+    // 2. ASAAS (Fintech / Pagamentos recurrentes & Pix)
+    if (p === 'asaas') {
+        const eventType = body.event;
+        const payment = body.payment || {};
+        if (eventType === 'PAYMENT_RECEIVED' || eventType === 'PAYMENT_CONFIRMED') {
+            return {
+                status: 'CONFIRMED',
+                transactionId: payment.id,
+                donorEmail: payment.customerEmail || payment.externalReference,
+                amount: payment.value,
+            };
+        }
+        if (eventType === 'PAYMENT_OVERDUE' || eventType === 'PAYMENT_DELETED') {
+            return { status: 'FAILED', transactionId: payment.id };
+        }
+        if (eventType === 'PAYMENT_REFUNDED') {
+            return { status: 'REFUNDED', transactionId: payment.id };
+        }
+    }
+    // 3. EFÍ BANK / GERENCIANET (Pix & Boleto)
+    if (p === 'efi' || p === 'efi_bank' || p === 'gerencianet') {
+        const pixEvent = body.pix?.[0];
+        if (pixEvent) {
+            return {
+                status: 'CONFIRMED',
+                transactionId: pixEvent.txid || pixEvent.endToEndId,
+                amount: parseFloat(pixEvent.valor || '0'),
+            };
+        }
+    }
+    // 4. CORA SCFI (Banco Digital oficial do ISM)
+    if (p === 'cora') {
+        if (body.status === 'PAID' || body.event === 'INVOICE_PAID') {
+            return {
+                status: 'CONFIRMED',
+                transactionId: body.id || body.transactionId,
+                amount: body.amount,
+            };
+        }
+    }
+    // 5. MERCADO PAGO / PAGSEGURO / NUBANK / INTER / BB / ITAÚ / MOCK
+    if (body.status === 'approved' || body.status === 'PAID' || body.status === 'CONFIRMED' || body.event === 'PAYMENT_SUCCESS') {
+        return {
+            status: 'CONFIRMED',
+            transactionId: body.id || body.txid || body.payment_id,
+            donorEmail: body.email || body.payer?.email,
+            amount: body.amount || body.transaction_amount,
+        };
+    }
+    return { status: 'PENDING', transactionId: body.id || body.transactionId };
+}
+/** POST /api/v2/webhooks/:provider — Webhook Universal de Pagamentos */
+router.post('/webhooks/:provider', async (req, res) => {
+    const { provider } = req.params;
+    const body = req.body || {};
+    try {
+        const event = normalizePaymentEvent(provider, body);
+        if (event.status !== 'PENDING' && (event.transactionId || event.donorEmail)) {
+            // Buscar doação correspondente no Firestore por ID do gateway ou email do doador
+            let donationRef = null;
+            if (event.transactionId) {
+                const snap = await db.collection('donations').where('gatewayTransactionId', '==', event.transactionId).limit(1).get();
+                if (!snap.empty)
+                    donationRef = snap.docs[0].ref;
+            }
+            if (!donationRef && event.donorEmail) {
+                const snap = await db.collection('donations').where('donorEmail', '==', event.donorEmail).where('status', '==', 'PENDING').limit(1).get();
+                if (!snap.empty)
+                    donationRef = snap.docs[0].ref;
+            }
+            if (donationRef) {
+                await donationRef.update({
                     status: event.status,
-                    message: `Webhook ${provider} processado com sucesso.`,
-                });
-            }
-            catch (err) {
-                console.error(`[Webhook ${provider}] Erro ao processar:`, err);
-                // Retornar 200 para evitar retentativas infinitas do gateway em falhas de parsing
-                res.status(200).json({ received: true, error: err.message });
-            }
-        });
-        /** POST /api/v2/payments/checkout — Inicializa Checkout Multi-Provedor (Stripe, ASAAS, Efí, Pix Direct) */
-        router.post('/payments/checkout', rateLimiterMiddleware(10, 60000), async (req, res) => {
-            try {
-                const { provider = 'pix_direct', amount, donorName, donorEmail, recurrence = 'SINGLE', campaignId } = req.body;
-                if (!amount || amount <= 0) {
-                    sendProblemDetails(res, 400, 'Bad Request', 'O valor da doação deve ser positivo', 'INVALID_AMOUNT');
-                    return;
-                }
-                // Criar doação PENDING no Firestore
-                const docRef = await db.collection('donations').add({
-                    donorName: donorName || 'Doador Anônimo',
-                    donorEmail: donorEmail || 'doacao@institutosermelhor.org',
-                    amount: Number(amount),
-                    currency: 'BRL',
-                    paymentMethod: provider.toUpperCase(),
-                    status: 'PENDING',
-                    recurrence,
-                    campaignId: campaignId ?? null,
+                    paidAt: admin.firestore.FieldValue.serverTimestamp(),
                     gatewayName: provider.toUpperCase(),
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                    gatewayTransactionId: event.transactionId ?? null,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
                 });
-                const isStripe = provider.toLowerCase() === 'stripe';
-                const isAsaas = provider.toLowerCase() === 'asaas';
-                res.status(201).json({
-                    success: true,
-                    donationId: docRef.id,
-                    provider: provider.toUpperCase(),
-                    // URLs e Payloads preparados para os SDKs no frontend
-                    checkoutUrl: isStripe
-                        ? `https://checkout.stripe.com/pay/cs_live_${docRef.id}`
-                        : isAsaas
-                            ? `https://www.asaas.com/c/${docRef.id}`
-                            : null,
-                    pixCopiaECola: `00020126580014BR.GOV.BCB.PIX011409040440000147520400005303986540${Number(amount).toFixed(2).replace('.', '')}5802BR5925INSTITUTO SER MELHOR6009SAO PAULO62070503***6304ABCD`,
-                    instructions: 'Doação registrada com status PENDING. Aguardando confirmação do pagamento.',
+                await db.collection('audit_logs').add({
+                    action: 'PAYMENT_WEBHOOK_PROCESSED',
+                    userEmail: `system@webhook.${provider.toLowerCase()}`,
+                    entity: 'donations',
+                    entityId: donationRef.id,
+                    description: `Pagamento ${event.status} via ${provider.toUpperCase()} (ID: ${event.transactionId || '—'})`,
+                    timestamp: admin.firestore.FieldValue.serverTimestamp(),
                 });
             }
-            catch (err) {
-                console.error('[Payments Checkout] Erro ao criar checkout:', err);
-                sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao inicializar o checkout', 'CHECKOUT_ERROR');
-            }
+        }
+        res.status(200).json({
+            received: true,
+            provider: provider.toUpperCase(),
+            status: event.status,
+            message: `Webhook ${provider} processado com sucesso.`,
         });
-        // ─────────────────────────────────────────────────────────────────────────────
-        // SEO: SITEMAP.XML E ROBOTS.TXT DINÂMICOS
-        // ─────────────────────────────────────────────────────────────────────────────
-        const SITE_URL = 'https://institutosermelhor.org';
-        const STATIC_ROUTES = [
-            { path: '/', priority: '1.0', changefreq: 'weekly' },
-            { path: '/#sobre', priority: '0.8', changefreq: 'monthly' },
-            { path: '/#projetos', priority: '0.8', changefreq: 'weekly' },
-            { path: '/#impacto', priority: '0.8', changefreq: 'monthly' },
-            { path: '/#governança', priority: '0.7', changefreq: 'monthly' },
-            { path: '/#transparência', priority: '0.7', changefreq: 'monthly' },
-            { path: '/#parceiros', priority: '0.6', changefreq: 'monthly' },
-            { path: '/#doação', priority: '0.9', changefreq: 'weekly' },
-        ];
-        /** GET /api/v2/sitemap.xml — Sitemap XML dinâmico com posts publicados do blog */
-        router.get('/sitemap.xml', async (_req, res) => {
-            try {
-                const now = new Date().toISOString().split('T')[0];
-                // Busca posts publicados do Firestore
-                const blogSnap = await db.collection('blog_posts')
-                    .where('status', '==', 'PUBLISHED')
-                    .limit(200)
-                    .get();
-                const blogUrls = blogSnap.docs.map(doc => {
-                    const data = doc.data();
-                    const slug = data.slug || doc.id;
-                    const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString().split('T')[0] : now;
-                    return `  <url>
+    }
+    catch (err) {
+        console.error(`[Webhook ${provider}] Erro ao processar:`, err);
+        // Retornar 200 para evitar retentativas infinitas do gateway em falhas de parsing
+        res.status(200).json({ received: true, error: err.message });
+    }
+});
+/** POST /api/v2/payments/checkout — Inicializa Checkout Multi-Provedor (Stripe, ASAAS, Efí, Pix Direct) */
+router.post('/payments/checkout', rateLimiterMiddleware(10, 60000), async (req, res) => {
+    try {
+        const { provider = 'pix_direct', amount, donorName, donorEmail, recurrence = 'SINGLE', campaignId } = req.body;
+        if (!amount || amount <= 0) {
+            sendProblemDetails(res, 400, 'Bad Request', 'O valor da doação deve ser positivo', 'INVALID_AMOUNT');
+            return;
+        }
+        // Criar doação PENDING no Firestore
+        const docRef = await db.collection('donations').add({
+            donorName: donorName || 'Doador Anônimo',
+            donorEmail: donorEmail || 'doacao@institutosermelhor.org',
+            amount: Number(amount),
+            currency: 'BRL',
+            paymentMethod: provider.toUpperCase(),
+            status: 'PENDING',
+            recurrence,
+            campaignId: campaignId ?? null,
+            gatewayName: provider.toUpperCase(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        const isStripe = provider.toLowerCase() === 'stripe';
+        const isAsaas = provider.toLowerCase() === 'asaas';
+        res.status(201).json({
+            success: true,
+            donationId: docRef.id,
+            provider: provider.toUpperCase(),
+            // URLs e Payloads preparados para os SDKs no frontend
+            checkoutUrl: isStripe
+                ? `https://checkout.stripe.com/pay/cs_live_${docRef.id}`
+                : isAsaas
+                    ? `https://www.asaas.com/c/${docRef.id}`
+                    : null,
+            pixCopiaECola: `00020126580014BR.GOV.BCB.PIX011409040440000147520400005303986540${Number(amount).toFixed(2).replace('.', '')}5802BR5925INSTITUTO SER MELHOR6009SAO PAULO62070503***6304ABCD`,
+            instructions: 'Doação registrada com status PENDING. Aguardando confirmação do pagamento.',
+        });
+    }
+    catch (err) {
+        console.error('[Payments Checkout] Erro ao criar checkout:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao inicializar o checkout', 'CHECKOUT_ERROR');
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// SEO: SITEMAP.XML E ROBOTS.TXT DINÂMICOS
+// ─────────────────────────────────────────────────────────────────────────────
+const SITE_URL = 'https://institutosermelhor.org';
+const STATIC_ROUTES = [
+    { path: '/', priority: '1.0', changefreq: 'weekly' },
+    { path: '/#sobre', priority: '0.8', changefreq: 'monthly' },
+    { path: '/#projetos', priority: '0.8', changefreq: 'weekly' },
+    { path: '/#impacto', priority: '0.8', changefreq: 'monthly' },
+    { path: '/#governança', priority: '0.7', changefreq: 'monthly' },
+    { path: '/#transparência', priority: '0.7', changefreq: 'monthly' },
+    { path: '/#parceiros', priority: '0.6', changefreq: 'monthly' },
+    { path: '/#doação', priority: '0.9', changefreq: 'weekly' },
+];
+/** GET /api/v2/sitemap.xml — Sitemap XML dinâmico com posts publicados do blog */
+router.get('/sitemap.xml', async (_req, res) => {
+    try {
+        const now = new Date().toISOString().split('T')[0];
+        // Busca posts publicados do Firestore
+        const blogSnap = await db.collection('blog_posts')
+            .where('status', '==', 'PUBLISHED')
+            .limit(200)
+            .get();
+        const blogUrls = blogSnap.docs.map(doc => {
+            const data = doc.data();
+            const slug = data.slug || doc.id;
+            const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString().split('T')[0] : now;
+            return `  <url>
     <loc>${SITE_URL}/blog/${slug}</loc>
     <lastmod>${updatedAt}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>`;
-                });
-                const staticUrls = STATIC_ROUTES.map(route => `  <url>
+        });
+        const staticUrls = STATIC_ROUTES.map(route => `  <url>
     <loc>${SITE_URL}${route.path}</loc>
     <lastmod>${now}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority}</priority>
   </url>`);
-                const xml = `<?xml version="1.0" encoding="UTF-8"?>
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticUrls.join('\n')}
 ${blogUrls.join('\n')}
 </urlset>`;
-                res.set('Content-Type', 'application/xml; charset=utf-8');
-                res.set('Cache-Control', 'public, max-age=3600');
-                res.status(200).send(xml);
-            }
-            catch (err) {
-                logStructured('ERROR', '[Sitemap] Falha ao gerar sitemap.xml', { error: err.message });
-                res.status(500).send('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
-            }
-        });
-        /** GET /api/v2/robots.txt — Robots.txt com referência ao sitemap */
-        router.get('/robots.txt', (_req, res) => {
-            const robotsTxt = `User-agent: *
+        res.set('Content-Type', 'application/xml; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=3600');
+        res.status(200).send(xml);
+    }
+    catch (err) {
+        logStructured('ERROR', '[Sitemap] Falha ao gerar sitemap.xml', { error: err.message });
+        res.status(500).send('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    }
+});
+/** GET /api/v2/robots.txt — Robots.txt com referência ao sitemap */
+router.get('/robots.txt', (_req, res) => {
+    const robotsTxt = `User-agent: *
 Allow: /
 
 User-agent: Googlebot
@@ -1392,14 +1400,10 @@ Allow: /
 Sitemap: ${SITE_URL}/api/sitemap.xml
 Sitemap: https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api/api/v2/sitemap.xml
 `;
-            res.set('Content-Type', 'text/plain; charset=utf-8');
-            res.set('Cache-Control', 'public, max-age=86400');
-            res.status(200).send(robotsTxt);
-        });
-        app.use('/api/v2', router);
-        export const api = (0, https_1.onRequest)({ region: 'southamerica-east1', cors: true }, app);
-    }
-    finally {
-    }
+    res.set('Content-Type', 'text/plain; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.status(200).send(robotsTxt);
 });
+app.use('/api/v2', router);
+exports.api = (0, https_1.onRequest)({ region: 'southamerica-east1', cors: true }, app);
 //# sourceMappingURL=index.js.map
