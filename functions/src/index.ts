@@ -1534,6 +1534,8 @@ Sitemap: https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api/api/v2/si
 });
 
 app.use('/api/v2', router);
+app.use('/api', router);
+app.use('/', router);
 
 export const api = onRequest({ region: 'southamerica-east1', cors: true }, app);
 
