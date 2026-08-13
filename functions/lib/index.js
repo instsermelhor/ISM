@@ -69,7 +69,30 @@ app.use((0, cors_1.default)({
     },
     credentials: true,
 }));
-app.use(express_1.default.json());
+// Proteção contra fingerprinting do framework
+app.disable('x-powered-by');
+app.use(express_1.default.json({ limit: '1mb' }));
+// ─────────────────────────────────────────────────────────────────────────────
+// MIDDLEWARE DE SEGURANÇA HTTP (Hardening — Fase 15)
+// Injeta cabeçalhos de segurança em TODAS as respostas da API
+// ─────────────────────────────────────────────────────────────────────────────
+app.use((_req, res, next) => {
+    // HSTS: forçar HTTPS por 2 anos com preload
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    // Prevenir MIME-sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Proibir embedding em iframes externos
+    res.setHeader('X-Frame-Options', 'DENY');
+    // Controlar informações enviadas no Referer
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // APIs não devem ser cacheadas em proxies intermediários
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    // CORP para APIs JSON
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+});
 // ─────────────────────────────────────────────────────────────────────────────
 // MEMORY / IDEMPOTENCY & RATE LIMITING
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,15 +186,54 @@ const LeadSchema = zod_1.z.object({
     subject: zod_1.z.string().max(200).optional(),
     message: zod_1.z.string().min(5).max(5000),
 });
+// ─────────────────────────────────────────────────────────────────────────────
+// TELEMETRIA E OBSERVABILIDADE ESTRUTURADA (GCP Cloud Logging & System Errors)
+// ─────────────────────────────────────────────────────────────────────────────
+/** Helper para log estruturado JSON compatível com GCP Cloud Logging */
+function logStructured(severity, message, context) {
+    const payload = {
+        severity,
+        message,
+        component: 'functions-v2',
+        timestamp: new Date().toISOString(),
+        ...context,
+    };
+    if (severity === 'ERROR') {
+        console.error(JSON.stringify(payload));
+    }
+    else if (severity === 'WARNING') {
+        console.warn(JSON.stringify(payload));
+    }
+    else {
+        console.log(JSON.stringify(payload));
+    }
+}
+/** Registra erro no log estruturado e persiste na coleção system_errors do Firestore */
+async function reportSystemError(source, message, route, statusCode = 500, stack) {
+    logStructured('ERROR', `[${source}] ${message}`, { route, statusCode, stack });
+    try {
+        await db.collection('system_errors').add({
+            source,
+            message: message || 'Erro não especificado',
+            route: route || 'INTERNAL',
+            statusCode,
+            stack: stack ? stack.substring(0, 2000) : null,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    }
+    catch (err) {
+        console.error('[Telemetry] Falha ao gravar no Firestore system_errors:', err);
+    }
+}
 /** GET /api/v2/health — Liveness Probe */
 router.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK', apiVersion: 'v2.0', mode: 'Liveness', timestamp: new Date().toISOString() });
 });
-/** GET /api/v2/health/deep — Readiness Probe (Testa conexão com o Firestore) */
+/** GET /api/v2/health/deep — Readiness Probe Expandido com Telemetria */
 router.get('/health/deep', async (_req, res) => {
     const startTime = Date.now();
+    const mem = process.memoryUsage();
     try {
-        // Teste atômico de leitura no Firestore para confirmar integridade do banco
         await db.collection('settings').limit(1).get();
         const latency = Date.now() - startTime;
         res.status(200).json({
@@ -180,10 +242,18 @@ router.get('/health/deep', async (_req, res) => {
             mode: 'Readiness',
             database: 'CONNECTED',
             dbLatencyMs: latency,
+            uptimeSeconds: Math.floor(process.uptime()),
+            memory: {
+                rssMb: Math.round(mem.rss / 1024 / 1024),
+                heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
+                heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+            },
+            nodeVersion: process.version,
             timestamp: new Date().toISOString()
         });
     }
     catch (err) {
+        await reportSystemError('HealthProbe', err.message, '/api/v2/health/deep', 503, err.stack);
         res.status(503).json({
             status: 'UNHEALTHY',
             apiVersion: 'v2.0',
@@ -454,13 +524,21 @@ router.post('/admin/users/:userId/role', authenticateToken, requireRole('SUPER_A
             sendProblemDetails(res, 400, 'Bad Request', `Role inválido. Valores aceitos: ${validRoles.join(', ')}`, 'INVALID_ROLE');
             return;
         }
+        const callerRole = req.user.role || 'VIEWER';
+        const callerEmail = (req.user.email || '').toLowerCase();
+        const isCallerSuperAdmin = callerEmail === 'instsermelhor.adm@gmail.com' || callerRole === 'SUPER_ADMIN';
+        // SoD Protection: Usuários administradores comuns não podem alterar a própria função
+        if (req.user.uid === userId && !isCallerSuperAdmin) {
+            sendProblemDetails(res, 403, 'Forbidden', 'Você não pode alterar a sua própria função de acesso.', 'SELF_ROLE_CHANGE_FORBIDDEN');
+            return;
+        }
         // Proteção: apenas SUPER_ADMIN pode definir role SUPER_ADMIN
-        if (role === 'SUPER_ADMIN' && req.user.email !== 'instsermelhor.adm@gmail.com') {
-            sendProblemDetails(res, 403, 'Forbidden', 'Apenas o Super Administrador pode elevar uma conta para SUPER_ADMIN.', 'FORBIDDEN');
+        if (role === 'SUPER_ADMIN' && !isCallerSuperAdmin) {
+            sendProblemDetails(res, 403, 'Forbidden', 'Apenas o Super Administrador pode elevar uma conta para SUPER_ADMIN.', 'SUPER_ADMIN_PROTECTED');
             return;
         }
         const target = await admin.auth().getUser(userId);
-        if (target.customClaims?.role === 'SUPER_ADMIN' && req.user.email !== 'instsermelhor.adm@gmail.com') {
+        if (target.customClaims?.role === 'SUPER_ADMIN' && !isCallerSuperAdmin) {
             sendProblemDetails(res, 403, 'Forbidden', 'O role do Super Administrador não pode ser alterado por ADMINs.', 'SUPER_ADMIN_PROTECTED');
             return;
         }
@@ -504,12 +582,14 @@ router.delete('/admin/users/:userId', authenticateToken, requireRole('SUPER_ADMI
     try {
         const targetUserId = req.params.userId;
         const callerEmail = (req.user.email || '').toLowerCase();
+        const callerRole = req.user.role || 'VIEWER';
+        const isCallerSuperAdmin = callerEmail === 'instsermelhor.adm@gmail.com' || callerRole === 'SUPER_ADMIN';
         // Buscar perfil do usuário alvo
         const targetUserRecord = await admin.auth().getUser(targetUserId).catch(() => null);
         const targetEmail = (targetUserRecord?.email || '').toLowerCase();
         // Trava de Segurança: Impedir exclusão de SUPER_ADMIN por administradores normais
         if (targetEmail === 'instsermelhor.adm@gmail.com' || targetUserRecord?.customClaims?.role === 'SUPER_ADMIN') {
-            if (callerEmail !== 'instsermelhor.adm@gmail.com') {
+            if (!isCallerSuperAdmin) {
                 sendProblemDetails(res, 403, 'Forbidden', 'Operação bloqueada pelo backend. O Super Administrador não pode ser excluído por usuários delegados.', 'SUPER_ADMIN_PROTECTED');
                 return;
             }
@@ -645,7 +725,82 @@ router.post('/admin/lgpd/anonymize', authenticateToken, requireRole('SUPER_ADMIN
     }
 });
 // ─────────────────────────────────────────────────────────────────────────────
-// ENDPOINTS DE PAGAMENTO MULTI-GATEWAY — Stripe, ASAAS, Efí, Cora, Nubank, BB
+// ENDPOINTS DE TELEMETRIA E ERROS DO SISTEMA
+// ─────────────────────────────────────────────────────────────────────────────
+const ClientTelemetrySchema = zod_1.z.object({
+    source: zod_1.z.string().max(100).default('Frontend'),
+    message: zod_1.z.string().min(1).max(2000),
+    route: zod_1.z.string().max(300).optional(),
+    statusCode: zod_1.z.number().optional(),
+    stack: zod_1.z.string().max(3000).optional(),
+    userAgent: zod_1.z.string().max(500).optional(),
+});
+/** POST /api/v2/telemetry/errors — Coleta pública de erros de clientes frontend (rate-limited) */
+router.post('/telemetry/errors', rateLimiterMiddleware(20, 60000), async (req, res) => {
+    try {
+        const validated = ClientTelemetrySchema.parse(req.body);
+        await reportSystemError(validated.source, validated.message, validated.route || 'CLIENT_RUNTIME', validated.statusCode || 400, validated.stack);
+        res.status(201).json({ success: true, message: 'Telemetria de erro registrada.' });
+    }
+    catch (err) {
+        res.status(400).json({ success: false, error: 'Formato de telemetria inválido.' });
+    }
+});
+/** GET /api/v2/admin/system/errors — Consulta dos últimos erros do sistema (ADMIN+) */
+router.get('/admin/system/errors', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (_req, res) => {
+    try {
+        const snap = await db.collection('system_errors')
+            .orderBy('timestamp', 'desc')
+            .limit(100)
+            .get();
+        const errors = snap.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                source: data.source || 'SISTEMA',
+                message: data.message || 'Sem mensagem',
+                route: data.route || 'N/A',
+                statusCode: data.statusCode || 500,
+                stack: data.stack || null,
+                timestamp: data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate().toISOString() : data.timestamp) : new Date().toISOString(),
+            };
+        });
+        res.status(200).json({ errors, total: errors.length });
+    }
+    catch (err) {
+        console.error('[Telemetry API] Erro ao buscar system_errors:', err);
+        sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao buscar log de erros do sistema', 'SYSTEM_ERRORS_FETCH_ERROR');
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// TELEMETRIA DE CORE WEB VITALS — Fase 12 / PERF-003
+// ─────────────────────────────────────────────────────────────────────────────
+const WebVitalSchema = zod_1.z.object({
+    name: zod_1.z.enum(['LCP', 'INP', 'CLS', 'FCP', 'TTFB']),
+    value: zod_1.z.number().nonnegative(),
+    rating: zod_1.z.enum(['good', 'needs-improvement', 'poor']),
+    delta: zod_1.z.number(),
+    id: zod_1.z.string().max(128),
+    url: zod_1.z.string().max(512),
+    timestamp: zod_1.z.number().positive(),
+});
+/** POST /api/v2/telemetry/web-vitals — Recebe métricas CWV do frontend (sendBeacon) */
+router.post('/telemetry/web-vitals', rateLimiterMiddleware(60, 60000), async (req, res) => {
+    try {
+        const validated = WebVitalSchema.parse(req.body);
+        // Persiste assincronamente — não bloqueia a resposta
+        db.collection('cwv_metrics').add({
+            ...validated,
+            receivedAt: new Date().toISOString(),
+        }).catch((err) => {
+            logStructured('WARNING', '[WebVitals] Falha ao persistir métrica CWV', { error: err.message });
+        });
+        res.status(202).json({ success: true });
+    }
+    catch {
+        res.status(400).json({ success: false, error: 'Payload de métrica inválido.' });
+    }
+});
 // ─────────────────────────────────────────────────────────────────────────────
 /**
  * Normaliza eventos de pagamento provenientes de múltiplos provedores
@@ -814,6 +969,78 @@ router.post('/payments/checkout', rateLimiterMiddleware(10, 60000), async (req, 
         console.error('[Payments Checkout] Erro ao criar checkout:', err);
         sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao inicializar o checkout', 'CHECKOUT_ERROR');
     }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// SEO: SITEMAP.XML E ROBOTS.TXT DINÂMICOS
+// ─────────────────────────────────────────────────────────────────────────────
+const SITE_URL = 'https://institutosermelhor.org';
+const STATIC_ROUTES = [
+    { path: '/', priority: '1.0', changefreq: 'weekly' },
+    { path: '/#sobre', priority: '0.8', changefreq: 'monthly' },
+    { path: '/#projetos', priority: '0.8', changefreq: 'weekly' },
+    { path: '/#impacto', priority: '0.8', changefreq: 'monthly' },
+    { path: '/#governança', priority: '0.7', changefreq: 'monthly' },
+    { path: '/#transparência', priority: '0.7', changefreq: 'monthly' },
+    { path: '/#parceiros', priority: '0.6', changefreq: 'monthly' },
+    { path: '/#doação', priority: '0.9', changefreq: 'weekly' },
+];
+/** GET /api/v2/sitemap.xml — Sitemap XML dinâmico com posts publicados do blog */
+router.get('/sitemap.xml', async (_req, res) => {
+    try {
+        const now = new Date().toISOString().split('T')[0];
+        // Busca posts publicados do Firestore
+        const blogSnap = await db.collection('blog_posts')
+            .where('status', '==', 'PUBLISHED')
+            .limit(200)
+            .get();
+        const blogUrls = blogSnap.docs.map(doc => {
+            const data = doc.data();
+            const slug = data.slug || doc.id;
+            const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString().split('T')[0] : now;
+            return `  <url>
+    <loc>${SITE_URL}/blog/${slug}</loc>
+    <lastmod>${updatedAt}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`;
+        });
+        const staticUrls = STATIC_ROUTES.map(route => `  <url>
+    <loc>${SITE_URL}${route.path}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`);
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${staticUrls.join('\n')}
+${blogUrls.join('\n')}
+</urlset>`;
+        res.set('Content-Type', 'application/xml; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=3600');
+        res.status(200).send(xml);
+    }
+    catch (err) {
+        logStructured('ERROR', '[Sitemap] Falha ao gerar sitemap.xml', { error: err.message });
+        res.status(500).send('<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>');
+    }
+});
+/** GET /api/v2/robots.txt — Robots.txt com referência ao sitemap */
+router.get('/robots.txt', (_req, res) => {
+    const robotsTxt = `User-agent: *
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+Sitemap: ${SITE_URL}/api/sitemap.xml
+Sitemap: https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api/api/v2/sitemap.xml
+`;
+    res.set('Content-Type', 'text/plain; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.status(200).send(robotsTxt);
 });
 app.use('/api/v2', router);
 exports.api = (0, https_1.onRequest)({ region: 'southamerica-east1', cors: true }, app);
