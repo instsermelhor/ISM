@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Instituto Ser Melhor — Gitleaks Configuration
+# SEC-SECRET-001 — Secret Scanning com Allowlist para Falsos Positivos
+# ─────────────────────────────────────────────────────────────────────────────
+# Referência: https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
+# ─────────────────────────────────────────────────────────────────────────────
+
+title = "Instituto Ser Melhor — Gitleaks Config"
+
+[extend]
+# Herda todas as regras padrão do Gitleaks
+useDefault = true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ALLOWLIST — Falsos Positivos Conhecidos e Justificados
+# ─────────────────────────────────────────────────────────────────────────────
+[allowlist]
+  description = "Allowlist de padrões que são seguros por design na plataforma ISM"
+
+  # Firebase Web API Keys são PÚBLICAS por design da plataforma Firebase.
+  # Elas identificam o projeto Firebase mas NÃO concedem acesso privilegiado.
+  # A segurança real é imposta pelas Firebase Security Rules (Firestore/Storage).
+  # Referência: https://firebase.google.com/docs/projects/api-keys
+  regexes = [
+    # Firebase Web API Key (AIza...) — pública por design
+    '''AIzaSy[0-9A-Za-z_-]{33}''',
+    # Stripe Publishable Key (pk_test_ / pk_live_) — pública por design
+    '''pk_(test|live)_[0-9A-Za-z]{24,}''',
+  ]
+
+  # Caminhos que contêm apenas exemplos/placeholders ou são públicos por design
+  paths = [
+    # Exemplos de configuração — nunca contêm valores reais
+    '''.env.example''',
+    '''.*\.env\.example$''',
+    # Histórico de prompts migrados (sem credenciais reais)
+    '''migrated_prompt_history/''',
+    # Documentação e relatórios de segurança (usam REDACTED ou placeholders)
+    '''SECURITY/''',
+    '''docs/''',
+    # Artefatos de build — refletem código-fonte auditado
+    '''dist/''',
+    '''functions/lib/''',
+  ]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REGRAS CUSTOMIZADAS ADICIONAIS
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Detectar Firebase Admin SDK Service Account (não deve estar no repo)
+[[rules]]
+  id = "firebase-service-account"
+  description = "Firebase Admin SDK Service Account JSON"
+  regex = '''"type"\s*:\s*"service_account"'''
+  severity = "CRITICAL"
+  tags = ["firebase", "service-account", "credential"]
+
+# Detectar senhas SMTP hardcoded
+[[rules]]
+  id = "smtp-password-hardcoded"
+  description = "SMTP Password hardcoded in source"
+  regex = '''(?i)(smtp_password|SMTP_PASS)\s*=\s*['""][^'""\$\{]{6,}'''
+  severity = "HIGH"
+  tags = ["smtp", "password", "credential"]
+
+# Detectar OpenAI API Key (sk-proj- ou sk-)
+[[rules]]
+  id = "openai-api-key"
+  description = "OpenAI API Key"
+  regex = '''sk-proj-[A-Za-z0-9_-]{32,}'''
+  severity = "CRITICAL"
+  tags = ["openai", "api-key"]
+
+# Detectar Stripe Webhook Secret
+[[rules]]
+  id = "stripe-webhook-secret"
+  description = "Stripe Webhook Signing Secret"
+  regex = '''whsec_[A-Za-z0-9]{32,}'''
+  severity = "HIGH"
+  tags = ["stripe", "webhook", "secret"]

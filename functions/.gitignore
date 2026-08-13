@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Instituto Ser Melhor — Cloud Functions — .gitignore
+# SEC-SECRET-001 — Proteção explícita de credenciais e segredos backend
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Build artifacts
+lib/
+
+# Dependências Node.js
+node_modules/
+
+# Logs
+*.log
+
+# ── SEGREDOS E CREDENCIAIS — NUNCA COMMITAR ──────────────────────────────────
+# Arquivos de ambiente com valores reais
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.staging
+.env.staging.local
+.env.production
+.env.production.local
+
+# Service Accounts e chaves de cloud
+*-service-account.json
+*-credentials.json
+service-account*.json
+credentials*.json
+firebase-adminsdk*.json
+gcp-key*.json
+
+# Chaves privadas e certificados
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt

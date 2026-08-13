@@ -177,17 +177,92 @@ const LeadSchema = z.object({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SEC-SECRET-001 — SECRET REDACTION
+// Sanitiza valores sensíveis antes de qualquer log ou resposta de erro
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Padrões de campos sensíveis que NUNCA devem aparecer em logs */
+const SENSITIVE_FIELD_PATTERNS = [
+  /authorization/i,
+  /bearer/i,
+  /password/i,
+  /passwd/i,
+  /secret/i,
+  /token/i,
+  /api.?key/i,
+  /private.?key/i,
+  /smtp/i,
+  /credential/i,
+  /webhook/i,
+  /signing.?key/i,
+  /stripe/i,
+  /openai/i,
+];
+
+/** Padrões de valores que parecem segredos (chaves de API, tokens, etc.) */
+const SECRET_VALUE_PATTERNS = [
+  /sk_(?:test|live)_[A-Za-z0-9]{24,}/,  // Stripe Secret Key
+  /pk_(?:test|live)_[A-Za-z0-9]{24,}/,  // Stripe Publishable Key (log safety)
+  /sk-proj-[A-Za-z0-9_-]{32,}/,         // OpenAI API Key
+  /whsec_[A-Za-z0-9]{32,}/,             // Stripe Webhook Secret
+  /Bearer\s+[A-Za-z0-9_\-\.]+/,         // Bearer tokens JWT
+  /[A-Za-z0-9+/]{40,}={0,2}/,           // Base64 encoded values > 40 chars
+];
+
+/**
+ * Redação de segredos em objetos de log.
+ * Percorre recursivamente o objeto e substitui valores sensíveis por [REDACTED].
+ */
+function redactSecrets(obj: Record<string, any>): Record<string, any> {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  const redacted = { ...obj };
+  for (const [key, value] of Object.entries(redacted)) {
+    // Redactar campos com nomes suspeitos
+    if (SENSITIVE_FIELD_PATTERNS.some(p => p.test(key))) {
+      redacted[key] = '[REDACTED]';
+      continue;
+    }
+    // Redactar valores que correspondem a padrões de segredos
+    if (typeof value === 'string') {
+      let redactedValue = value;
+      for (const pattern of SECRET_VALUE_PATTERNS) {
+        redactedValue = redactedValue.replace(pattern, '[REDACTED]');
+      }
+      redacted[key] = redactedValue;
+    } else if (typeof value === 'object' && value !== null) {
+      redacted[key] = redactSecrets(value);
+    }
+  }
+  return redacted;
+}
+
+/**
+ * Sanitiza strings de erro para remover dados sensíveis antes de logar.
+ */
+function redactErrorMessage(message: string): string {
+  let sanitized = message;
+  for (const pattern of SECRET_VALUE_PATTERNS) {
+    sanitized = sanitized.replace(new RegExp(pattern.source, pattern.flags + 'g'), '[REDACTED]');
+  }
+  return sanitized;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // TELEMETRIA E OBSERVABILIDADE ESTRUTURADA (GCP Cloud Logging & System Errors)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Helper para log estruturado JSON compatível com GCP Cloud Logging */
 function logStructured(severity: 'INFO' | 'WARNING' | 'ERROR', message: string, context?: Record<string, any>): void {
+  const safeMessage = redactErrorMessage(message);
+  const safeContext = context ? redactSecrets(context) : undefined;
+
   const payload = {
     severity,
-    message,
+    message: safeMessage,
     component: 'functions-v2',
     timestamp: new Date().toISOString(),
-    ...context,
+    ...safeContext,
   };
   if (severity === 'ERROR') {
     console.error(JSON.stringify(payload));

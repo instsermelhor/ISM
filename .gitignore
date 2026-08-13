@@ -22,4 +22,70 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.vercel
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SEC-SECRET-001 — PROTEÇÃO EXPLÍCITA DE SEGREDOS E CREDENCIAIS
+# REGRA: Nenhum arquivo contendo segredos reais deve ser rastreado pelo Git
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Arquivos de ambiente com valores reais (NUNCA commitar)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.staging
+.env.staging.local
+.env.production
+.env.production.local
+
+# Subprojetos: admin e functions
+admin/.env
+admin/.env.local
+admin/.env.development
+admin/.env.development.local
+admin/.env.staging
+admin/.env.production
+admin/.env.production.local
+
+functions/.env
+functions/.env.local
+functions/.env.development
+functions/.env.development.local
+functions/.env.staging
+functions/.env.production
+functions/.env.production.local
+
+# Vercel — pode conter tokens e deployment secrets
+.vercel/
+*/.vercel/
+**/.env.production.local
+
+# Service Account JSONs e credenciais de cloud
+*-service-account.json
+*-credentials.json
+service-account*.json
+credentials*.json
+google-credentials.json
+firebase-adminsdk*.json
+gcp-key*.json
+
+# Chaves privadas, certificados e arquivos sensíveis
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+id_rsa
+id_ed25519
+*.asc
+
+# Artefatos de segurança sensíveis
+secrets/
+.secrets/
+vault/
+
+# Snapshots de testes que possam conter dados reais
+*.snap
