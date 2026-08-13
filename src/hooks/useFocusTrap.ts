@@ -42,7 +42,7 @@ export function useFocusTrap(isOpen: boolean) {
     if (!container) return;
 
     // Move o foco para o primeiro elemento focável dentro do container
-    const focusableElements = Array.from(
+    const focusableElements = Array.from<HTMLElement>(
       container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
     );
 
