@@ -39,6 +39,7 @@ export default defineConfig({
     exclude: [
       // Admin tests run in their own Vite context with separate React instance
       'admin/**',
+      'e2e/**',
       '**/node_modules/**',
     ],
   },
