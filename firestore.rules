@@ -15,7 +15,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ─────────────────────────────────────────────────────────────────────────
-    // FUNÇÕES DE AUTENTICAÇÃO E AUTORIZAÇÃO (RBAC & Custom Claims)
+    // FUNÇÕES DE AUTENTICAÇÃO, MULTI-TENANCY & RBAC (MT-001)
     // ─────────────────────────────────────────────────────────────────────────
 
     /** Verifica se a requisição provém de um usuário autenticado via Firebase Auth */
@@ -30,11 +30,18 @@ service cloud.firestore {
       );
     }
 
+    /** Verifica se o usuário é SUPER_ADMIN global */
+    function isSuperAdmin() {
+      return isSuperAdminEmail() || (
+        isAuthenticated() && request.auth.token.role == 'SUPER_ADMIN'
+      );
+    }
+
     /** Verifica se o usuário possui a Custom Claim ou perfil de SUPER_ADMIN/ADMIN */
     function isAdmin() {
-      return isSuperAdminEmail() || (
+      return isSuperAdmin() || (
         isAuthenticated() &&
-        (request.auth.token.role == 'SUPER_ADMIN' || request.auth.token.role == 'ADMIN' || request.auth.token.admin == true)
+        (request.auth.token.role == 'ADMIN' || request.auth.token.admin == true)
       );
     }
 
@@ -48,9 +55,6 @@ service cloud.firestore {
 
     /**
      * NC-007 — GESTOR: Gestão de projetos, impacto e métricas.
-     * Acesso de LEITURA em coleções editoriais e métricas.
-     * Sem acesso a dados financeiros ou logs de auditoria.
-     * Hierarquia: GESTOR < EDITOR < ADMIN < SUPER_ADMIN
      */
     function isGestor() {
       return isEditor() || (
@@ -61,9 +65,6 @@ service cloud.firestore {
 
     /**
      * NC-007 — OPERADOR: Operações de atendimento e leads.
-     * Pode ler/atualizar leads e candidaturas de parceria.
-     * Sem acesso a conteúdo editorial, financeiro ou configurações.
-     * Hierarquia: OPERADOR < GESTOR
      */
     function isOperador() {
       return isGestor() || (
@@ -74,9 +75,6 @@ service cloud.firestore {
 
     /**
      * NC-007 — CONSULTA / VIEWER: Acesso somente-leitura.
-     * Visualiza conteúdo publicado e dashboards.
-     * Sem acesso a dados sensíveis, financeiros ou de auditoria.
-     * Hierarquia: VIEWER/CONSULTA < OPERADOR
      */
     function isViewer() {
       return isOperador() || (
@@ -85,44 +83,100 @@ service cloud.firestore {
       );
     }
 
+    /**
+     * MT-001: Valida se o usuário autenticado pertence ao Tenant especificado
+     */
+    function isTenantMember(tId) {
+      return isSuperAdmin() || (
+        isAuthenticated() && (
+          request.auth.token.tenantId == tId ||
+          (request.auth.token.tenants != null && tId in request.auth.token.tenants)
+        )
+      );
+    }
+
+    /**
+     * MT-001: Valida se o usuário possui privilégios de ADMIN dentro do Tenant
+     */
+    function isTenantAdmin(tId) {
+      return isSuperAdmin() || (
+        isTenantMember(tId) && (
+          request.auth.token.role == 'ADMIN' ||
+          request.auth.token.tenantRole == 'TENANT_ADMIN'
+        )
+      );
+    }
+
+    /**
+     * MT-001: Validador de escopo de documento contra isolamento de Tenant
+     */
+    function canAccessTenantDoc(docData) {
+      return isSuperAdmin() || 
+        (!('tenantId' in docData) && isEditor()) || 
+        ('tenantId' in docData && isTenantMember(docData.tenantId));
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 1. FORMULÁRIOS DE ENTRADA
-    //    Leitura restrita a Admin/Editor, Criação pública validada
+    // 0. GESTÃO DE TENANTS & MEMBRESIAS (MT-001)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    match /tenants/{tenantId} {
+      // Super Admin gerencia tudo; Membros do tenant podem ler seus dados; Leitura pública de metadados ativos
+      allow read: if isTenantMember(tenantId) || (resource.data.status == 'ACTIVE');
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || isTenantAdmin(tenantId);
+      allow delete: if isSuperAdmin();
+    }
+
+    match /user_tenants/{membershipId} {
+      // Relacionamento formal User <-> Tenant
+      allow read: if isAuthenticated() && (
+        isSuperAdmin() || 
+        request.auth.uid == resource.data.userId || 
+        isTenantAdmin(resource.data.tenantId)
+      );
+      allow create, update: if isSuperAdmin() || (
+        isAuthenticated() && isTenantAdmin(request.resource.data.tenantId)
+      );
+      allow delete: if isSuperAdmin() || (
+        isAuthenticated() && isTenantAdmin(resource.data.tenantId)
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 1. FORMULÁRIOS DE ENTRADA & REGISTROS COM ESCOPO DE TENANT
+    //    Leitura restrita a membros autorizados do Tenant / Admins
     // ─────────────────────────────────────────────────────────────────────────
 
     match /partner_applications/{docId} {
       allow create: if isValidPartnerApplication(request.resource.data);
-      // OPERADOR pode ler e atualizar status (ex: triagem inicial)
-      allow read, update: if isOperador();
-      allow delete: if isAdmin();
+      // OPERADOR com acesso ao tenant ou Global Admin pode ler/atualizar
+      allow read, update: if isOperador() && canAccessTenantDoc(resource.data);
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /donations/{docId} {
       allow create: if isValidDonation(request.resource.data);
-      // OPERADOR pode ler doações para conciliação básica
-      allow read: if isOperador();
-      allow update, delete: if isAdmin();
+      allow read: if isOperador() && canAccessTenantDoc(resource.data);
+      allow update, delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /leads/{docId} {
       allow create: if isValidLead(request.resource.data);
-      // OPERADOR pode ler e atualizar status de leads (atendimento)
-      allow read: if isOperador();
-      allow update: if isOperador();
-      allow delete: if isAdmin();
+      allow read, update: if isOperador() && canAccessTenantDoc(resource.data);
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /volunteer_applications/{docId} {
       allow create: if request.resource.data.email is string && request.resource.data.name is string;
-      allow read, update: if isOperador();
-      allow delete: if isAdmin();
+      allow read, update: if isOperador() && canAccessTenantDoc(resource.data);
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /beneficiary_applications/{docId} {
       allow create: if request.resource.data.cpf is string && request.resource.data.responsibleName is string;
-      allow read, update: if isOperador();
-      allow delete: if isAdmin();
+      allow read, update: if isOperador() && canAccessTenantDoc(resource.data);
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
 
@@ -291,7 +345,7 @@ service cloud.firestore {
     match /audit_logs/{docId} {
       // LGPD Art. 6º, X — Responsabilização e Prestação de Contas
       // Trilha de auditoria: criação restrita a Editors autenticados; imutável após registro.
-      allow read: if isAdmin();
+      allow read: if isAdmin() && canAccessTenantDoc(resource.data);
       allow create: if isEditor() && isValidAuditLog(request.resource.data);
       allow update, delete: if false; // IMUTÁVEL — nunca permitido
     }
@@ -305,47 +359,48 @@ service cloud.firestore {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // DADOS FINANCEIROS — Acesso exclusivo ADMIN (LGPD Art. 6º, VII)
+    // DADOS FINANCEIROS — Acesso exclusivo ADMIN com isolamento de Tenant (LGPD Art. 6º, VII)
     // ─────────────────────────────────────────────────────────────────────────
     match /financial_data/{docId} {
-      allow read, create, update: if isAdmin();
+      allow read: if isAdmin() && canAccessTenantDoc(resource.data);
+      allow create, update: if isAdmin() && (!('tenantId' in request.resource.data) || isTenantAdmin(request.resource.data.tenantId));
       allow delete: if false; // Registros financeiros: imutáveis por compliance
     }
 
     match /pipeline_cards/{docId} {
-      // GESTOR pode ler cards do pipeline para acompanhar status de conteúdo
-      allow read: if isGestor();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      // GESTOR pode ler cards do pipeline pertencentes ao seu tenant
+      allow read: if isGestor() && canAccessTenantDoc(resource.data);
+      allow create, update: if isEditor() && (!('tenantId' in request.resource.data) || isTenantMember(request.resource.data.tenantId));
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /pipeline_tasks/{docId} {
-      allow read: if isGestor();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      allow read: if isGestor() && canAccessTenantDoc(resource.data);
+      allow create, update: if isEditor() && (!('tenantId' in request.resource.data) || isTenantMember(request.resource.data.tenantId));
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /bpm_tasks/{docId} {
-      allow read: if isGestor();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      allow read: if isGestor() && canAccessTenantDoc(resource.data);
+      allow create, update: if isEditor() && (!('tenantId' in request.resource.data) || isTenantMember(request.resource.data.tenantId));
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /bpm_processes/{docId} {
-      allow read: if isGestor();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      allow read: if isGestor() && canAccessTenantDoc(resource.data);
+      allow create, update: if isEditor() && (!('tenantId' in request.resource.data) || isTenantMember(request.resource.data.tenantId));
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /bpm_approvals/{docId} {
-      allow read: if isGestor();
-      allow create, update: if isEditor();
-      allow delete: if isAdmin();
+      allow read: if isGestor() && canAccessTenantDoc(resource.data);
+      allow create, update: if isEditor() && (!('tenantId' in request.resource.data) || isTenantMember(request.resource.data.tenantId));
+      allow delete: if isAdmin() && canAccessTenantDoc(resource.data);
     }
 
     match /bpm_logs/{docId} {
-      allow read: if isGestor();
-      allow create: if isEditor();
+      allow read: if isGestor() && canAccessTenantDoc(resource.data);
+      allow create: if isEditor() && (!('tenantId' in request.resource.data) || isTenantMember(request.resource.data.tenantId));
       allow update, delete: if false; // Audit imutável
     }
 
