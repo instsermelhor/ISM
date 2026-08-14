@@ -94,11 +94,13 @@ export const HealthServiceReal = {
         const d = doc.data();
         return {
           id: doc.id,
+          tenantId: d.tenantId || undefined,
           source: d.source || 'Sistema',
           message: d.message || 'Erro sem mensagem',
           route: d.route || 'N/A',
           statusCode: d.statusCode || 500,
           stack: d.stack || null,
+          correlationId: d.correlationId || d.requestId || null,
           timestamp: d.timestamp?.toDate ? d.timestamp.toDate().toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR'),
         };
       });

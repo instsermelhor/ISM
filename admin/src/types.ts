@@ -339,6 +339,7 @@ export interface SystemErrorItem {
   route: string;
   statusCode: number;
   stack: string | null;
+  correlationId?: string | null; // OBS-001 Tracing Distribuído
   timestamp: string;
 }
 
