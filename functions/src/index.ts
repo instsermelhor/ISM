@@ -40,10 +40,17 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MIDDLEWARE DE SEGURANÇA HTTP (Hardening — Fase 15)
-// Injeta cabeçalhos de segurança em TODAS as respostas da API
+// MIDDLEWARE DE SEGURANÇA HTTP & TRACING DISTRIBUÍDO (OBS-001)
+// Injeta correlation IDs e cabeçalhos de segurança em TODAS as respostas da API
 // ─────────────────────────────────────────────────────────────────────────────
-app.use((_req: Request, res: Response, next: NextFunction): void => {
+app.use((req: Request, res: Response, next: NextFunction): void => {
+  const incomingCorrId = req.headers['x-correlation-id'] as string || req.headers['x-request-id'] as string;
+  const correlationId = incomingCorrId || `req-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
+  
+  (req as any).correlationId = correlationId;
+  res.setHeader('x-correlation-id', correlationId);
+  res.setHeader('x-request-id', correlationId);
+
   // HSTS: forçar HTTPS por 2 anos com preload
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   // Prevenir MIME-sniffing
@@ -330,6 +337,22 @@ router.get('/health/deep', async (_req: Request, res: Response) => {
   }
 });
 
+/** POST /api/v2/telemetry/errors — Ingestão Segura de Erros e Telemetria do Frontend (OBS-001) */
+router.post('/telemetry/errors', rateLimiterMiddleware(30, 60000), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { source, message, route, statusCode, stack, correlationId } = req.body || {};
+    
+    const safeSource = source || 'Frontend';
+    const safeMessage = redactErrorMessage(message || 'Erro sem mensagem');
+    const safeStack = stack ? redactErrorMessage(stack) : undefined;
+    
+    await reportSystemError(safeSource, safeMessage, route, statusCode || 500, safeStack);
+    
+    res.status(201).json({ received: true, correlationId: correlationId || (req as any).correlationId });
+  } catch (err: any) {
+    res.status(200).json({ received: false, error: err.message });
+  }
+});
 
 /** POST /api/v2/donations */
 router.post('/donations', rateLimiterMiddleware(10, 60000), async (req: Request, res: Response): Promise<void> => {

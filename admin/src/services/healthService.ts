@@ -66,7 +66,8 @@ export const HealthServiceReal = {
         uptime: 'Online (SDK Client)',
         databaseStatus: dbOk ? 'CONNECTED' : 'DISCONNECTED',
       };
-    },
+    }
+  },
 
   /** Busca os últimos erros gravados no Firestore na coleção system_errors */
   getRecentErrors: async (maxItems = 20): Promise<SystemErrorItem[]> => {

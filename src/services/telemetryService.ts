@@ -1,9 +1,8 @@
 /**
- * telemetryService.ts — OBS-002: Serviço de Coleta de Telemetria e Erros do Cliente (Frontend)
+ * telemetryService.ts — OBS-001: Observabilidade Enterprise & Tracing Distribuído
  * ─────────────────────────────────────────────────────────────────────────────
  * Captura exceções não tratadas (window.onerror), rejeições de Promise não tratadas,
- * e métricas de desempenho Core Web Vitals (LCP, CLS, INP) enviando dados estruturados
- * para a API de Telemetria (/api/v2/telemetry/errors) com rate-limiting e throttling local.
+ * sanitiza PII e segredos antes do envio e injeta correlation IDs para rastreamento distribuído.
  */
 
 export interface TelemetryPayload {
@@ -13,6 +12,8 @@ export interface TelemetryPayload {
   statusCode?: number;
   stack?: string;
   userAgent?: string;
+  correlationId?: string;
+  timestamp?: string;
 }
 
 export interface WebVitalsMetric {
@@ -25,16 +26,43 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://southamerica-east
 let isInitialized = false;
 const sentErrorsCache = new Set<string>();
 
-/** Envia payload de erro estruturado para o backend de telemetria */
+/** Gera ou recupera o Correlation ID único da sessão atual */
+let sessionCorrelationId: string = '';
+export function getCorrelationId(): string {
+  if (!sessionCorrelationId) {
+    const randomPart = Math.random().toString(36).substring(2, 10);
+    sessionCorrelationId = `corr-${Date.now().toString(36)}-${randomPart}`;
+  }
+  return sessionCorrelationId;
+}
+
+/** Sanitiza segredos, senhas e tokens de strings antes da transmissão */
+export function redactSensitiveData(text: string): string {
+  if (!text) return '';
+  return text
+    // Chaves de API e Secrets
+    .replace(/(sk_[a-zA-Z0-9_-]{20,})/g, '[REDACTED_API_KEY]')
+    .replace(/(AIza[0-9A-Za-z-_]{35})/g, '[REDACTED_FIREBASE_KEY]')
+    .replace(/(eyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]+)/g, '[REDACTED_JWT]')
+    // Senhas e campos de autorização
+    .replace(/(password|senha|secret|token|authorization)\s*[:=]\s*["']?([^"',\s]+)["']?/gi, '$1="[REDACTED]"')
+    // Números de cartão de crédito (13-16 dígitos)
+    .replace(/\b(?:\d{4}[ -]?){3}\d{4}\b/g, '[REDACTED_CARD_NUMBER]');
+}
+
+/** Envia payload de erro estruturado e higienizado para o backend de telemetria */
 export async function sendTelemetryError(payload: TelemetryPayload): Promise<boolean> {
-  const cacheKey = `${payload.source}:${payload.message}:${payload.route}`;
+  const sanitizedMessage = redactSensitiveData(payload.message);
+  const sanitizedStack = payload.stack ? redactSensitiveData(payload.stack) : undefined;
+  const correlationId = payload.correlationId || getCorrelationId();
+
+  const cacheKey = `${payload.source}:${sanitizedMessage}:${payload.route}`;
   if (sentErrorsCache.has(cacheKey)) {
     // Evita envio duplicado da mesma exceção em loop
     return false;
   }
   sentErrorsCache.add(cacheKey);
   if (sentErrorsCache.size > 50) {
-    // Mantém o tamanho do cache limitado
     const first = sentErrorsCache.values().next().value;
     if (first) sentErrorsCache.delete(first);
   }
@@ -42,11 +70,15 @@ export async function sendTelemetryError(payload: TelemetryPayload): Promise<boo
   try {
     const fullPayload: TelemetryPayload = {
       ...payload,
-      route: payload.route || window.location.pathname,
-      userAgent: window.navigator.userAgent,
+      message: sanitizedMessage,
+      stack: sanitizedStack,
+      route: payload.route || (typeof window !== 'undefined' ? window.location.pathname : '/'),
+      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'NodeJS/Test',
+      correlationId,
+      timestamp: new Date().toISOString(),
     };
 
-    if (navigator.sendBeacon) {
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
       const blob = new Blob([JSON.stringify(fullPayload)], { type: 'application/json' });
       navigator.sendBeacon(`${API_BASE}/api/v2/telemetry/errors`, blob);
       return true;
@@ -54,7 +86,10 @@ export async function sendTelemetryError(payload: TelemetryPayload): Promise<boo
 
     await fetch(`${API_BASE}/api/v2/telemetry/errors`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-correlation-id': correlationId,
+      },
       body: JSON.stringify(fullPayload),
     });
     return true;
@@ -99,4 +134,6 @@ export function initTelemetry(): void {
 export const TelemetryService = {
   init: initTelemetry,
   reportError: sendTelemetryError,
+  getCorrelationId,
+  redactSensitiveData,
 };
