@@ -1604,7 +1604,7 @@ router.post('/lgpd/requests', rateLimiterMiddleware(5, 60000), async (req: Reque
 });
 
 /** POST /api/v2/lgpd/anonymize — Rotina de Descarte / Anonimização de Dados Expirados (Art. 16 LGPD) */
-router.post('/lgpd/anonymize', authMiddleware, requireRole('ADMIN'), async (req: Request, res: Response): Promise<void> => {
+router.post('/lgpd/anonymize', authenticateToken, requireRole('ADMIN'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { targetCollection = 'leads', retentionDays = 730 } = req.body || {};
     const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
