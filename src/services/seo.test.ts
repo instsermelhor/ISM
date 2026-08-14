@@ -1,7 +1,8 @@
 /**
- * seo.test.ts — F003: Testes Unitários do Motor SEO & Schema.org
+ * seo.test.ts — SEO-002: Testes Unitários do Motor SEO & Schema.org Rich Results
  * ──────────────────────────────────────────────────────────────────────────────
- * Cobre: geração de JSON-LD, Open Graph, canonical URL e validação de schemas.
+ * Cobre: geração de JSON-LD, Open Graph, canonical URL, NewsArticle, Event,
+ * FundraisingCampaign, SROICalculator, TransparencyReport e validação de schemas.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -11,7 +12,7 @@ import {
   SEO_SITE_NAME,
 } from './seoService';
 
-describe('F003 — SEOService (Schema.org & Open Graph)', () => {
+describe('SEO-002 — SEOService (Schema.org & Rich Results)', () => {
 
   // ── Organization Schema ──────────────────────────────────────────────────
   describe('buildOrganizationSchema()', () => {
@@ -126,12 +127,128 @@ describe('F003 — SEOService (Schema.org & Open Graph)', () => {
     });
   });
 
+  // ── NewsArticle Schema (SEO-002) ─────────────────────────────────────────
+  describe('buildNewsArticleSchema()', () => {
+    it('gera schema NewsArticle com headline, datas e publisher', () => {
+      const article = {
+        headline: 'Instituto Ser Melhor inaugura novo polo em Minas Gerais',
+        description: 'Expansão de atividades sociais no Vale do Jequitinhonha.',
+        path: '/noticias/polo-minas-gerais',
+        datePublished: '2026-08-10T10:00:00Z',
+        authorName: 'Equipe de Comunicação',
+        category: 'Expansão Regional',
+      };
+
+      const schema = SEOService.buildNewsArticleSchema(article);
+      expect(schema['@type']).toBe('NewsArticle');
+      expect(schema['headline']).toBe(article.headline);
+      expect(schema['datePublished']).toBe(article.datePublished);
+      expect(schema['inLanguage']).toBe('pt-BR');
+
+      const publisher = schema['publisher'] as Record<string, unknown>;
+      expect(publisher['name']).toBe('Instituto Ser Melhor');
+      expect(SEOService.validateSchema(schema)).toBe(true);
+    });
+  });
+
+  // ── Event Schema (SEO-002) ───────────────────────────────────────────────
+  describe('buildEventSchema()', () => {
+    it('gera schema Event presencial com local e gratuidade', () => {
+      const event = {
+        name: 'Mutirão de Voluntariado — Plantio de Mudas Nativas',
+        description: 'Ação de restauração ecológica da Mata Atlântica.',
+        startDate: '2026-09-15T09:00:00Z',
+        endDate: '2026-09-15T16:00:00Z',
+        locationName: 'Parque Ecológico Ser Melhor',
+        locationAddress: 'Rua das Palmeiras, 100, São Paulo, SP',
+      };
+
+      const schema = SEOService.buildEventSchema(event);
+      expect(schema['@type']).toBe('Event');
+      expect(schema['name']).toBe(event.name);
+      expect(schema['isAccessibleForFree']).toBe(true);
+      expect(schema['eventAttendanceMode']).toContain('OfflineEventAttendanceMode');
+      expect(SEOService.validateSchema(schema)).toBe(true);
+    });
+
+    it('gera schema Event virtual quando isVirtual é true', () => {
+      const virtualEvent = {
+        name: 'Webinar: Governança e ESG no Terceiro Setor',
+        description: 'Discussão sobre transparência e impacto.',
+        startDate: '2026-09-20T19:00:00Z',
+        locationName: 'Online',
+        isVirtual: true,
+        virtualUrl: 'https://www.youtube.com/@institutosermelhor',
+      };
+
+      const schema = SEOService.buildEventSchema(virtualEvent);
+      expect(schema['eventAttendanceMode']).toContain('OnlineEventAttendanceMode');
+      const location = schema['location'] as Record<string, unknown>;
+      expect(location['@type']).toBe('VirtualLocation');
+    });
+  });
+
+  // ── Fundraising Campaign Schema (SEO-002) ────────────────────────────────
+  describe('buildFundraisingCampaignSchema()', () => {
+    it('gera schema Project com DonateAction e metas de captação', () => {
+      const campaign = {
+        name: 'Educação para o Futuro 2026',
+        description: 'Captação para compra de materiais didáticos.',
+        path: '/campanhas/educacao-2026',
+        targetAmount: 50000,
+        currentAmount: 28500,
+      };
+
+      const schema = SEOService.buildFundraisingCampaignSchema(campaign);
+      expect(schema['@type']).toBe('Project');
+      expect(schema['name']).toBe(campaign.name);
+
+      const action = schema['potentialAction'] as Record<string, unknown>;
+      expect(action['@type']).toBe('DonateAction');
+      expect(action['price']).toBe(50000);
+      expect(action['priceCurrency']).toBe('BRL');
+    });
+  });
+
+  // ── SROI Calculator Schema (SEO-002) ─────────────────────────────────────
+  describe('buildSROICalculatorSchema()', () => {
+    it('gera schema WebApplication com categoria e gratuidade', () => {
+      const schema = SEOService.buildSROICalculatorSchema();
+      expect(schema['@type']).toBe('WebApplication');
+      expect(schema['applicationCategory']).toBe('BusinessApplication');
+
+      const offers = schema['offers'] as Record<string, unknown>;
+      expect(offers['price']).toBe('0');
+      expect(SEOService.validateSchema(schema)).toBe(true);
+    });
+  });
+
+  // ── Transparency Report Schema (SEO-002) ─────────────────────────────────
+  describe('buildTransparencyReportSchema()', () => {
+    it('gera schema DigitalDocument com formato PDF e publisher', () => {
+      const report = {
+        name: 'Relatório Anual de Atividades e Demonstrações Financeiras 2025',
+        description: 'Balanço auditado e prestação de contas.',
+        fileUrl: `${SEO_SITE_URL}/docs/relatorio-2025.pdf`,
+        datePublished: '2026-03-31',
+      };
+
+      const schema = SEOService.buildTransparencyReportSchema(report);
+      expect(schema['@type']).toBe('DigitalDocument');
+      expect(schema['encodingFormat']).toBe('application/pdf');
+      expect(schema['url']).toContain('.pdf');
+      expect(SEOService.validateSchema(schema)).toBe(true);
+    });
+  });
+
   // ── Open Graph ───────────────────────────────────────────────────────────
   describe('buildOpenGraphMeta()', () => {
     const meta = {
       title: 'Instituto Ser Melhor — Doação',
       description: 'Apoie nossa missão.',
       path: '/doacao',
+      publishedTime: '2026-08-14T00:00:00Z',
+      author: 'Instituto Ser Melhor',
     };
 
     it('inclui og:title e og:description', () => {
@@ -150,9 +267,16 @@ describe('F003 — SEOService (Schema.org & Open Graph)', () => {
       expect(og['og:site_name']).toBe(SEO_SITE_NAME);
     });
 
-    it('inclui twitter:card summary_large_image', () => {
+    it('inclui twitter:card summary_large_image e twitter:site @instsermelhor', () => {
       const og = SEOService.buildOpenGraphMeta(meta);
       expect(og['twitter:card']).toBe('summary_large_image');
+      expect(og['twitter:site']).toBe('@instsermelhor');
+    });
+
+    it('inclui article:published_time e article:author quando informados', () => {
+      const og = SEOService.buildOpenGraphMeta(meta);
+      expect(og['article:published_time']).toBe('2026-08-14T00:00:00Z');
+      expect(og['article:author']).toBe('Instituto Ser Melhor');
     });
 
     it('usa og-default.png como imagem fallback', () => {
@@ -202,14 +326,15 @@ describe('F003 — SEOService (Schema.org & Open Graph)', () => {
 
   // ── buildHomepageSchemas ─────────────────────────────────────────────────
   describe('buildHomepageSchemas()', () => {
-    it('retorna os 4 schemas da homepage', () => {
+    it('retorna os schemas completos da homepage incluindo SROICalculator', () => {
       const schemas = SEOService.buildHomepageSchemas();
-      expect(schemas).toHaveLength(4);
+      expect(schemas.length).toBeGreaterThanOrEqual(5);
       const types = schemas.map((s) => s.type);
       expect(types).toContain('Organization');
       expect(types).toContain('WebSite');
       expect(types).toContain('DonateAction');
       expect(types).toContain('FAQPage');
+      expect(types).toContain('SROICalculator');
     });
 
     it('todos os schemas passam pela validação', () => {
