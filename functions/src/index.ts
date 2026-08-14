@@ -1533,6 +1533,103 @@ Sitemap: https://southamerica-east1-ismbd-27e84.cloudfunctions.net/api/api/v2/si
   res.status(200).send(robotsTxt);
 });
 
+/** POST /api/v2/lgpd/requests — Canal Oficial de Direitos do Titular (Art. 18 LGPD) */
+router.post('/lgpd/requests', rateLimiterMiddleware(5, 60000), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { rightType, name, email, taxId, details } = req.body || {};
+
+    if (!name || !email || !rightType) {
+      sendProblemDetails(res, 400, 'Bad Request', 'Nome, e-mail e tipo de direito são obrigatórios', 'INVALID_DSR_PAYLOAD');
+      return;
+    }
+
+    const year = new Date().getFullYear();
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const protocol = `REQ-LGPD-${year}-${randomSuffix}`;
+
+    const docRef = await db.collection('lgpd_requests').add({
+      protocol,
+      rightType,
+      name,
+      email,
+      taxId: taxId ? `${taxId.slice(0, 3)}.***.***-${taxId.slice(-2)}` : null, // Mascaramento de CPF
+      details: details || '',
+      status: 'EM_ANALISE',
+      deadlineDays: 15,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await db.collection('audit_logs').add({
+      action: 'LGPD_DSR_REQUESTED',
+      userEmail: email,
+      entity: 'lgpd_requests',
+      entityId: docRef.id,
+      description: `Solicitação LGPD ${rightType} registrada com protocolo ${protocol}`,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(201).json({
+      success: true,
+      protocol,
+      deadlineDays: 15,
+      message: 'Solicitação registrada com sucesso. Prazo legal de atendimento: até 15 dias úteis (Art. 19, II LGPD).',
+    });
+  } catch (err: any) {
+    logStructured('ERROR', '[LGPD] Erro ao registrar solicitação DSR', { error: err.message });
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao processar solicitação LGPD', 'DSR_ERROR');
+  }
+});
+
+/** POST /api/v2/lgpd/anonymize — Rotina de Descarte / Anonimização de Dados Expirados (Art. 16 LGPD) */
+router.post('/lgpd/anonymize', authMiddleware, requireRole('ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { targetCollection = 'leads', retentionDays = 730 } = req.body || {};
+    const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+
+    const snap = await db.collection(targetCollection)
+      .where('createdAt', '<=', cutoffDate)
+      .limit(100)
+      .get();
+
+    let anonymizedCount = 0;
+    const batch = db.batch();
+
+    snap.forEach((doc) => {
+      batch.update(doc.ref, {
+        name: 'ANONIMIZADO_LGPD',
+        email: `anonimizado_${doc.id.substring(0, 6)}@lgpd.ism.org.br`,
+        phone: null,
+        companyName: 'ANONIMIZADO',
+        message: '[DADOS_EXPIRADOS_E_ANONIMIZADOS_CONFORME_ART_16_LGPD]',
+        anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      anonymizedCount++;
+    });
+
+    if (anonymizedCount > 0) {
+      await batch.commit();
+      await db.collection('audit_logs').add({
+        action: 'LGPD_DATA_ANONYMIZED',
+        userEmail: (req as any).user?.email || 'admin@ism.org.br',
+        entity: targetCollection,
+        description: `Anonimização em lote executada: ${anonymizedCount} registros da coleção ${targetCollection} com retenção superior a ${retentionDays} dias.`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      anonymizedCount,
+      targetCollection,
+      retentionDays,
+      cutoffDate: cutoffDate.toISOString(),
+    });
+  } catch (err: any) {
+    logStructured('ERROR', '[LGPD] Erro ao executar anonimização em lote', { error: err.message });
+    sendProblemDetails(res, 500, 'Internal Server Error', 'Falha ao executar rotina de anonimização', 'ANONYMIZATION_ERROR');
+  }
+});
+
 app.use('/api/v2', router);
 app.use('/api', router);
 app.use('/', router);

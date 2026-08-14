@@ -67,6 +67,7 @@ const ADMIN_URL = (() => {
 interface Props {
   onOpenPrivacy: () => void;
   onOpenTerms: () => void;
+  onOpenLGPD?: () => void;
   footerData?: any;
 }
 
@@ -268,6 +269,15 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, footerData
             >
               Termos de Uso
             </button>
+            {onOpenLGPD && (
+              <button
+                onClick={onOpenLGPD}
+                className="text-secondary-500 text-xs hover:text-brand-400 transition-colors flex items-center gap-1"
+                title="Exercer Direitos do Titular de Dados — Art. 18 LGPD"
+              >
+                Direitos do Titular (LGPD)
+              </button>
+            )}
             {/* Link discreto para o painel administrativo */}
             <a
               href={ADMIN_URL}

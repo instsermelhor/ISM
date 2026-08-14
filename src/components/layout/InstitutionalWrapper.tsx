@@ -6,11 +6,12 @@ interface Props {
   children: ReactNode;
   onOpenPrivacy: () => void;
   onOpenTerms: () => void;
+  onOpenLGPD?: () => void;
   navData?: any;
   footerData?: any;
 }
 
-export const InstitutionalWrapper: React.FC<Props> = ({ children, onOpenPrivacy, onOpenTerms, navData, footerData }) => {
+export const InstitutionalWrapper: React.FC<Props> = ({ children, onOpenPrivacy, onOpenTerms, onOpenLGPD, navData, footerData }) => {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export const InstitutionalWrapper: React.FC<Props> = ({ children, onOpenPrivacy,
       <main className="flex-grow">
         {children}
       </main>
-      <Footer onOpenPrivacy={onOpenPrivacy} onOpenTerms={onOpenTerms} footerData={footerData} />
+      <Footer onOpenPrivacy={onOpenPrivacy} onOpenTerms={onOpenTerms} onOpenLGPD={onOpenLGPD} footerData={footerData} />
     </div>
   );
 };

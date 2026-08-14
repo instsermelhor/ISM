@@ -26,6 +26,7 @@ const CampaignGoalsSection = lazy(() => import('./components/sections/CampaignGo
 import { Modal } from './components/ui/Modal';
 const PrivacyPolicy = lazy(() => import('./components/legal/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsOfUse = lazy(() => import('./components/legal/TermsOfUse').then(m => ({ default: m.TermsOfUse })));
+const DataSubjectRightsModal = lazy(() => import('./components/legal/DataSubjectRightsModal').then(m => ({ default: m.DataSubjectRightsModal })));
 import { LanguageProvider } from './contexts/LanguageContext';
 const AIAssistantWidget = lazy(() => import('./components/ui/AIAssistantWidget').then(m => ({ default: m.AIAssistantWidget })));
 import { PWAInstallBanner } from './components/ui/PWAInstallBanner';
@@ -230,6 +231,7 @@ interface AppState {
   error: boolean;
   isPrivacyOpen: boolean;
   isTermsOpen: boolean;
+  isLGPDOpen: boolean;
   isBeneficiaryPortalOpen: boolean;
   isVolunteerPortalOpen: boolean;
 }
@@ -241,6 +243,7 @@ function App() {
     error: false,
     isPrivacyOpen: false,
     isTermsOpen: false,
+    isLGPDOpen: false,
     isBeneficiaryPortalOpen: false,
     isVolunteerPortalOpen: false,
   });
@@ -433,6 +436,7 @@ function App() {
       <InstitutionalWrapper
         onOpenPrivacy={() => setState(s => ({ ...s, isPrivacyOpen: true }))}
         onOpenTerms={() => setState(s => ({ ...s, isTermsOpen: true }))}
+        onOpenLGPD={() => setState(s => ({ ...s, isLGPDOpen: true }))}
         navData={activeNav}
         footerData={activeFooter}
       >
@@ -585,6 +589,12 @@ function App() {
         <VolunteerPortalModal
           isOpen={state.isVolunteerPortalOpen}
           onClose={() => setState(s => ({ ...s, isVolunteerPortalOpen: false }))}
+        />
+
+        {/* Canal de Direitos do Titular LGPD — Art. 18 */}
+        <DataSubjectRightsModal
+          isOpen={state.isLGPDOpen}
+          onClose={() => setState(s => ({ ...s, isLGPDOpen: false }))}
         />
       </Suspense>
 
