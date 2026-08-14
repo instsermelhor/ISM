@@ -88,8 +88,12 @@ app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     // Proibir embedding em iframes externos
     res.setHeader('X-Frame-Options', 'DENY');
+    // Proteção XSS legada para navegadores mais antigos
+    res.setHeader('X-XSS-Protection', '1; mode=block');
     // Controlar informações enviadas no Referer
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Restrição de hardware e recursos do dispositivo
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
     // APIs não devem ser cacheadas em proxies intermediários
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
