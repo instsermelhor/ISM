@@ -1,14 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * playwright.config.ts — TEST-003: Configuração Oficial E2E do Instituto Ser Melhor
- * ─────────────────────────────────────────────────────────────────────────────
- * Suporte a testes automatizados de fumaça (Smoke Tests), acessibilidade e fluxos
- * críticos de doação e administração.
+ * playwright.config.ts — Configuração E2E do Instituto Ser Melhor
  */
 export default defineConfig({
   testDir: './e2e',
-  timeout: 30 * 1000,
+  timeout: 30000,
   expect: {
     timeout: 5000,
   },
@@ -16,12 +13,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['list'],
-  ],
+  reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://ismbd-27e84.web.app',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -31,11 +25,13 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'Mobile Chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 12'] },
+    },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
 });
