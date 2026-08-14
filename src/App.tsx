@@ -30,6 +30,7 @@ const DataSubjectRightsModal = lazy(() => import('./components/legal/DataSubject
 import { LanguageProvider } from './contexts/LanguageContext';
 const AIAssistantWidget = lazy(() => import('./components/ui/AIAssistantWidget').then(m => ({ default: m.AIAssistantWidget })));
 import { PWAInstallBanner } from './components/ui/PWAInstallBanner';
+import { OfflineIndicator } from './components/ui/OfflineIndicator';
 import { PerformanceMonitorBadge } from './components/ui/PerformanceMonitorBadge';
 import { CookieConsentBanner } from './components/ui/CookieConsentBanner';
 
@@ -662,6 +663,9 @@ function App() {
       <Suspense fallback={null}>
         <AIAssistantWidget />
       </Suspense>
+
+      {/* Indicador de Status Offline & Fila de Sincronização — PWA-001 */}
+      <OfflineIndicator />
 
       {/* Banner de Instalação PWA — F001 */}
       <PWAInstallBanner />
