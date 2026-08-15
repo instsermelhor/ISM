@@ -78,7 +78,7 @@ const defaultSocialLinks = [
   { platform: 'x', label: 'X (antigo Twitter) — @instsermelhor', url: 'https://x.com/instsermelhor', openInNewTab: true },
 ];
 
-export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, footerData }) => {
+export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, onOpenLGPD, footerData }) => {
   const realtimeSocials = useRealtimeSocialNetworks({ showInFooter: true });
   const tagline = footerData?.tagline || 'Trabalhando desde 2007 para conectar pessoas, natureza e sustentabilidade em prol de um futuro regenerativo.';
 
