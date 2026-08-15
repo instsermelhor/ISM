@@ -599,15 +599,18 @@ function App() {
         />
       </Suspense>
 
-      {/* Botões de Acesso Rápido (Portal Família & Portal Voluntário) — Posicionados à esquerda para não sobrepor o Assistente ISM */}
+      {/* Botões de Acesso Rápido (Portal Família & Portal Voluntário) — Posicionados à esquerda com safe-area */}
       <div
+        className="touch-manipulation"
         style={{
           position: 'fixed',
-          bottom: 24,
-          left: 24,
+          bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))',
+          left: 'calc(1.25rem + env(safe-area-inset-left, 0px))',
           zIndex: 9970,
           display: 'flex',
-          gap: 10,
+          gap: 8,
+          flexWrap: 'wrap',
+          maxWidth: 'calc(100vw - 6rem)',
         }}
       >
         <button
@@ -615,6 +618,7 @@ function App() {
           style={{
             background: 'rgba(15, 23, 42, 0.9)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             border: '1px solid rgba(34, 197, 94, 0.4)',
             borderRadius: 20,
             color: '#4ade80',
@@ -639,6 +643,7 @@ function App() {
           style={{
             background: 'rgba(15, 23, 42, 0.9)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             border: '1px solid rgba(168, 85, 247, 0.4)',
             borderRadius: 20,
             color: '#c084fc',
