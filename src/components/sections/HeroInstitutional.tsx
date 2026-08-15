@@ -42,7 +42,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
   const mottoExplanation = data?.mottoExplanation || 'Sapere Aude — Ouse Saber. Reflete nosso compromisso com a educação transformadora e a autonomia intelectual.';
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-secondary-950 flex flex-col">
+    <section className="relative min-h-screen min-h-[100svh] min-h-dvh w-full overflow-hidden bg-secondary-950 flex flex-col justify-between">
 
       {/* Background Image — renderiza apenas se houver URL válida */}
       <div className="absolute inset-0 z-0">
@@ -83,7 +83,12 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
       </div>
 
       {/* Conteúdo principal */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-20 pb-6 text-center sm:px-6 lg:px-8">
+      <div
+        className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pb-8 text-center sm:px-6 lg:px-8"
+        style={{
+          paddingTop: 'calc(6rem + env(safe-area-inset-top, 0px))',
+        }}
+      >
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -95,10 +100,10 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-500/30 bg-brand-500/10 backdrop-blur-sm mb-8"
+            className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full border border-brand-500/30 bg-brand-500/10 backdrop-blur-sm mb-6 sm:mb-8"
           >
-            <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse-slow" />
-            <span className="text-brand-300 text-xs font-bold uppercase tracking-[0.2em]">
+            <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse-slow shrink-0" />
+            <span className="text-brand-300 text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em]">
               {eyebrowText}
             </span>
           </motion.div>
@@ -107,7 +112,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.3 }}
-            className="mb-6 text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] text-white"
+            className="mb-5 sm:mb-6 text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] sm:leading-[0.95] text-white"
           >
             {(typeof heroTitle === 'string' ? heroTitle : 'Instituto Ser Melhor — Sapere Aude').split('—')[0].trim()}
           </motion.h1>
@@ -116,7 +121,7 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.5 }}
-            className="mx-auto mb-10 max-w-2xl text-lg text-secondary-300 sm:text-xl leading-relaxed"
+            className="mx-auto mb-8 sm:mb-10 max-w-2xl text-base sm:text-lg md:text-xl text-secondary-300 leading-relaxed px-2"
           >
             {heroSubtitle}
           </motion.p>
@@ -126,11 +131,11 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.7 }}
-            className="inline-flex flex-col sm:flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-3.5 backdrop-blur-md mb-10 max-w-xl mx-auto"
+            className="inline-flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 sm:px-6 py-3 sm:py-3.5 backdrop-blur-md mb-8 sm:mb-10 max-w-xl mx-auto"
           >
-            <span className="font-serif text-xl italic text-brand-300">"{motto}"</span>
+            <span className="font-serif text-lg sm:text-xl italic text-brand-300 shrink-0">"{motto}"</span>
             <span className="hidden sm:block w-px h-5 bg-white/20 shrink-0" />
-            <span className="text-sm text-secondary-400 max-w-xs text-center sm:text-left">
+            <span className="text-xs sm:text-sm text-secondary-400 max-w-xs text-center sm:text-left leading-snug">
               {mottoExplanation}
             </span>
           </motion.div>
@@ -140,17 +145,17 @@ export const HeroInstitutional: React.FC<HeroInstitutionalProps> = ({ data = {} 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.85 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full max-w-md mx-auto sm:max-w-none"
           >
             <a
               href="#donate"
-              className="w-full sm:w-auto px-8 py-4 rounded-full bg-brand-600 text-white font-bold text-sm uppercase tracking-widest shadow-2xl shadow-brand-600/40 hover:bg-brand-500 hover:shadow-brand-500/50 hover:scale-105 transition-all duration-200"
+              className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-full bg-brand-600 text-white font-bold text-xs sm:text-sm uppercase tracking-widest shadow-2xl shadow-brand-600/40 hover:bg-brand-500 hover:shadow-brand-500/50 hover:scale-105 transition-all duration-200 text-center touch-manipulation"
             >
               Apoie Nossa Missão
             </a>
             <a
               href="#mission"
-              className="w-full sm:w-auto px-8 py-4 rounded-full border border-white/20 text-white font-bold text-sm uppercase tracking-widest backdrop-blur-sm hover:bg-white/10 hover:border-white/40 transition-all duration-200"
+              className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-full border border-white/20 text-white font-bold text-xs sm:text-sm uppercase tracking-widest backdrop-blur-sm hover:bg-white/10 hover:border-white/40 transition-all duration-200 text-center touch-manipulation"
             >
               Conheça o Instituto
             </a>
