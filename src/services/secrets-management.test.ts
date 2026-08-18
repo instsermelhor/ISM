@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const REPO_ROOT = path.resolve(__dirname, '../../..');
+const REPO_ROOT = path.resolve(__dirname, '../..');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

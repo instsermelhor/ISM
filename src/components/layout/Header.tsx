@@ -205,7 +205,6 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
                 {item.subItems && (
                   <div
                     id={dropdownId}
-                    role="menu"
                     className={`absolute top-full left-0 w-56 bg-white rounded-xl shadow-2xl shadow-black/10 border border-gray-100 overflow-hidden transition-all duration-200 origin-top ${
                       isExpanded
                         ? 'opacity-100 translate-y-0 pointer-events-auto'
@@ -213,9 +212,9 @@ export const Header: React.FC<HeaderProps> = ({ navData }) => {
                     }`}
                   >
                     <div className="h-0.5 w-full bg-gradient-to-r from-brand-400 to-brand-600" aria-hidden="true" />
-                    <ul className="py-2" role="list">
+                    <ul className="py-2" role="menu" aria-label={item.label}>
                       {item.subItems.map((sub) => (
-                        <li key={sub.label}>
+                        <li key={sub.label} role="none">
                           <a
                             href={sub.href}
                             role="menuitem"
