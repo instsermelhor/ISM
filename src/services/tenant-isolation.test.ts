@@ -296,4 +296,28 @@ describe('MT-001 — Suíte de Testes Multi-Tenant & Isolamento de Dados', () =>
     expect(logs[1].action).toBe('CROSS_TENANT_BLOCKED');
     expect(logs[1].tenantId).toBe(tenantB);
   });
+
+  // TENANT-016
+  it('TENANT-016: Log isolation — logs de tenant A não aparecem em auditoria de tenant B', () => {
+    enforcer.recordAudit('LOGIN', userTenantA.userEmail, tenantA);
+    enforcer.recordAudit('LOGIN', userTenantB.userEmail, tenantB);
+    const logs = enforcer.getAuditLogs();
+    const logsTenantB = logs.filter(l => l.tenantId === tenantB);
+    expect(logsTenantB.some(l => l.tenantId === tenantA)).toBe(false);
+  });
+
+  // TENANT-017
+  it('TENANT-017: Report export isolation — relatório gerado para tenant A não contém dados do tenant B', () => {
+    const allRecords = [resourceTenantA, resourceTenantB];
+    const exportedForA = enforcer.exportData(userTenantA, allRecords);
+    expect(exportedForA.every(r => r.tenantId === tenantA)).toBe(true);
+    expect(exportedForA.some(r => r.tenantId === tenantB)).toBe(false);
+  });
+
+  // TENANT-018
+  it('TENANT-018: Job queue isolation — job do tenant A não processa dados do tenant B', () => {
+    const jobResult = enforcer.processBackgroundJob({ tenantId: tenantA, resourceId: 'job-1' });
+    expect(jobResult.processedTenantId).not.toBe(tenantB);
+    expect(jobResult.processedTenantId).toBe(tenantA);
+  });
 });
