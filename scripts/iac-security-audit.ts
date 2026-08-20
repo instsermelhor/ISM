@@ -132,7 +132,7 @@ function auditFirebaseJson(projectRoot: string): Finding[] {
         if (!hasSTS) {
           findings.push({ id: generateId("FB"), title: `Missing Strict-Transport-Security on ${siteName}`, severity: "CRITICAL", category: "Transport Security", location: "firebase.json", description: "Missing Strict-Transport-Security header." });
         } else {
-          const maxAgeMatch = stsValue.match(/max-age=(\\d+)/i);
+          const maxAgeMatch = stsValue.match(/max-age=(\d+)/i);
           const maxAge = maxAgeMatch ? parseInt(maxAgeMatch[1], 10) : 0;
           if (maxAge < 31536000) {
             findings.push({ id: generateId("FB"), title: `HSTS max-age insufficient on ${siteName}`, severity: "HIGH", category: "Transport Security", location: "firebase.json", description: `HSTS max-age is ${maxAge}s, minimum required is 31536000s (1 year). Recommended is 63072000s.` });
