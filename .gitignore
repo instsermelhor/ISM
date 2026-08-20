@@ -89,3 +89,4 @@ vault/
 
 # Snapshots de testes que possam conter dados reais
 *.snap
+SECURITY/audit-reports/*.json
