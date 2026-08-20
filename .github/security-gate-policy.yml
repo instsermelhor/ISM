@@ -1,0 +1,212 @@
+# ISM Security Gate Policy v1.0.0
+# Código: ISM-SECURITY-DEPLOY-GATE-001
+# Classificação: CRÍTICO — Security / DevSecOps / Release Governance
+
+version: "1.0.0"
+project: "Instituto Ser Melhor (ISM)"
+policy_id: "ISM-SECURITY-GATE-001"
+last_updated: "2026-08-20"
+next_review: "2027-02-20"
+
+severity_thresholds:
+  # CRITICAL — bloqueia SEMPRE, sem exceção
+  critical:
+    action: block
+    bypass_allowed: false
+    sla_fix_hours: 0  # Correção imediata
+    examples:
+      - remote_code_execution
+      - authentication_bypass
+      - authorization_bypass
+      - secret_exposure
+      - valid_credential_exposed
+      - sql_injection_critical
+      - rls_absent_sensitive_data
+      - cross_tenant_access
+      - privilege_escalation
+      - data_exfiltration
+      - known_critical_cve
+      - admin_endpoint_exposed
+      - critical_insecure_configuration
+
+  # HIGH — bloqueia por padrão; exceção requer aprovação formal
+  high:
+    action: block
+    bypass_allowed: true  # Somente com Exception Request aprovado
+    sla_fix_hours: 72  # 3 dias úteis
+    exception_requires:
+      - written_justification
+      - security_lead_approval
+      - compensating_control
+      - expiration_date_max_days: 30
+      - revalidation_scheduled: true
+
+  # MEDIUM — bloqueia condicionalmente
+  medium:
+    action: policy_based
+    bypass_allowed: true
+    sla_fix_hours: 336  # 14 dias
+    block_conditions:
+      - sla_exceeded: true
+      - risk_concentration: true  # 3+ médios no mesmo componente
+      - affects_critical_component: true
+      - violates_internal_policy: true
+      - area: [authentication, authorization, pii_data, critical_infrastructure]
+
+  # LOW — avisa, registra, não bloqueia normalmente
+  low:
+    action: warn
+    bypass_allowed: true
+    sla_fix_hours: 720  # 30 dias
+    add_to_backlog: true
+    block_conditions:
+      - count_threshold: 20  # Bloqueia se > 20 lows no mesmo release
+
+# Condições que SEMPRE bloqueiam independente de severidade
+hard_blocks:
+  secret_detected:
+    action: block
+    response_required:
+      - identify_secret
+      - determine_exposure
+      - revoke_credential
+      - rotate_credential
+      - remove_from_code
+      - clean_history_if_needed
+      - re_run_audit
+      - register_incident
+
+  authentication_bypass:
+    action: block
+
+  authorization_bypass:
+    action: block
+
+  cross_tenant_access:
+    action: block
+
+  rls_failure:
+    action: block
+    tables_requiring_rls: [donations, leads, users, beneficiaries, financial_data, audit_logs]
+
+  production_debug_mode:
+    action: block
+
+  source_map_exposed_in_production:
+    action: block
+
+  admin_endpoint_unprotected:
+    action: block
+
+  cors_wildcard_authenticated:
+    action: block  # Access-Control-Allow-Origin: * em rotas autenticadas
+
+  known_cve_critical:
+    action: block
+    npm_audit_level: critical
+
+# Escopos auditados
+scopes:
+  - source_code
+  - dependencies
+  - secrets
+  - authentication
+  - authorization
+  - rbac
+  - rls
+  - multi_tenancy
+  - apis
+  - database
+  - frontend
+  - backend
+  - infrastructure
+  - iac
+  - containers
+  - cicd
+  - configuration
+  - http_headers
+  - cors
+  - csp
+  - tls_https
+  - sessions
+  - tokens
+  - cookies
+  - uploads
+  - downloads
+  - logs
+  - monitoring
+  - transitive_dependencies
+  - supply_chain
+  - known_vulnerabilities
+  - privacy
+  - lgpd
+  - admin_flows
+  - external_integrations
+  - webhooks
+  - jobs
+  - queues
+  - storage
+  - infra_permissions
+
+# Security Score — weights para cálculo
+score_weights:
+  critical_finding: -30
+  high_finding: -15
+  medium_finding: -5
+  low_finding: -1
+  rls_pass: +15
+  rbac_pass: +15
+  secret_scan_pass: +20
+  dependency_scan_pass: +15
+  iac_scan_pass: +10
+  auth_tests_pass: +15
+  api_tests_pass: +10
+  base_score: 100
+  minimum_deploy_score: 70  # Score mínimo para PASS (mas findings críticos bloqueiam independente)
+
+# Ambientes e rigor progressivo
+environments:
+  development:
+    gate_enabled: true
+    gate_level: lenient  # Bloqueia somente críticos
+    dependency_audit_level: high
+
+  test:
+    gate_enabled: true
+    gate_level: standard
+    dependency_audit_level: high
+
+  staging:
+    gate_enabled: true
+    gate_level: strict
+    dependency_audit_level: moderate
+
+  production:
+    gate_enabled: true
+    gate_level: maximum  # Bloqueia crítico + high, policy_based para médio
+    dependency_audit_level: critical
+    force_allowed: false
+    skip_security_allowed: false
+    manual_bypass_allowed: false
+    bypass_requires: "security_lead_approval_with_audit_trail"
+
+# Ferramentas utilizadas
+tools:
+  secret_scan: gitleaks
+  dependency_scan: npm_audit
+  sast: semgrep
+  iac_scan: custom_ism_iac_auditor
+  auth_tests: vitest
+  rbac_tests: vitest
+  rls_tests: vitest
+  tenant_tests: vitest
+  api_tests: vitest
+  http_tests: vitest
+  regression_tests: vitest
+
+# Retenção de relatórios
+reports:
+  retention_days: 365
+  format: [json, markdown, sarif]
+  upload_to: github_artifacts
+  immutable: true
