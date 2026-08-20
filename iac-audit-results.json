@@ -1,0 +1,7 @@
+{
+  "scanner": "custom_ism_iac_auditor",
+  "timestamp": "2026-08-20T14:56:43.991Z",
+  "passed": true,
+  "severity": "NONE",
+  "findings": []
+}
