@@ -241,4 +241,32 @@ describe('RLS-001 — Suíte de Testes de Segurança de Dados e Row Level Securi
     const logs = dbEngine.getAuditLogs();
     expect(logs.some(l => l.action === 'SUPER_ADMIN_RLS_READ')).toBe(true);
   });
+
+  it('RLS-009: Direct API access sem frontend — autorização deve se manter no banco', () => {
+    const directResults = dbEngine.selectRows('donations', ctxTenantA);
+    expect(directResults).toHaveLength(1);
+    expect(directResults[0].id).toBe('don-1');
+  });
+
+  it('RLS-010: Tentativa de DELETE em audit_logs por ADMIN (não SUPER_ADMIN) → DENY', () => {
+    // Insere um registro de audit_log no tenant B para que o ADMIN do tenant B
+    // consiga visualizá-lo (política USING passando) mas não consiga deletá-lo
+    // (tabela imutável — RLS_DELETE_PROHIBITED_IMMUTABLE_COMPLIANCE)
+    dbEngine.insertSeedRow('audit_logs', { id: 'log-1', tenantId: 'tenant-beta', data: 'Evento crítico auditado' });
+    const deleteAttempt = dbEngine.deleteRow('audit_logs', 'log-1', ctxTenantB);
+    expect(deleteAttempt.success).toBe(false);
+    expect(deleteAttempt.error).toBe('RLS_DELETE_PROHIBITED_IMMUTABLE_COMPLIANCE');
+  });
+
+  it('RLS-011: Tentativa de bypass via modificação de tenantId em update → DENY (WITH CHECK)', () => {
+    const updateAttempt = dbEngine.updateRow('users_profiles', 'prof-1', { tenantId: 'tenant-beta' }, ctxTenantA);
+    expect(updateAttempt.success).toBe(false);
+    expect(updateAttempt.error).toBe('RLS_WITH_CHECK_VIOLATION_TENANT_TAMPERING');
+  });
+
+  it('RLS-012: Acesso anônimo a qualquer tabela protegida → DENY', () => {
+    const anonCtx = { userId: null, userEmail: null, role: 'ANONYMOUS', tenantId: null } as any;
+    const results = dbEngine.selectRows('donations', anonCtx);
+    expect(results).toHaveLength(0);
+  });
 });
