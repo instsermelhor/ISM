@@ -10,8 +10,8 @@
 
 Esta política define os padrões criptográficos obrigatórios para a transmissão e armazenamento de dados em todos os domínios, serviços web, APIs e microserviços do **Instituto Ser Melhor (ISM)**.
 Aplica-se a:
-- Todos os domínios institucionais e administrativos (, , etc.).
-- APIs em Cloud Functions ().
+- Todos os domínios institucionais e administrativos (`institutosermelhor.org`, `admin.institutosermelhor.org`, etc.).
+- APIs em Cloud Functions (`southamerica-east1-ismbd-27e84.cloudfunctions.net`).
 - Serviços de CDN, Edge e infraestrutura Firebase/Google Cloud Platform.
 - Dispositivos de clientes, navegadores e integrações externas (Stripe, Google APIs, etc.).
 
@@ -37,17 +37,17 @@ Aplica-se a:
 - **Proibição:** Cifras CBC obsoletas, RC4, 3DES, DES, NULL e cifras sem autenticação.
 
 ### 3.2. Cifras Recomendadas (TLS 1.3)
-- 
-- 
-- 
+- `TLS_AES_128_GCM_SHA256`
+- `TLS_AES_256_GCM_SHA384`
+- `TLS_CHACHA20_POLY1305_SHA256`
 
 ### 3.3. Cifras Permitidas (TLS 1.2 com PFS)
-- 
-- 
-- 
-- 
-- 
-- 
+- `ECDHE-ECDSA-AES128-GCM-SHA256`
+- `ECDHE-RSA-AES128-GCM-SHA256`
+- `ECDHE-ECDSA-AES256-GCM-SHA384`
+- `ECDHE-RSA-AES256-GCM-SHA384`
+- `ECDHE-ECDSA-CHACHA20-POLY1305`
+- `ECDHE-RSA-CHACHA20-POLY1305`
 
 ---
 
@@ -55,12 +55,14 @@ Aplica-se a:
 
 ### 4.1. Configuração Padrão
 Todos os pontos de entrada HTTP do ISM devem responder com o cabeçalho HSTS em modo **Strict**:
-
+```http
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+```
 
 ### 4.2. Parâmetros Obrigatórios
-- **:** Mínimo de 63.072.000 segundos (2 anos).
-- **:** Obrigatório para cobrir todos os subdomínios presentes e futuros.
-- **:** Obrigatório para elegibilidade e inclusão permanente nas listas de pré-carregamento dos principais navegadores (Chrome, Firefox, Safari, Edge).
+- **`max-age`:** Mínimo de 63.072.000 segundos (2 anos).
+- **`includeSubDomains`:** Obrigatório para cobrir todos os subdomínios presentes e futuros.
+- **`preload`:** Obrigatório para elegibilidade e inclusão permanente nas listas de pré-carregamento dos principais navegadores (Chrome, Firefox, Safari, Edge).
 
 ---
 
@@ -81,26 +83,30 @@ Todos os pontos de entrada HTTP do ISM devem responder com o cabeçalho HSTS em 
 
 ## 6. PREVENÇÃO DE CONTEÚDO MISTO (MIXED CONTENT)
 
-- **Proibição Estrita:** Nenhum recurso ativo (scripts, iframes, stylesheets) ou passivo (imagens, áudios, vídeos) pode ser requisitado via .
-- **Content Security Policy:** A diretiva  deve estar ativa em todos os documentos HTML para instruir os navegadores a auto-converter qualquer link HTTP em HTTPS.
-- **WebSockets:** Conexões bidirecionais devem utilizar exclusivamente o protocolo seguro .
+- **Proibição Estrita:** Nenhum recurso ativo (scripts, iframes, stylesheets) ou passivo (imagens, áudios, vídeos) pode ser requisitado via `http://`.
+- **Content Security Policy:** A diretiva `upgrade-insecure-requests;` deve estar ativa em todos os documentos HTML para instruir os navegadores a auto-converter qualquer link HTTP em HTTPS.
+- **WebSockets:** Conexões bidirecionais devem utilizar exclusivamente o protocolo seguro `wss://`.
 
 ---
 
 ## 7. SEGURANÇA DE COOKIES E SESSÃO
 
 - Caso cookies sejam emitidos por qualquer serviço ou API do ISM, devem obrigatoriamente possuir os seguintes atributos de segurança:
-  - : Garante envio apenas através de HTTPS.
-  - : Previne acesso via JavaScript (mitigação de roubo de sessão via XSS).
-  -  ou : Mitigação de ataques Cross-Site Request Forgery (CSRF).
+  - `Secure`: Garante envio apenas através de HTTPS.
+  - `HttpOnly`: Previne acesso via JavaScript (mitigação de roubo de sessão via XSS).
+  - `SameSite=Strict` ou `SameSite=Lax`: Mitigação de ataques Cross-Site Request Forgery (CSRF).
 
 ---
 
 ## 8. REGISTROS CAA E DNSSEC
 
 ### 8.1. Registros CAA (Certification Authority Authorization)
-Para mitigar a emissão indevida de certificados por CAs não autorizadas, o DNS do domínio  deve configurar:
-
+Para mitigar a emissão indevida de certificados por CAs não autorizadas, o DNS do domínio `institutosermelhor.org` deve configurar:
+```dns
+institutosermelhor.org. IN CAA 0 issue letsencrypt.org
+institutosermelhor.org. IN CAA 0 issue pki.goog
+institutosermelhor.org. IN CAA 0 iodef mailto:seguranca@institutosermelhor.org
+```
 
 ### 8.2. DNSSEC
 O domínio deve ter DNSSEC ativado no registrador de domínio para prevenir ataques de DNS Spoofing e interceptação de tráfego.
@@ -109,4 +115,4 @@ O domínio deve ter DNSSEC ativado no registrador de domínio para prevenir ataq
 
 ## 9. CONFORMIDADE E DEPLOY GATE
 
-A não conformidade com qualquer item desta política constitui violação de segurança de gravidade **CRITICAL** ou **HIGH**, resultando em bloqueio imediato do pipeline de Deploy ().
+A não conformidade com qualquer item desta política constitui violação de segurança de gravidade **CRITICAL** ou **HIGH**, resultando em bloqueio imediato do pipeline de Deploy (`ISM-SECURITY-DEPLOY-GATE-001`).
