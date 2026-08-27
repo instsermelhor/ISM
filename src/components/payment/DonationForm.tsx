@@ -373,7 +373,7 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
           )}
           <p className="text-xs text-secondary-400 mb-6">
             Após o pagamento, salve o comprovante. Envie para
-            {' '}<strong className="text-secondary-700">financeiro@institutosm.com.br</strong> para receber o certificado de impacto.
+            {' '}<strong className="text-secondary-700">doacao@institutosermelhor.org</strong> para receber o certificado de impacto.
           </p>
           <button
             id="pix-confirm-btn"
