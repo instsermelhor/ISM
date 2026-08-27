@@ -81,8 +81,8 @@ describe('REGRESSION Security - Prevenção de Retorno de Vulnerabilidades', () 
   });
 
   it('REG-007: Privilege escalation VIEWER→ADMIN → DENY', () => {
-    const attemptedRole = 'ADMIN';
-    const actualRole = 'VIEWER';
+    const attemptedRole: string = 'ADMIN';
+    const actualRole: string = 'VIEWER';
     expect(attemptedRole === actualRole).toBe(false);
   });
 

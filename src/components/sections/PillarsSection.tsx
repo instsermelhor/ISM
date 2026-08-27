@@ -166,7 +166,7 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ pillars: customP
             4 Pilares,{' '}
             <span
               style={{
-                background: activePillar.gradient,
+                backgroundImage: activePillar.gradient,
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
