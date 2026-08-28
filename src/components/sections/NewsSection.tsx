@@ -6,7 +6,7 @@
  */
 import React, { useRef, useState, useMemo } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { Newspaper, Calendar, Clock, ArrowRight, User, X, Tag, BookOpen, Search, Filter } from 'lucide-react';
+import { Newspaper, Calendar, Clock, ArrowRight, User, X, Tag, BookOpen, Search, ExternalLink } from 'lucide-react';
 
 // ── Tipos ──────────────────────────────────────────────────────────────────────
 
@@ -17,6 +17,10 @@ export interface BlogPostItem {
   summary: string;
   content?: string;
   coverImage?: string;
+  /** URL externo opcional: quando definido, o card exibe um botão CTA abrindo em nova aba */
+  ctaUrl?: string;
+  /** Rótulo do botão CTA (fallback: "Saiba mais") */
+  ctaLabel?: string;
   author?: {
     name: string;
     role?: string;
@@ -59,6 +63,8 @@ const DEFAULT_BLOG_POSTS: BlogPostItem[] = [
     content: 'Saúde mental é um direito humano fundamental e pilar indispensável para o desenvolvimento social. O Projeto AURA atua diretamente com populações vulneráveis e agentes públicos, oferecendo suporte emocional humanizado, rodas de conversa, terapia comunitária e práticas integrativas.\n\nEm 2024, mais de 4.500 atendimentos individuais e em grupo foram realizados, com taxa de satisfação de 98% dos participantes e impacto direto na melhoria do clima escolar e comunitário.',
     coverImage: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80',
     author: { name: 'Equipe de Saúde AURA', role: 'Núcleo Psicossocial', avatarUrl: '' },
+    ctaUrl: 'https://www.aura.institutosermelhor.org',
+    ctaLabel: 'Conheça o Projeto AURA',
     category: 'Saúde & Bem-Estar',
     tags: ['Saúde Mental', 'AURA', 'Assistência Social'],
     publishedAt: '2025-01-20T14:30:00.000Z',
@@ -188,6 +194,21 @@ const PostModal: React.FC<{
                 <p key={idx} className="text-base text-secondary-700 leading-relaxed">{paragraph}</p>
               ))}
             </div>
+
+            {/* Botão CTA externo — exibido quando o post tem ctaUrl (ex.: Projeto AURA) */}
+            {post.ctaUrl && (
+              <div className="mb-6">
+                <a
+                  href={post.ctaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm text-white bg-brand-600 hover:bg-brand-700 transition-all shadow-md hover:scale-105"
+                >
+                  <ExternalLink size={15} />
+                  {post.ctaLabel || 'Saiba mais'}
+                </a>
+              </div>
+            )}
 
             {/* Tags */}
             {post.tags && post.tags.length > 0 && (
@@ -447,9 +468,22 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ posts = [] }) => {
                           </span>
                         ) : <span />}
 
-                        <span className="text-xs font-bold text-brand-400 group-hover:text-brand-300 flex items-center gap-1 transition-colors">
-                          Ler Artigo <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                        </span>
+                        {post.ctaUrl ? (
+                          <a
+                            href={post.ctaUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-xs font-bold text-brand-400 group-hover:text-brand-300 flex items-center gap-1 transition-colors hover:underline"
+                            aria-label={post.ctaLabel || 'Saiba mais'}
+                          >
+                            {post.ctaLabel || 'Saiba mais'} <ExternalLink size={12} />
+                          </a>
+                        ) : (
+                          <span className="text-xs font-bold text-brand-400 group-hover:text-brand-300 flex items-center gap-1 transition-colors">
+                            Ler Artigo <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                          </span>
+                        )}
                       </div>
                     </div>
                   </motion.article>
