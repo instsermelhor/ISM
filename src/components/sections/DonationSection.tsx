@@ -102,7 +102,7 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
           initial={{ opacity: 0, y: 32 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.15 }}
-          className="max-w-4xl mx-auto bg-white rounded-3xl overflow-hidden shadow-2xl shadow-black/30 flex flex-col md:flex-row min-h-[520px]"
+          className="max-w-4xl mx-auto bg-white rounded-3xl overflow-hidden shadow-2xl shadow-black/30 flex flex-col md:flex-row min-h-[620px]"
         >
           {/* Left Panel: Impact Context */}
           <div className="md:w-5/12 bg-secondary-900 p-8 flex flex-col justify-between relative overflow-hidden">
@@ -123,10 +123,18 @@ export const DonationSection: React.FC<DonationSectionProps> = ({ donationData }
               </ul>
             </div>
 
-            {/* PIX Panel — sempre visível com CNPJ oficial como fallback */}
+            {/* PIX Panel — QR Code oficial + CNPJ como fallback */}
             <div className="relative z-10 mt-6 bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm text-white">
-              <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-1">Pix Direto ⚡</p>
-              <p className="text-xs font-bold font-mono select-all break-all">{pixKey}</p>
+              <p className="text-[10px] text-brand-400 uppercase font-bold tracking-widest mb-3">Pix Direto ⚡ — Escaneie o QR</p>
+              <div className="flex justify-center mb-3">
+                <img
+                  src="/images/qrcode-pix-ism.jpg"
+                  alt="QR Code Pix — Instituto Ser Melhor"
+                  className="w-40 h-40 object-contain rounded-xl border-2 border-brand-400/40 shadow-lg"
+                />
+              </div>
+              <p className="text-[10px] text-secondary-400 font-bold uppercase tracking-wider text-center mb-2">ou copie a chave:</p>
+              <p className="text-xs font-bold font-mono select-all break-all text-center">{pixKey}</p>
               <p className="text-[10px] text-secondary-300 mt-1 font-medium leading-tight">{ISM_PIX_NAME}</p>
               {bankName && <p className="text-[10px] text-brand-300 font-bold mt-0.5">{bankName}</p>}
             </div>
