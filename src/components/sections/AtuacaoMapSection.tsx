@@ -3,6 +3,10 @@
  * ──────────────────────────────────────────────────────────────────────────────
  * Mapa SVG do Brasil com pins coloridos por pilar de impacto (Social, Ambiental,
  * Educação, Cultural). Filtros interativos, painel de detalhes e estatísticas.
+ *
+ * INTEGRAÇÃO: As estatísticas rápidas (Municípios, Estados, Beneficiários, sROI Médio)
+ * espelham os dados de "Números que comprovam nossa missão" (impact_metrics).
+ * Basta editar impact_metrics no painel admin para atualizar ambas as seções.
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -15,7 +19,27 @@ import {
   type ImpactPillar,
 } from '../../services/atuacaoMapService';
 
-// ── Outline SVG do Brasil (800×900 viewBox, projeção simplificada) ─────────────
+// ── Tipos de prop ─────────────────────────────────────────────────────────────
+
+/** Item de métrica vindo do backend (impact_metrics do Firestore) */
+export interface ImpactMetricRaw {
+  id?: string;
+  label: string;
+  value: number | string;
+  suffix?: string;
+  prefix?: string;
+}
+
+export interface AtuacaoMapSectionProps {
+  /**
+   * Array de métricas do Firestore (impact_metrics).
+   * Quando fornecido, substitui os valores calculados do mapa para
+   * Municípios, Estados, Beneficiários e sROI Médio.
+   */
+  metrics?: ImpactMetricRaw[];
+}
+
+
 
 const BRAZIL_OUTLINE = `
   M 80 58
@@ -206,7 +230,24 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ municipality, onClose }) => {
 
 // ── Componente Principal ──────────────────────────────────────────────────────
 
-export const AtuacaoMapSection: React.FC = () => {
+/**
+ * Extrai um valor numérico de um array de métricas pelo label (case-insensitive, parcial).
+ * Retorna `null` se não encontrar.
+ */
+function extractMetricValue(metrics: ImpactMetricRaw[], ...labelParts: string[]): number | null {
+  for (const part of labelParts) {
+    const found = metrics.find(m =>
+      m.label.toLowerCase().includes(part.toLowerCase())
+    );
+    if (found !== undefined) {
+      const num = typeof found.value === 'number' ? found.value : parseFloat(String(found.value));
+      if (!isNaN(num)) return num;
+    }
+  }
+  return null;
+}
+
+export const AtuacaoMapSection: React.FC<AtuacaoMapSectionProps> = ({ metrics = [] }) => {
   const [activeFilter, setActiveFilter] = useState<FilterPillar>('ALL');
   const [selected, setSelected] = useState<Municipality | null>(null);
   const [municipalities, setMunicipalities] = useState<Municipality[]>(AtuacaoMapService.getAll());
@@ -215,7 +256,8 @@ export const AtuacaoMapSection: React.FC = () => {
     AtuacaoMapService.getAllAsync().then(setMunicipalities);
   }, []);
 
-  const stats = useMemo(() => {
+  /** Estatísticas calculadas a partir do mapa (fallback interno) */
+  const mapStats = useMemo(() => {
     const total = municipalities;
     return {
       totalMunicipalities: total.length,
@@ -228,6 +270,31 @@ export const AtuacaoMapSection: React.FC = () => {
       regions: [...new Set(total.map((m) => m.region))].length,
     };
   }, [municipalities]);
+
+  /**
+   * Estatísticas exibidas na seção.
+   * Quando a prop `metrics` (impact_metrics do Firestore) estiver disponível,
+   * os valores de Municípios, Estados, Beneficiários e sROI Médio são extraídos
+   * dela — mantendo a sincronia com "Números que comprovam nossa missão".
+   * Caso contrário, usa os valores calculados do mapa como fallback.
+   */
+  const stats = useMemo(() => {
+    if (metrics.length === 0) return mapStats;
+
+    const metrMunicipios   = extractMetricValue(metrics, 'município', 'municipio', 'Municípios');
+    const metrEstados      = extractMetricValue(metrics, 'estado', 'Estado');
+    const metrBeneficiarios = extractMetricValue(metrics, 'beneficiário', 'beneficiario', 'Beneficiários', 'Diretos');
+    const metrSROI         = extractMetricValue(metrics, 'sroi', 'SROI', 'Retorno');
+
+    return {
+      totalMunicipalities: metrMunicipios  ?? mapStats.totalMunicipalities,
+      totalStates:         metrEstados     ?? mapStats.totalStates,
+      totalBeneficiaries:  metrBeneficiarios ?? mapStats.totalBeneficiaries,
+      totalProjects:       mapStats.totalProjects,
+      avgSROI:             metrSROI        ?? mapStats.avgSROI,
+      regions:             mapStats.regions,
+    };
+  }, [metrics, mapStats]);
 
   const filtered = useMemo(() => {
     if (activeFilter === 'ALL') return municipalities;
