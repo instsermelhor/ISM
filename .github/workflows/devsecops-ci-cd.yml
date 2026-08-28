@@ -239,7 +239,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci || true
       - name: Run IaC Security Scan
-        run: npx ts-node scripts/iac-security-audit.ts --output iac-audit-results.json
+        run: node scripts/iac-security-audit.cjs --output iac-audit-results.json
       - name: Upload IaC audit results
         if: always()
         uses: actions/upload-artifact@v4
@@ -268,7 +268,7 @@ jobs:
           path: artifacts
       - name: Run Security Gate Engine
         run: |
-          npx ts-node scripts/security-gate-engine.ts \
+          node scripts/security-gate-engine.cjs \
             --commit ${{ github.sha }} \
             --branch ${{ github.ref_name }} \
             --version ${{ github.run_number }} \
