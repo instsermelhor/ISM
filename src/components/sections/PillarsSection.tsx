@@ -5,7 +5,7 @@
  */
 import React, { useState, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Users, Leaf, Palette, ArrowRight, TrendingUp, MapPin, Award } from 'lucide-react';
+import { BookOpen, Users, Leaf, Palette, ArrowRight, ExternalLink } from 'lucide-react';
 import type { PillarKey } from '../ui/PillarBadge';
 
 export interface PillarsSectionProps {
@@ -47,7 +47,11 @@ const DEFAULT_PILLARS = [
     colorLight: '#ffedd5',
     bgClass: 'pillar-bg-soc',
     kpis: [{ value: '5k+', label: 'Famílias assistidas' }, { value: '78', label: 'Municípios cobertos' }],
-    programs: ['Assistência Jurídica Gratuita', 'Apoio Psicossocial', 'Geração de Renda'],
+    programs: [
+      'Assistência Jurídica Gratuita',
+      { name: 'Apoio Psicossocial', ctaUrl: 'https://www.aura.institutosermelhor.org', ctaLabel: 'Apoio Psicossocial' },
+      'Geração de Renda',
+    ],
     ctaHref: '#programs',
   },
   {
@@ -253,19 +257,46 @@ export const PillarsSection: React.FC<PillarsSectionProps> = ({ pillars: customP
                       Programas Relacionados
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {activePillar.programs.map((prog: string) => (
-                        <span
-                          key={prog}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium border"
-                          style={{
-                            color: activePillar.colorLight,
-                            borderColor: `${activePillar.color}40`,
-                            background: `${activePillar.color}15`,
-                          }}
-                        >
-                          {prog}
-                        </span>
-                      ))}
+                      {activePillar.programs.map((prog: string | any) => {
+                        const isLink = typeof prog === 'object' && prog !== null && prog.ctaUrl;
+                        const label = typeof prog === 'string' ? prog : prog.name || prog.ctaLabel || '';
+                        const key = typeof prog === 'string' ? prog : (prog.name || prog.ctaUrl || label);
+
+                        if (isLink) {
+                          return (
+                            <a
+                              key={key}
+                              href={prog.ctaUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all hover:scale-105 hover:shadow-md"
+                              style={{
+                                color: activePillar.colorLight,
+                                borderColor: `${activePillar.color}70`,
+                                background: `${activePillar.color}25`,
+                              }}
+                              aria-label={`${label} — abre em nova aba`}
+                            >
+                              {label}
+                              <ExternalLink size={11} />
+                            </a>
+                          );
+                        }
+
+                        return (
+                          <span
+                            key={key}
+                            className="px-3 py-1.5 rounded-full text-xs font-medium border"
+                            style={{
+                              color: activePillar.colorLight,
+                              borderColor: `${activePillar.color}40`,
+                              background: `${activePillar.color}15`,
+                            }}
+                          >
+                            {label}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
