@@ -50,8 +50,8 @@ const donationSchema = z.object({
 type DonationFormData = z.infer<typeof donationSchema>;
 
 /* ── Constants ─────────────────────────────────────────────────────── */
-type Step = 'select' | 'payment_method' | 'pix_panel' | 'boleto_panel' | 'details' | 'processing' | 'success';
-type PaymentMethod = 'PIX' | 'CARTAO' | 'BOLETO';
+type Step = 'select' | 'payment_method' | 'pix_panel' | 'details' | 'processing' | 'success';
+type PaymentMethod = 'PIX' | 'CARTAO';
 const PRESET_AMOUNTS = [50, 100, 200, 500, 1000];
 const MIN_AMOUNT = 5;
 
@@ -156,7 +156,7 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
         amount,
         frequency,
         pillar: selectedPillar,
-        paymentMethod: paymentMethod === 'PIX' ? 'PIX Instantâneo' : paymentMethod === 'CARTAO' ? 'Cartão de Crédito' : 'Boleto Bancário',
+        paymentMethod: paymentMethod === 'PIX' ? 'PIX Instantâneo' : 'Cartão de Crédito',
       });
       setReceiptData(rData);
       setStep('success');
@@ -258,12 +258,10 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
     );
   }
 
-  /* ── Step: payment_method ── */
   if (step === 'payment_method') {
     const methods: { id: PaymentMethod; label: string; desc: string; icon: React.ElementType; badge: string; color: string }[] = [
       { id: 'PIX',    label: 'PIX Instantâneo',        desc: 'Chave CNPJ · Aprovação imediata',                   icon: QrCode,    badge: '⚡ Instantâneo',  color: '#16a34a' },
       { id: 'CARTAO', label: 'Cartão de Crédito',      desc: 'Débito automático · Parcelamento em até 12x',       icon: CreditCard, badge: '💳 Recorrente', color: '#2563eb' },
-      { id: 'BOLETO', label: 'Boleto Bancário',        desc: 'Vencimento em 3 dias úteis · Sem taxas extras',      icon: FileText,  badge: '📄 Sem taxa',    color: '#d97706' },
     ];
     return (
       <div className="animate-fade-in flex flex-col h-full">
@@ -313,13 +311,12 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
         <div className="mt-auto">
           <button
             onClick={() => {
-              if (paymentMethod === 'PIX')   setStep('pix_panel');
-              else if (paymentMethod === 'BOLETO') setStep('boleto_panel');
+              if (paymentMethod === 'PIX') setStep('pix_panel');
               else setStep('details');
             }}
             className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 transition-all duration-200 flex items-center justify-center gap-2"
           >
-            Continuar com {paymentMethod === 'PIX' ? 'PIX' : paymentMethod === 'CARTAO' ? 'Cartão' : 'Boleto'}
+            Continuar com {paymentMethod === 'PIX' ? 'PIX' : 'Cartão'}
           </button>
         </div>
       </div>
@@ -339,10 +336,14 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
           Voltar
         </button>
         <div className="flex flex-col items-center text-center flex-1 justify-center">
-          {/* QR Code visual */}
-          <div className="w-36 h-36 bg-gray-50 border-2 border-gray-200 rounded-2xl flex flex-col items-center justify-center mb-5 mx-auto">
-            <QrCode size={64} className="text-secondary-300" aria-hidden="true" />
-            <span className="text-[9px] text-secondary-300 font-mono mt-1">QR PIX ISM</span>
+          {/* QR Code oficial Instituto Ser Melhor */}
+          <div className="mb-4 mx-auto">
+            <img
+              src="/images/qrcode-pix-ism.jpg"
+              alt="QR Code Pix — Instituto Ser Melhor"
+              className="w-52 h-52 object-contain rounded-2xl border-4 border-brand-100 shadow-lg shadow-brand-200/50"
+            />
+            <p className="text-[10px] text-secondary-400 font-bold uppercase tracking-widest mt-1">Escaneie com o App do Banco</p>
           </div>
           <h3 className="text-lg font-black text-secondary-900 mb-1">Pix CNPJ — Instituto Ser Melhor</h3>
           <p className="text-xs text-secondary-400 mb-5">
@@ -384,35 +385,6 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
             className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 transition-all duration-200"
           >
             Já realizei o Pix ✓
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  /* ── Step: boleto_panel ── */
-  if (step === 'boleto_panel') {
-    return (
-      <div className="animate-fade-in flex flex-col h-full">
-        <button
-          type="button"
-          onClick={() => setStep('payment_method')}
-          className="text-sm text-secondary-400 hover:text-brand-600 font-bold mb-5 flex items-center gap-1 group transition-colors"
-        >
-          <span className="group-hover:-translate-x-1 transition-transform inline-block" aria-hidden="true">←</span>
-          Voltar
-        </button>
-        <div className="flex flex-col items-center text-center flex-1 justify-center">
-          <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center mb-5 mx-auto">
-            <FileText size={32} className="text-amber-500" aria-hidden="true" />
-          </div>
-          <h3 className="text-lg font-black text-secondary-900 mb-1">Boleto Bancário</h3>
-          <p className="text-sm text-secondary-400 mb-6">Informe seus dados para gerar o boleto.</p>
-          <button
-            onClick={() => setStep('details')}
-            className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 transition-all duration-200"
-          >
-            Preencher dados
           </button>
         </div>
       </div>
@@ -657,7 +629,7 @@ export const DonationForm: React.FC<DonationFormProps> = ({ initialPillar = 'Ger
         className="w-full py-4 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:bg-brand-700 mt-auto flex items-center justify-center gap-2 group transition-all duration-200"
       >
         <CreditCard size={20} className="group-hover:scale-110 transition-transform" aria-hidden="true" />
-        {paymentMethod === 'BOLETO' ? 'Gerar Boleto' : 'Ir para Pagamento Seguro'}
+        Ir para Pagamento Seguro
       </button>
 
       <div className="flex items-center justify-center gap-4 mt-5 opacity-50">
