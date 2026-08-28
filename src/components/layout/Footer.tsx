@@ -100,7 +100,7 @@ export const Footer: React.FC<Props> = ({ onOpenPrivacy, onOpenTerms, onOpenLGPD
     : defaultSocialLinks;
 
   return (
-    <footer className="relative bg-secondary-950 text-white overflow-hidden">
+    <footer id="footer" className="relative bg-secondary-950 text-white overflow-hidden">
       {/* Decorative gradient top border */}
       <div className="h-1 w-full bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600" />
 

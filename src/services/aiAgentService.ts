@@ -43,9 +43,10 @@ const ISM_KNOWLEDGE_BASE: KBTopic[] = [
   },
   {
     keywords: ['aura', 'saude', 'psicossocial', 'terapia', 'mental'],
-    reply: 'O **Projeto AURA** é nosso programa integrativo de saúde mental preventivo e suporte psicossocial. Oferecemos atendimento humanizado, rodas de conversa e práticas terapêuticas em comunidades vulneráveis, com mais de 4.500 atendimentos realizados!',
+    reply: 'O **Projeto AURA** é nosso programa integrativo de saúde mental preventivo e suporte psicossocial. Oferecemos atendimento humanizado, rodas de conversa e práticas terapêuticas em comunidades vulneráveis, com mais de 4.500 atendimentos realizados!\n\n🌐 Acesse o portal oficial: **https://www.aura.institutosermelhor.org**',
     quickActions: [
-      { label: '🌿 Conhecer Todos os Programas', action: 'GOTO_PROGRAMS' },
+      { label: '🌐 Conhecer o Projeto AURA', action: 'OPEN_AURA' },
+      { label: '🌿 Ver Programas em Campo', action: 'GOTO_PROGRAMS' },
       { label: '🤝 Seja um Parceiro Institucional', action: 'GOTO_PARTNER' },
     ],
   },

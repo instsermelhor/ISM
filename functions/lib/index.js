@@ -343,20 +343,6 @@ router.get('/health/deep', async (_req, res) => {
         });
     }
 });
-/** POST /api/v2/telemetry/errors — Ingestão Segura de Erros e Telemetria do Frontend (OBS-001) */
-router.post('/telemetry/errors', rateLimiterMiddleware(30, 60000), async (req, res) => {
-    try {
-        const { source, message, route, statusCode, stack, correlationId } = req.body || {};
-        const safeSource = source || 'Frontend';
-        const safeMessage = redactErrorMessage(message || 'Erro sem mensagem');
-        const safeStack = stack ? redactErrorMessage(stack) : undefined;
-        await reportSystemError(safeSource, safeMessage, route, statusCode || 500, safeStack);
-        res.status(201).json({ received: true, correlationId: correlationId || req.correlationId });
-    }
-    catch (err) {
-        res.status(200).json({ received: false, error: err.message });
-    }
-});
 /** POST /api/v2/donations */
 router.post('/donations', rateLimiterMiddleware(10, 60000), async (req, res) => {
     try {
@@ -1470,7 +1456,7 @@ router.post('/lgpd/requests', rateLimiterMiddleware(5, 60000), async (req, res) 
     }
 });
 /** POST /api/v2/lgpd/anonymize — Rotina de Descarte / Anonimização de Dados Expirados (Art. 16 LGPD) */
-router.post('/lgpd/anonymize', authenticateToken, requireRole('ADMIN'), async (req, res) => {
+router.post('/lgpd/anonymize', authenticateToken, requireRole('SUPER_ADMIN', 'ADMIN'), async (req, res) => {
     try {
         const { targetCollection = 'leads', retentionDays = 730 } = req.body || {};
         const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);

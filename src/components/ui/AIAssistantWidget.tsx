@@ -82,6 +82,9 @@ export const AIAssistantWidget: React.FC = () => {
       case 'ASK_AURA':
         handleSendMessage('O que é o Projeto AURA?');
         break;
+      case 'OPEN_AURA':
+        window.open('https://www.aura.institutosermelhor.org', '_blank', 'noopener,noreferrer');
+        break;
       case 'GOTO_DONATION':
         document.getElementById('donate')?.scrollIntoView({ behavior: 'smooth' });
         break;
@@ -90,6 +93,9 @@ export const AIAssistantWidget: React.FC = () => {
         break;
       case 'GOTO_TRANSPARENCY':
         document.getElementById('transparency')?.scrollIntoView({ behavior: 'smooth' });
+        break;
+      case 'GOTO_GOVERNANCE':
+        document.getElementById('governance')?.scrollIntoView({ behavior: 'smooth' });
         break;
       case 'GOTO_PROGRAMS':
         document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' });
@@ -105,6 +111,9 @@ export const AIAssistantWidget: React.FC = () => {
         break;
       case 'GOTO_IMPACT':
         document.getElementById('impact')?.scrollIntoView({ behavior: 'smooth' });
+        break;
+      case 'GOTO_FOOTER':
+        document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' });
         break;
       default:
         handleSendMessage(label);
