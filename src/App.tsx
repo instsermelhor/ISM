@@ -546,7 +546,7 @@ function App() {
           {/* Mapa Interativo de Atuação por Município e Pilar — G001 */}
           <Suspense fallback={<SectionSkeleton height="h-96" />}>
             <div className="cv-auto">
-              <AtuacaoMapSection />
+              <AtuacaoMapSection metrics={activeMetrics} />
             </div>
           </Suspense>
 
